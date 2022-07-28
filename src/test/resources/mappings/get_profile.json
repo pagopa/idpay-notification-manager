@@ -1,0 +1,16 @@
+{
+  "request": {
+    "method": "GET",
+    "urlPathPattern": "/api/v1/profiles/.*"
+  },
+  "response": {
+    "status": "200",
+    "jsonBody": {
+      "sender_allowed": true,
+      "preferred_languages": []
+    },
+    "headers": {
+      "Content-Type": "application/json"
+    }
+  }
+}

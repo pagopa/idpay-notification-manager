@@ -56,7 +56,7 @@ microservice-chart:
       memory: "256Mi"
       cpu: "40m"
     limits:
-      memory: "2Gi"
+      memory: "4Gi"
       cpu: "200m"
 
 #  autoscaling:
@@ -89,10 +89,25 @@ microservice-chart:
     idpay-common:
       TZ: tz
       JAVA_TOOL_OPTIONS: java_tool_options
+    rest-client:
+      URL_BACKEND_IO: io_backend_notification_base_url
+      BACKEND_IO_NOTIFY_URL: io_backend_notification_message_url
+      BACKEND_IO_PROFILE_URL: io_backend_notification_profile_url
+      BACKEND_IO_TOKEN: io_backend_notification_token
+      URL_PDV: pdv_tokenizer_base_url
+      PDV_TOKEN: pdv_tokenizer_api_key
+    idpay-eventhub-00:
+      KAFKA_BINDER_BROKER_ENDPOINT_LIST: kafka_broker
+      KAFKA_NOTIFICATION_SASL_MECHANISM: kafka_sasl_mechanism
+      KAFKA_NOTIFICATION_SECURITY_PROTOCOL: kafka_security_protocol
+      KAFKA_TOPIC_OUTCOME: idpay_onboarding_outcome_topic
+      KAFKA_OUTCOME_GROUP_IN: idpay-onboarding-outcome-notify-consumer-group
       
   envSecret:
     aks-api-url: cstar-d-weu-dev01-aks-apiserver-url
     MONGODB_URI: mongodb-connection-string
+    KAFKA_OUTCOME_SASL_JAAS_CONFIG: evh-idpay-onboarding-outcome-idpay-onboarding-outcome-consumer-jaas-config-idpay-00
+    KAFKA_OUTCOME_OUT_SASL_JAAS_CONFIG: evh-idpay-onboarding-outcome-idpay-onboarding-outcome-producer-jaas-config-idpay-00
 #    APPLICATIONINSIGHTS_CONNECTION_STRING: appinsights-instrumentation-key
 
   keyvault:
