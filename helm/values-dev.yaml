@@ -84,18 +84,16 @@ microservice-chart:
     APPLICATIONINSIGHTS_ROLE_NAME: "idpaynotificationmanager"
     APPLICATIONINSIGHTS_INSTRUMENTATION_LOGGING_LEVEL: "OFF"
     APPLICATIONINSIGHTS_INSTRUMENTATION_MICROMETER_ENABLED: "false"
+    JAVA_TOOL_OPTIONS: '-Xms128m -Xmx4g -javaagent:/app/applicationinsights-agent.jar'
 
   envConfigMapExternals:
     idpay-common:
       TZ: tz
-      JAVA_TOOL_OPTIONS: java_tool_options
     rest-client:
-      URL_BACKEND_IO: io_backend_notification_base_url
-      BACKEND_IO_NOTIFY_URL: io_backend_notification_message_url
-      BACKEND_IO_PROFILE_URL: io_backend_notification_profile_url
-      BACKEND_IO_TOKEN: io_backend_notification_token
-      URL_PDV: pdv_tokenizer_base_url
-      PDV_TOKEN: pdv_tokenizer_api_key
+      IO_BACKEND_BASE_URL: io_backend_base_url
+      IO_BACKEND_NOTIFY_URL: io_backend_message_url
+      IO_BACKEND_PROFILE_URL: io_backend_profile_url
+      PDV_DECRYPT_BASE_URL: pdv_decrypt_base_url
     idpay-eventhub-00:
       KAFKA_BINDER_BROKER_ENDPOINT_LIST: kafka_broker
       KAFKA_NOTIFICATION_SASL_MECHANISM: kafka_sasl_mechanism
@@ -108,6 +106,8 @@ microservice-chart:
     MONGODB_URI: mongodb-connection-string
     KAFKA_OUTCOME_SASL_JAAS_CONFIG: evh-idpay-onboarding-outcome-idpay-onboarding-outcome-consumer-jaas-config-idpay-00
     KAFKA_OUTCOME_OUT_SASL_JAAS_CONFIG: evh-idpay-onboarding-outcome-idpay-onboarding-outcome-producer-jaas-config-idpay-00
+    PDV_DECRYPT_API_KEY: pdv-api-key
+    IO_BACKEND_API_KEY: io-backend-api-key
 #    APPLICATIONINSIGHTS_CONNECTION_STRING: appinsights-instrumentation-key
 
   keyvault:
