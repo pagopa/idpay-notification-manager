@@ -88,7 +88,7 @@ microservice-chart:
 
   envConfigMapExternals:
     idpay-common:
-      TZ: tz
+      TZ: TZ
     rest-client:
       IO_BACKEND_BASE_URL: io_backend_base_url
       IO_BACKEND_NOTIFY_URL: io_backend_message_url
