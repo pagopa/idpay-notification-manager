@@ -1,9 +1,12 @@
 package it.gov.pagopa.notification.manager.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import it.gov.pagopa.notification.manager.constants.NotificationConstants;
 import it.gov.pagopa.notification.manager.dto.EvaluationDTO;
 import it.gov.pagopa.notification.manager.service.NotificationManagerService;
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mockito;
@@ -25,8 +28,22 @@ class NotificationManagerControllerTest {
 
   private static final String BASE_URL = "http://localhost:8080/idpay/notifications/";
 
+  private static final String USER_ID = "USER_ID";
+  private static final String INITIATIVE_ID = "INITIATIVE_ID";
+
+  private static final LocalDateTime TEST_DATE = LocalDateTime.now();
   private static final EvaluationDTO EVALUATION_DTO =
-      new EvaluationDTO("", "", "", LocalDateTime.now(), null);
+      new EvaluationDTO(
+          USER_ID,
+          INITIATIVE_ID,
+          INITIATIVE_ID,
+          TEST_DATE,
+          INITIATIVE_ID,
+          NotificationConstants.STATUS_ONBOARDING_OK,
+          TEST_DATE,
+          List.of(),
+          new BigDecimal(500),
+          INITIATIVE_ID);
 
   @MockBean NotificationManagerService notificationManagerServiceMock;
 

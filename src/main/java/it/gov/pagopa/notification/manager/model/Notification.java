@@ -1,5 +1,6 @@
 package it.gov.pagopa.notification.manager.model;
 
+import it.gov.pagopa.notification.manager.dto.OnboardingRejectionReason;
 import java.time.LocalDateTime;
 import java.util.List;
 import lombok.Builder;
@@ -29,6 +30,6 @@ public class Notification {
 
   private String onboardingOutcome;
 
-  private List<String> rejectReasons;
+  private List<OnboardingRejectionReason> rejectReasons;
 
 }
