@@ -14,22 +14,31 @@ public class NotificationMarkdown {
 
   @Value("${notification.manager.markdown.double.new.line}")
   private String markdownDoubleNewLine;
+
   @Value("${notification.manager.subject.ok}")
   private String subjectOk;
+
   @Value("${notification.manager.subject.ko}")
   private String subjectKo;
+
   @Value("${notification.manager.subject.ko.tech}")
   private String subjectKoTech;
+
   @Value("${notification.manager.markdown.ok}")
   private String markdownOk;
+
   @Value("${notification.manager.markdown.ko.pdnd}")
   private String markdownKoPdnd;
+
   @Value("${notification.manager.markdown.ko.ranking}")
   private String markdownKoRanking;
+
   @Value("${notification.manager.markdown.ko.mistake}")
   private String markdownKoMistake;
+
   @Value("${notification.manager.markdown.ko.tech}")
   private String markdownKoTech;
+
   @Value("${notification.manager.markdown.ko.apology}")
   private String markdownKoApology;
 
@@ -40,11 +49,13 @@ public class NotificationMarkdown {
             evaluationDTO.getInitiativeName(), evaluationDTO.getOnboardingRejectionReasons());
   }
 
-  private String getSubjectKo(String initiativeName, List<OnboardingRejectionReason> onboardingRejectionReasons) {
+  private String getSubjectKo(
+      String initiativeName, List<OnboardingRejectionReason> onboardingRejectionReasons) {
     String reason = onboardingRejectionReasons.get(0).getType().name();
     return reason.startsWith(OnboardingRejectionReasonType.AUTOMATED_CRITERIA_FAIL.name())
             || reason.equals(OnboardingRejectionReasonType.OUT_OF_RANKING.name())
-        ? replaceMessageItem(this.subjectKo, NotificationConstants.INITIATIVE_NAME_KEY, initiativeName)
+        ? replaceMessageItem(
+            this.subjectKo, NotificationConstants.INITIATIVE_NAME_KEY, initiativeName)
         : this.subjectKoTech;
   }
 
@@ -64,10 +75,11 @@ public class NotificationMarkdown {
         StringUtils.hasLength(value) ? value : NotificationConstants.MARKDOWN_NA);
   }
 
-  private String getMarkdownKo(String initiativeName, List<OnboardingRejectionReason> onboardingRejectionReasons) {
+  private String getMarkdownKo(
+      String initiativeName, List<OnboardingRejectionReason> onboardingRejectionReasons) {
     String reason = onboardingRejectionReasons.get(0).getType().name();
     if (reason.startsWith(OnboardingRejectionReasonType.AUTOMATED_CRITERIA_FAIL.name())) {
-      return getMarkdownKoPdnd(initiativeName);
+      return getMarkdownKoPdnd(initiativeName, onboardingRejectionReasons);
     }
     if (reason.equals(OnboardingRejectionReasonType.OUT_OF_RANKING.name())) {
       return getMarkdownKoRanking(initiativeName);
@@ -75,16 +87,38 @@ public class NotificationMarkdown {
     return getMarkdownKoTech(initiativeName);
   }
 
-  private String getMarkdownKoPdnd(String initiativeName) {
-    return replaceMessageItem(this.markdownKoPdnd, NotificationConstants.INITIATIVE_NAME_KEY, initiativeName)
+  private String getMarkdownKoPdnd(
+      String initiativeName, List<OnboardingRejectionReason> onboardingRejectionReasons) {
+    return replaceMessageItem(
+            this.markdownKoPdnd, NotificationConstants.INITIATIVE_NAME_KEY, initiativeName)
         .concat(this.markdownDoubleNewLine)
+        .concat(getPdndRejectReasons(onboardingRejectionReasons))
         .concat(this.markdownKoMistake)
         .concat(this.markdownDoubleNewLine)
         .concat(this.markdownKoApology);
   }
 
+  private String getPdndRejectReasons(List<OnboardingRejectionReason> onboardingRejectionReasons) {
+    final StringBuilder builder = new StringBuilder();
+    onboardingRejectionReasons.stream()
+        .filter(
+            reason ->
+                reason.getType().equals(OnboardingRejectionReasonType.AUTOMATED_CRITERIA_FAIL))
+        .toList()
+        .forEach(
+            reason ->
+                builder.append(
+                    reason.getAuthorityLabel())
+                    .append(" : ")
+                    .append(reason.getCode())
+                    .append(this.markdownDoubleNewLine)
+        );
+    return builder.toString();
+  }
+
   private String getMarkdownKoRanking(String initiativeName) {
-    return replaceMessageItem(this.markdownKoRanking, NotificationConstants.INITIATIVE_NAME_KEY, initiativeName)
+    return replaceMessageItem(
+            this.markdownKoRanking, NotificationConstants.INITIATIVE_NAME_KEY, initiativeName)
         .concat(this.markdownDoubleNewLine)
         .concat(this.markdownKoMistake)
         .concat(this.markdownDoubleNewLine)
