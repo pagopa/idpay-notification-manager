@@ -4,6 +4,9 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import it.gov.pagopa.notification.manager.constants.NotificationConstants;
 import it.gov.pagopa.notification.manager.dto.EvaluationDTO;
+import it.gov.pagopa.notification.manager.dto.OnboardingRejectionReason;
+import it.gov.pagopa.notification.manager.dto.OnboardingRejectionReason.OnboardingRejectionReasonType;
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
@@ -35,80 +38,126 @@ class NotificationMarkdownTest {
   private static final String SUBJECT_OK = "Il tuo Bonus è attivo";
   private static final String SUBJECT_KO = "Non è stato possibile attivare Iniziativa di test";
   private static final String SUBJECT_KO_TECH = "Abbiamo riscontrato dei problemi";
-  private static final EvaluationDTO EVALUTATION_DTO =
-      new EvaluationDTO(
-          "TEST_TOKEN", "Iniziativa di test", "ONBOARDING_OK", LocalDateTime.now(), null);
-  private static final EvaluationDTO EVALUTATION_DTO_KO_PDND =
-      new EvaluationDTO(
-          "TEST_TOKEN",
-          "Iniziativa di test",
-          "ONBOARDING_KO",
-          LocalDateTime.now(),
-          List.of(NotificationConstants.AUTOMATED_CRITERIA + "_ISEE_FAIL"));
+  private static final String USER_ID = "USER_ID";
+  private static final String INITIATIVE_ID = "Iniziativa di test";
+  private static final LocalDateTime TEST_DATE = LocalDateTime.now();
 
-  private static final EvaluationDTO EVALUTATION_DTO_KO_RANKING =
+  private static final EvaluationDTO EVALUATION_DTO =
       new EvaluationDTO(
-          "TEST_TOKEN",
-          "Iniziativa di test",
-          "ONBOARDING_KO",
-          LocalDateTime.now(),
-          List.of(NotificationConstants.RANKING_FAIL));
+          USER_ID,
+          INITIATIVE_ID,
+          INITIATIVE_ID,
+          TEST_DATE,
+          INITIATIVE_ID,
+          NotificationConstants.STATUS_ONBOARDING_OK,
+          TEST_DATE,
+          List.of(),
+          new BigDecimal(500),
+          INITIATIVE_ID);
+  private static final EvaluationDTO EVALUATION_DTO_KO_PDND =
+      new EvaluationDTO(
+          USER_ID,
+          INITIATIVE_ID,
+          INITIATIVE_ID,
+          TEST_DATE,
+          INITIATIVE_ID,
+          NotificationConstants.STATUS_ONBOARDING_KO,
+          TEST_DATE,
+          List.of(
+              new OnboardingRejectionReason(
+                  OnboardingRejectionReasonType.AUTOMATED_CRITERIA_FAIL,
+                  "CODE",
+                  "AUTHORITY",
+                  "LABEL",
+                  "DETAIL")),
+          new BigDecimal(500),
+          INITIATIVE_ID);
 
-  private static final EvaluationDTO EVALUTATION_DTO_KO_TECH =
+  private static final EvaluationDTO EVALUATION_DTO_KO_RANKING =
       new EvaluationDTO(
-          "TEST_TOKEN",
-          "Iniziativa di test",
-          "ONBOARDING_KO",
-          LocalDateTime.now(),
-          List.of("TECH_FAIL"));
+          USER_ID,
+          INITIATIVE_ID,
+          INITIATIVE_ID,
+          TEST_DATE,
+          INITIATIVE_ID,
+          NotificationConstants.STATUS_ONBOARDING_KO,
+          TEST_DATE,
+          List.of(
+              new OnboardingRejectionReason(
+                  OnboardingRejectionReasonType.OUT_OF_RANKING,
+                  "CODE",
+                  "AUTHORITY",
+                  "LABEL",
+                  "DETAIL")),
+          new BigDecimal(500),
+          INITIATIVE_ID);
+
+  private static final EvaluationDTO EVALUATION_DTO_KO_TECH =
+      new EvaluationDTO(
+          USER_ID,
+          INITIATIVE_ID,
+          INITIATIVE_ID,
+          TEST_DATE,
+          INITIATIVE_ID,
+          NotificationConstants.STATUS_ONBOARDING_KO,
+          TEST_DATE,
+          List.of(
+              new OnboardingRejectionReason(
+                  OnboardingRejectionReasonType.TECHNICAL_ERROR,
+                  "CODE",
+                  "AUTHORITY",
+                  "LABEL",
+                  "DETAIL")),
+          new BigDecimal(500),
+          INITIATIVE_ID);
 
   @Autowired NotificationMarkdown notificationMarkdown;
 
   @Test
   void getSubject_status_ok() {
-    String actual = notificationMarkdown.getSubject(EVALUTATION_DTO);
+    String actual = notificationMarkdown.getSubject(EVALUATION_DTO);
     assertEquals(SUBJECT_OK, actual);
   }
 
   @Test
   void getSubject_status_ko_pdnd() {
-    String actual = notificationMarkdown.getSubject(EVALUTATION_DTO_KO_PDND);
+    String actual = notificationMarkdown.getSubject(EVALUATION_DTO_KO_PDND);
     assertEquals(SUBJECT_KO, actual);
   }
 
   @Test
   void getSubject_status_ko_ranking() {
-    String actual = notificationMarkdown.getSubject(EVALUTATION_DTO_KO_RANKING);
+    String actual = notificationMarkdown.getSubject(EVALUATION_DTO_KO_RANKING);
     assertEquals(SUBJECT_KO, actual);
   }
 
   @Test
   void getSubject_status_ko_tech() {
-    String actual = notificationMarkdown.getSubject(EVALUTATION_DTO_KO_TECH);
+    String actual = notificationMarkdown.getSubject(EVALUATION_DTO_KO_TECH);
     assertEquals(SUBJECT_KO_TECH, actual);
   }
 
   @Test
   void getMarkdown_status_ok() {
-    String actual = notificationMarkdown.getMarkdown(EVALUTATION_DTO);
+    String actual = notificationMarkdown.getMarkdown(EVALUATION_DTO);
     log.info(actual);
   }
 
   @Test
   void getMarkdown_status_ko_pdnd() {
-    String actual = notificationMarkdown.getMarkdown(EVALUTATION_DTO_KO_PDND);
+    String actual = notificationMarkdown.getMarkdown(EVALUATION_DTO_KO_PDND);
     log.info(actual);
   }
 
   @Test
   void getMarkdown_status_ko_ranking() {
-    String actual = notificationMarkdown.getMarkdown(EVALUTATION_DTO_KO_RANKING);
+    String actual = notificationMarkdown.getMarkdown(EVALUATION_DTO_KO_RANKING);
     log.info(actual);
   }
 
   @Test
   void getMarkdown_status_ko_tech() {
-    String actual = notificationMarkdown.getMarkdown(EVALUTATION_DTO_KO_TECH);
+    String actual = notificationMarkdown.getMarkdown(EVALUATION_DTO_KO_TECH);
     log.info(actual);
   }
 }
