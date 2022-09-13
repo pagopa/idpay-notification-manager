@@ -15,7 +15,7 @@ import it.gov.pagopa.notification.manager.dto.NotificationResource;
 import it.gov.pagopa.notification.manager.dto.ProfileResource;
 import it.gov.pagopa.notification.manager.dto.mapper.EvaluationDTOToNotificationMapper;
 import it.gov.pagopa.notification.manager.dto.mapper.NotificationDTOMapper;
-import it.gov.pagopa.notification.manager.event.OutcomeProducer;
+import it.gov.pagopa.notification.manager.event.producer.OutcomeProducer;
 import it.gov.pagopa.notification.manager.model.Notification;
 import it.gov.pagopa.notification.manager.model.NotificationMarkdown;
 import it.gov.pagopa.notification.manager.repository.NotificationManagerRepository;
