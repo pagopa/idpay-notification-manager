@@ -1,4 +1,4 @@
-package it.gov.pagopa.notification.manager.event;
+package it.gov.pagopa.notification.manager.event.consumer;
 
 import it.gov.pagopa.notification.manager.dto.EvaluationDTO;
 import it.gov.pagopa.notification.manager.service.NotificationManagerService;

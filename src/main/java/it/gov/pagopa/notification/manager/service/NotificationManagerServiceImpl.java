@@ -5,17 +5,16 @@ import it.gov.pagopa.notification.manager.connector.IOBackEndRestConnector;
 import it.gov.pagopa.notification.manager.connector.PdvDecryptRestConnector;
 import it.gov.pagopa.notification.manager.dto.EvaluationDTO;
 import it.gov.pagopa.notification.manager.dto.NotificationDTO;
+import it.gov.pagopa.notification.manager.dto.NotificationQueueDTO;
 import it.gov.pagopa.notification.manager.dto.NotificationResource;
 import it.gov.pagopa.notification.manager.dto.ProfileResource;
 import it.gov.pagopa.notification.manager.dto.mapper.EvaluationDTOToNotificationMapper;
 import it.gov.pagopa.notification.manager.dto.mapper.NotificationDTOMapper;
-import it.gov.pagopa.notification.manager.event.OutcomeProducer;
+import it.gov.pagopa.notification.manager.event.producer.OutcomeProducer;
 import it.gov.pagopa.notification.manager.model.Notification;
 import it.gov.pagopa.notification.manager.model.NotificationMarkdown;
 import it.gov.pagopa.notification.manager.repository.NotificationManagerRepository;
-import java.time.LocalDateTime;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -98,5 +97,10 @@ public class NotificationManagerServiceImpl implements NotificationManagerServic
     } catch (FeignException e) {
       return false;
     }
+  }
+
+  @Override
+  public void checkIbanKo(NotificationQueueDTO notificationQueueDTO) {
+
   }
 }
