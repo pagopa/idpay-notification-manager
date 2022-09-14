@@ -7,7 +7,8 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 @Configuration
-public class NotificationConsumer {
+public class NotificationCheckIbanConsumer {
+
   @Bean
   public Consumer<NotificationQueueDTO> walletConsumer(
       NotificationManagerService notificationManagerService) {

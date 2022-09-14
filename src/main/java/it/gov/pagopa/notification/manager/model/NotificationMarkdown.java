@@ -42,6 +42,20 @@ public class NotificationMarkdown {
   @Value("${notification.manager.markdown.ko.apology}")
   private String markdownKoApology;
 
+  @Value("${notification.manager.subject.ko.checkIban}")
+  private String subjectCheckIbanKo;
+
+  @Value("${notification.manager.markdown.ko.checkIban}")
+  private String markdownCheckIbanKo;
+
+  public String getSubjectCheckIbanKo(){
+    return this.subjectCheckIbanKo;
+  }
+
+  public String getMarkdownCheckIbanKo(){
+    return this.markdownCheckIbanKo;
+  }
+
   public String getSubject(EvaluationDTO evaluationDTO) {
     return evaluationDTO.getStatus().equals(NotificationConstants.STATUS_ONBOARDING_OK)
         ? this.subjectOk

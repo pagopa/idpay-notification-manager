@@ -4,12 +4,16 @@ import feign.FeignException;
 import it.gov.pagopa.notification.manager.connector.IOBackEndRestConnector;
 import it.gov.pagopa.notification.manager.connector.PdvDecryptRestConnector;
 import it.gov.pagopa.notification.manager.dto.EvaluationDTO;
+import it.gov.pagopa.notification.manager.dto.NotificationCheckIbanDTO;
 import it.gov.pagopa.notification.manager.dto.NotificationDTO;
 import it.gov.pagopa.notification.manager.dto.NotificationQueueDTO;
 import it.gov.pagopa.notification.manager.dto.NotificationResource;
 import it.gov.pagopa.notification.manager.dto.ProfileResource;
+import it.gov.pagopa.notification.manager.dto.ServiceResource;
 import it.gov.pagopa.notification.manager.dto.mapper.EvaluationDTOToNotificationMapper;
+import it.gov.pagopa.notification.manager.dto.mapper.NotificationCheckibanMapper;
 import it.gov.pagopa.notification.manager.dto.mapper.NotificationDTOMapper;
+import it.gov.pagopa.notification.manager.dto.mapper.NotificationQueueDTOToNotificationMapper;
 import it.gov.pagopa.notification.manager.event.producer.OutcomeProducer;
 import it.gov.pagopa.notification.manager.model.Notification;
 import it.gov.pagopa.notification.manager.model.NotificationMarkdown;
@@ -28,7 +32,9 @@ public class NotificationManagerServiceImpl implements NotificationManagerServic
   private final NotificationDTOMapper notificationDTOMapper;
   private final PdvDecryptRestConnector pdvDecryptRestConnector;
   private final EvaluationDTOToNotificationMapper evaluationDTOToNotificationMapper;
+  private final NotificationCheckibanMapper notificationCheckibanMapper;
   private final NotificationMarkdown notificationMarkdown;
+  private final NotificationQueueDTOToNotificationMapper notificationQueueDTOToNotificationMapper;
   @Value("${notification.backend-io.ttl}")
   private Long timeToLive;
 
@@ -39,14 +45,18 @@ public class NotificationManagerServiceImpl implements NotificationManagerServic
       NotificationManagerRepository notificationManagerRepository,
       NotificationDTOMapper notificationDTOMapper,
       EvaluationDTOToNotificationMapper evaluationDTOToNotificationMapper,
-      NotificationMarkdown notificationMarkdown) {
+      NotificationCheckibanMapper notificationCheckibanMapper,
+      NotificationMarkdown notificationMarkdown,
+      NotificationQueueDTOToNotificationMapper notificationQueueDTOToNotificationMapper) {
     this.outcomeProducer = outcomeProducer;
     this.ioBackEndRestConnector = ioBackEndRestConnector;
     this.pdvDecryptRestConnector = pdvDecryptRestConnector;
     this.notificationManagerRepository = notificationManagerRepository;
     this.notificationDTOMapper = notificationDTOMapper;
     this.evaluationDTOToNotificationMapper = evaluationDTOToNotificationMapper;
+    this.notificationCheckibanMapper = notificationCheckibanMapper;
     this.notificationMarkdown = notificationMarkdown;
+    this.notificationQueueDTOToNotificationMapper = notificationQueueDTOToNotificationMapper;
   }
 
   @Override
@@ -102,11 +112,42 @@ public class NotificationManagerServiceImpl implements NotificationManagerServic
   @Override
   public void checkIbanKo(NotificationQueueDTO notificationQueueDTO) {
     String fiscalCode = decryptUserToken(notificationQueueDTO.getUserId());
-    EvaluationDTO evaluationDTO = new EvaluationDTO();
-    if(isSenderAllowed(fiscalCode)){
-      ioBackEndRestConnector.getService(evaluationDTO.getServiceId());
+    if (isSenderAllowed(fiscalCode)) {
+      ServiceResource serviceResource = ioBackEndRestConnector.getService(
+          notificationQueueDTO.getServiceId());
+
+      Notification notification = notificationQueueDTOToNotificationMapper.map(
+          notificationQueueDTO);
+
+      String subject = notificationMarkdown.getSubjectCheckIbanKo();
+      String markdown = "notificationMarkdown.getMarkdown(evaluationDTO)";
+      try {
+        NotificationCheckIbanDTO notificationCheckIbanDTO = notificationCheckibanMapper.map(
+            notificationQueueDTO.getInitiativeId(), fiscalCode, serviceResource.getPrimary_key(),
+            subject, markdown);
+        notificationCheckIbanDTO.setNotificationId(notification.getNotificationId());
+        notification.setNotificationCheckIbanStatus("OK");
+
+        ioBackEndRestConnector.notifyCheckIbanKo(notificationCheckIbanDTO);
+
+      } catch (FeignException e) {
+        log.error("[%d] Cannot send notification: %s".formatted(e.status(), e.contentUTF8()));
+        notification.setNotificationCheckIbanStatus("KO");
+      }
+      notificationManagerRepository.save(notification);
+
     }
     log.warn("The user is not enabled to receive notifications!");
 
   }
 }
+
+
+
+
+
+
+
+
+
+

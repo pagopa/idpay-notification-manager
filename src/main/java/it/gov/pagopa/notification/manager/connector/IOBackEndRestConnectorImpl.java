@@ -1,8 +1,10 @@
 package it.gov.pagopa.notification.manager.connector;
 
+import it.gov.pagopa.notification.manager.dto.NotificationCheckIbanDTO;
 import it.gov.pagopa.notification.manager.dto.NotificationDTO;
 import it.gov.pagopa.notification.manager.dto.NotificationResource;
 import it.gov.pagopa.notification.manager.dto.ProfileResource;
+import it.gov.pagopa.notification.manager.dto.ServiceResource;
 import javax.validation.Valid;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -31,7 +33,12 @@ public class IOBackEndRestConnectorImpl implements IOBackEndRestConnector {
   }
 
   @Override
-  public void getService(String serviceId) {
-    ioBackEndRestClient.getService(serviceId, subscriptionKey);
+  public ServiceResource getService(String serviceId) {
+    return ioBackEndRestClient.getService(serviceId, subscriptionKey);
+  }
+
+  @Override
+  public NotificationCheckIbanDTO notifyCheckIbanKo(@Valid NotificationCheckIbanDTO notificationCheckIbanDTO) {
+    return  ioBackEndRestClient.notifyCheckibanKo(notificationCheckIbanDTO, subscriptionKey);
   }
 }
