@@ -1,6 +1,5 @@
 package it.gov.pagopa.notification.manager.connector;
 
-import it.gov.pagopa.notification.manager.dto.NotificationCheckIbanDTO;
 import it.gov.pagopa.notification.manager.dto.NotificationDTO;
 import it.gov.pagopa.notification.manager.dto.NotificationResource;
 import it.gov.pagopa.notification.manager.dto.ProfileResource;
@@ -23,13 +22,13 @@ public class IOBackEndRestConnectorImpl implements IOBackEndRestConnector {
   }
 
   @Override
-  public NotificationResource notify(@Valid NotificationDTO notificationDTO) {
-    return ioBackEndRestClient.notify(notificationDTO, subscriptionKey);
+  public NotificationResource notify(@Valid NotificationDTO notificationDTO, String primaryKey) {
+    return ioBackEndRestClient.notify(notificationDTO, primaryKey);
   }
 
   @Override
-  public ProfileResource getProfile(String fiscalCode) {
-    return ioBackEndRestClient.getProfile(fiscalCode, subscriptionKey);
+  public ProfileResource getProfile(String fiscalCode, String primaryKey) {
+    return ioBackEndRestClient.getProfile(fiscalCode, primaryKey);
   }
 
   @Override
@@ -37,8 +36,4 @@ public class IOBackEndRestConnectorImpl implements IOBackEndRestConnector {
     return ioBackEndRestClient.getService(serviceId, subscriptionKey);
   }
 
-  @Override
-  public NotificationCheckIbanDTO notifyCheckIbanKo(@Valid NotificationCheckIbanDTO notificationCheckIbanDTO) {
-    return  ioBackEndRestClient.notifyCheckibanKo(notificationCheckIbanDTO, subscriptionKey);
-  }
 }
