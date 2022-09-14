@@ -107,12 +107,11 @@ public class NotificationMarkdown {
         .toList()
         .forEach(
             reason ->
-                builder.append(
-                    reason.getAuthorityLabel())
+                builder
+                    .append(reason.getAuthorityLabel())
                     .append(" : ")
-                    .append(reason.getCode())
-                    .append(this.markdownDoubleNewLine)
-        );
+                    .append(reason.getCode().getDetail())
+                    .append(this.markdownDoubleNewLine));
     return builder.toString();
   }
 
