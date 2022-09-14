@@ -11,6 +11,7 @@ import it.gov.pagopa.notification.manager.dto.MessageContent;
 import it.gov.pagopa.notification.manager.dto.NotificationDTO;
 import it.gov.pagopa.notification.manager.dto.NotificationResource;
 import it.gov.pagopa.notification.manager.dto.ProfileResource;
+import it.gov.pagopa.notification.manager.dto.ServiceResource;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -40,11 +41,14 @@ import org.springframework.test.context.support.TestPropertySourceUtils;
     properties = {
       "spring.application.name=idpay-notification-manager-integration-rest",
       "rest-client.notification.backend-io.notify.url=/api/v1/messages",
-      "rest-client.notification.backend-io.profile.url=/api/v1/profiles"
+      "rest-client.notification.backend-io.profile.url=/api/v1/profiles",
+      "rest-client.notification.backend-io.service.url=/api/v1/services"
     })
 class IOBackEndRestClientTest {
 
   private static final String FISCAL_CODE = "AAAAAA00A00A000A";
+  private static final String PRIMARY_KEY = "PRIMARY_KEY";
+  private static final String SERVICE_ID = "SERVICE_ID";
 
   @Autowired private IOBackEndRestClient restClient;
 
@@ -64,7 +68,7 @@ class IOBackEndRestClientTest {
 
     notification.setContent(messageContent);
 
-    final NotificationResource actualResponse = restConnector.notify(notification);
+    final NotificationResource actualResponse = restConnector.notify(notification, PRIMARY_KEY);
 
     assertNotNull(actualResponse);
     assertEquals("ok", actualResponse.getId());
@@ -73,11 +77,19 @@ class IOBackEndRestClientTest {
   @Test
   void getProfile_test() {
 
-    final ProfileResource actualResponse = restConnector.getProfile(FISCAL_CODE);
+    final ProfileResource actualResponse = restConnector.getProfile(FISCAL_CODE, PRIMARY_KEY);
 
     assertNotNull(actualResponse);
     assertTrue(actualResponse.isSenderAllowed());
     assertNotNull(actualResponse.getPreferredLanguages());
+  }
+
+  @Test
+  void getService_test() {
+
+    final ServiceResource actualResponse = restConnector.getService(SERVICE_ID);
+
+    assertNotNull(actualResponse);
   }
 
   public static class WireMockInitializer

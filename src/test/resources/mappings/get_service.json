@@ -1,0 +1,15 @@
+{
+  "request": {
+    "method": "GET",
+    "urlPathPattern": "/api/v1/services/.*"
+  },
+  "response": {
+    "status": "200",
+    "jsonBody": {
+      "primary_key": "pk"
+    },
+    "headers": {
+      "Content-Type": "application/json"
+    }
+  }
+}

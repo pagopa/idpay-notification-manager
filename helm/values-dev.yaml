@@ -93,6 +93,7 @@ microservice-chart:
       IO_BACKEND_BASE_URL: io_backend_base_url
       IO_BACKEND_NOTIFY_URL: io_backend_message_url
       IO_BACKEND_PROFILE_URL: io_backend_profile_url
+      IO_BACKEND_SERVICE_URL: io_backend_service_url
       PDV_DECRYPT_BASE_URL: pdv_decrypt_base_url
     idpay-eventhub-00:
       KAFKA_BINDER_BROKER_ENDPOINT_LIST: kafka_broker
@@ -110,7 +111,7 @@ microservice-chart:
     KAFKA_OUTCOME_OUT_SASL_JAAS_CONFIG: evh-idpay-onboarding-outcome-idpay-onboarding-outcome-producer-jaas-config-idpay-00
     KAFKA_NOTIFICATION_SASL_JAAS_CONFIG: evh-idpay-notification-request-idpay-notification-request-consumer-jaas-config-idpay-00
     PDV_DECRYPT_API_KEY: pdv-api-key
-    IO_BACKEND_API_KEY: io-backend-api-key
+    IO_BACKEND_API_KEY: io-backend-aggregate-api-key
 #    APPLICATIONINSIGHTS_CONNECTION_STRING: appinsights-instrumentation-key
 
   keyvault:
