@@ -3,8 +3,7 @@ package it.gov.pagopa.notification.manager.dto.mapper;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import it.gov.pagopa.notification.manager.dto.EvaluationDTO;
-import it.gov.pagopa.notification.manager.dto.MessageContent;
-import it.gov.pagopa.notification.manager.dto.NotificationDTO;
+import it.gov.pagopa.notification.manager.dto.NotificationQueueDTO;
 import it.gov.pagopa.notification.manager.model.Notification;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -16,8 +15,8 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 @ExtendWith(SpringExtension.class)
-@ContextConfiguration(classes = EvaluationDTOToNotificationMapper.class)
-class EvaluationDTOToNotificationMapperTest {
+@ContextConfiguration(classes = NotificationMapper.class)
+class NotificationMapperTest {
 
   private static final String USER_ID = "USER_ID";
   private static final String INITIATIVE_ID = "INITIATIVE_ID";
@@ -45,14 +44,35 @@ class EvaluationDTOToNotificationMapperTest {
           .rejectReasons(List.of())
           .build();
 
-  @Autowired EvaluationDTOToNotificationMapper evaluationDTOToNotificationMapper;
+  private static final Notification NOTIFICATION_QUEUE =
+      Notification.builder()
+          .initiativeId(INITIATIVE_ID)
+          .userId(USER_ID)
+          .build();
+  private static final NotificationQueueDTO NOTIFICATION_QUEUE_DTO =
+      NotificationQueueDTO.builder()
+          .initiativeId(INITIATIVE_ID)
+          .userId(USER_ID)
+          .build();
+
+  @Autowired
+  NotificationMapper notificationMapper;
 
   @Test
-  void map() {
-    Notification actual = evaluationDTOToNotificationMapper.map(EVALUATION_DTO);
+  void evaluationToNotification() {
+    Notification actual = notificationMapper.evaluationToNotification(EVALUATION_DTO);
 
     NOTIFICATION.setNotificationDate(actual.getNotificationDate());
 
     assertEquals(NOTIFICATION, actual);
+  }
+
+  @Test
+  void queueToNotification() {
+    Notification actual = notificationMapper.queueToNotification(NOTIFICATION_QUEUE_DTO);
+
+    NOTIFICATION_QUEUE.setNotificationCheckIbanDate(actual.getNotificationCheckIbanDate());
+
+    assertEquals(NOTIFICATION_QUEUE, actual);
   }
 }
