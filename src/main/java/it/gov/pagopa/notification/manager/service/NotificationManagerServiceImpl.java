@@ -101,6 +101,11 @@ public class NotificationManagerServiceImpl implements NotificationManagerServic
 
   @Override
   public void checkIbanKo(NotificationQueueDTO notificationQueueDTO) {
+    String fiscalCode = decryptUserToken(notificationQueueDTO.getUserId());
+    if(isSenderAllowed(fiscalCode)){
+
+    }
+    log.warn("The user is not enabled to receive notifications!");
 
   }
 }

@@ -29,4 +29,9 @@ public class IOBackEndRestConnectorImpl implements IOBackEndRestConnector {
   public ProfileResource getProfile(String fiscalCode) {
     return ioBackEndRestClient.getProfile(fiscalCode, subscriptionKey);
   }
+
+  @Override
+  public void getService(String serviceId) {
+    ioBackEndRestClient.getService(serviceId, subscriptionKey);
+  }
 }
