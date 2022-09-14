@@ -108,6 +108,7 @@ public class NotificationMarkdown {
         .forEach(
             reason ->
                 builder
+                    .append("* ")
                     .append(reason.getAuthorityLabel())
                     .append(" : ")
                     .append(reason.getCode().getDetail())
