@@ -33,4 +33,12 @@ public interface IOBackEndRestClient {
   ProfileResource getProfile(
       @PathVariable("fiscal_code") String fiscalCode,
       @RequestHeader("Ocp-Apim-Subscription-Key") String token);
+
+  @GetMapping(
+      value = "${rest-client.notification.backend-io.service.url}/{service_id}",
+      produces = MediaType.APPLICATION_JSON_VALUE)
+  @ResponseBody
+  void getService(
+      @PathVariable("service_id") String serviceId,
+      @RequestHeader("Ocp-Apim-Subscription-Key") String token);
 }
