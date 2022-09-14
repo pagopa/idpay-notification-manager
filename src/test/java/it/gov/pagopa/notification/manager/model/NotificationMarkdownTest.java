@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import it.gov.pagopa.notification.manager.constants.NotificationConstants;
 import it.gov.pagopa.notification.manager.dto.EvaluationDTO;
 import it.gov.pagopa.notification.manager.dto.OnboardingRejectionReason;
+import it.gov.pagopa.notification.manager.dto.OnboardingRejectionReason.OnboardingRejectionReasonCode;
 import it.gov.pagopa.notification.manager.dto.OnboardingRejectionReason.OnboardingRejectionReasonType;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -66,7 +67,7 @@ class NotificationMarkdownTest {
           List.of(
               new OnboardingRejectionReason(
                   OnboardingRejectionReasonType.AUTOMATED_CRITERIA_FAIL,
-                  "CODE",
+                  OnboardingRejectionReasonCode.AUTOMATED_CRITERIA_ISEE_FAIL,
                   "AUTHORITY",
                   "LABEL",
                   "DETAIL")),
@@ -85,7 +86,7 @@ class NotificationMarkdownTest {
           List.of(
               new OnboardingRejectionReason(
                   OnboardingRejectionReasonType.OUT_OF_RANKING,
-                  "CODE",
+                  null,
                   "AUTHORITY",
                   "LABEL",
                   "DETAIL")),
@@ -104,7 +105,7 @@ class NotificationMarkdownTest {
           List.of(
               new OnboardingRejectionReason(
                   OnboardingRejectionReasonType.TECHNICAL_ERROR,
-                  "CODE",
+                  null,
                   "AUTHORITY",
                   "LABEL",
                   "DETAIL")),
