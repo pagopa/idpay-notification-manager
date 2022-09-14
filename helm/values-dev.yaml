@@ -100,12 +100,15 @@ microservice-chart:
       KAFKA_NOTIFICATION_SECURITY_PROTOCOL: kafka_security_protocol
       KAFKA_TOPIC_OUTCOME: idpay_onboarding_outcome_topic
       KAFKA_OUTCOME_GROUP_IN: idpay-onboarding-outcome-notify-consumer-group
+      KAFKA_TOPIC_NOTIFICATION: idpay_notification_request_topic
+      KAFKA_NOTIFICATION_GROUP_IN: idpay-notification-request-consumer-group
       
   envSecret:
     aks-api-url: cstar-d-weu-dev01-aks-apiserver-url
     MONGODB_URI: mongodb-connection-string
     KAFKA_OUTCOME_SASL_JAAS_CONFIG: evh-idpay-onboarding-outcome-idpay-onboarding-outcome-consumer-jaas-config-idpay-00
     KAFKA_OUTCOME_OUT_SASL_JAAS_CONFIG: evh-idpay-onboarding-outcome-idpay-onboarding-outcome-producer-jaas-config-idpay-00
+    KAFKA_NOTIFICATION_SASL_JAAS_CONFIG: evh-idpay-notification-request-idpay-notification-request-consumer-jaas-config-idpay-00
     PDV_DECRYPT_API_KEY: pdv-api-key
     IO_BACKEND_API_KEY: io-backend-api-key
 #    APPLICATIONINSIGHTS_CONNECTION_STRING: appinsights-instrumentation-key

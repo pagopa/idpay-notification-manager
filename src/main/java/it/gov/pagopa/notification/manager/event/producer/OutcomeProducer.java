@@ -1,4 +1,4 @@
-package it.gov.pagopa.notification.manager.event;
+package it.gov.pagopa.notification.manager.event.producer;
 
 import it.gov.pagopa.notification.manager.dto.EvaluationDTO;
 import org.springframework.beans.factory.annotation.Value;
