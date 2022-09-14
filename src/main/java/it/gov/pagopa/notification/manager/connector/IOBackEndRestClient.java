@@ -1,6 +1,5 @@
 package it.gov.pagopa.notification.manager.connector;
 
-import it.gov.pagopa.notification.manager.dto.NotificationCheckIbanDTO;
 import it.gov.pagopa.notification.manager.dto.NotificationDTO;
 import it.gov.pagopa.notification.manager.dto.NotificationResource;
 import it.gov.pagopa.notification.manager.dto.ProfileResource;
@@ -42,13 +41,5 @@ public interface IOBackEndRestClient {
   @ResponseBody
   ServiceResource getService(
       @PathVariable("service_id") String serviceId,
-      @RequestHeader("Ocp-Apim-Subscription-Key") String token);
-
-  @PostMapping(
-      value = "${rest-client.notification.backend-io.notify.url}",
-      produces = MediaType.APPLICATION_JSON_VALUE)
-  @ResponseBody
-  NotificationCheckIbanDTO notifyCheckibanKo(
-      @RequestBody @Valid NotificationCheckIbanDTO notificationCheckIbanDTO,
       @RequestHeader("Ocp-Apim-Subscription-Key") String token);
 }
