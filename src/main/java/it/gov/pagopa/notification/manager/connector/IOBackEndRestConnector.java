@@ -12,4 +12,5 @@ public interface IOBackEndRestConnector {
 
   NotificationResource notify(@RequestBody @Valid NotificationDTO notificationDTO);
   ProfileResource getProfile(@PathVariable("fiscal_code") String fiscalCode);
+  void getService(@PathVariable("service_id") String serviceId);
 }
