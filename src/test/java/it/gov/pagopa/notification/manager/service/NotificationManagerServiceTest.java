@@ -12,6 +12,7 @@ import it.gov.pagopa.notification.manager.dto.EvaluationDTO;
 import it.gov.pagopa.notification.manager.dto.FiscalCodeResource;
 import it.gov.pagopa.notification.manager.dto.MessageContent;
 import it.gov.pagopa.notification.manager.dto.NotificationDTO;
+import it.gov.pagopa.notification.manager.dto.NotificationQueueDTO;
 import it.gov.pagopa.notification.manager.dto.NotificationResource;
 import it.gov.pagopa.notification.manager.dto.ProfileResource;
 import it.gov.pagopa.notification.manager.dto.ServiceResource;
@@ -54,6 +55,10 @@ class NotificationManagerServiceTest {
   private static final Long TTL = 3600L;
   private static final String SUBJECT = "SUBJECT";
   private static final String MARKDOWN = "MARKDOWN";
+  private static final String OPERATION_TYPE = "OPERATION_TYPE";
+  private static final String SERVICE_ID = "SERVICE_ID";
+  private static final String IBAN = "IBAN";
+
   private static final EvaluationDTO EVALUATION_DTO =
       new EvaluationDTO(
           TEST_TOKEN,
@@ -77,6 +82,14 @@ class NotificationManagerServiceTest {
           .rejectReasons(EVALUATION_DTO.getOnboardingRejectionReasons())
           .build();
   private static final ServiceResource SERVICE_RESOURCE = new ServiceResource();
+
+  private static final NotificationQueueDTO NOTIFICATION_QUEUE_DTO = NotificationQueueDTO.builder()
+      .operationType(OPERATION_TYPE)
+      .userId(TEST_TOKEN)
+      .initiativeId(INITIATIVE_ID)
+      .serviceId(SERVICE_ID)
+      .iban(IBAN)
+      .build();
 
   static {
     FISCAL_CODE_RESOURCE.setPii(FISCAL_CODE);
@@ -199,6 +212,100 @@ class NotificationManagerServiceTest {
         .getProfile(FISCAL_CODE, PRIMARY_KEY);
 
     notificationManagerService.notify(EVALUATION_DTO);
+
+    Mockito.verify(notificationManagerRepository, Mockito.times(0))
+        .save(Mockito.any(Notification.class));
+  }
+
+  @Test
+  void checkIbanKo_ok() {
+    Mockito.when(pdvDecryptRestConnector.getPii(TEST_TOKEN)).thenReturn(FISCAL_CODE_RESOURCE);
+    Mockito.when(ioBackEndRestConnector.getProfile(FISCAL_CODE, PRIMARY_KEY))
+        .thenReturn(PROFILE_RESOURCE);
+    Mockito.when(ioBackEndRestConnector.getService(NOTIFICATION_QUEUE_DTO.getServiceId()))
+        .thenReturn(SERVICE_RESOURCE);
+    Mockito.when(notificationMarkdown.getSubjectCheckIbanKo()).thenReturn(SUBJECT);
+    Mockito.when(notificationMarkdown.getMarkdownCheckIbanKo()).thenReturn(MARKDOWN);
+    Mockito.when(
+            notificationDTOMapper.map(
+                Mockito.eq(FISCAL_CODE),
+                Mockito.any(Long.class),
+                Mockito.anyString(),
+                Mockito.anyString()))
+        .thenReturn(NOTIFICATION_DTO);
+    Mockito.when(notificationMapper.queueToNotification(NOTIFICATION_QUEUE_DTO))
+        .thenReturn(NOTIFICATION);
+    Mockito.when(ioBackEndRestConnector.notify(NOTIFICATION_DTO, PRIMARY_KEY))
+        .thenReturn(NOTIFICATION_RESOURCE);
+    try {
+      notificationManagerService.checkIbanKo(NOTIFICATION_QUEUE_DTO);
+    } catch (FeignException e) {
+      Assertions.fail();
+    }
+
+    Mockito.verify(notificationManagerRepository, Mockito.times(1))
+        .save(Mockito.any(Notification.class));
+  }
+
+  @Test
+  void checkIbanKo_ko() {
+    Mockito.when(pdvDecryptRestConnector.getPii(TEST_TOKEN)).thenReturn(FISCAL_CODE_RESOURCE);
+    Mockito.when(ioBackEndRestConnector.getProfile(FISCAL_CODE, PRIMARY_KEY))
+        .thenReturn(PROFILE_RESOURCE);
+    Mockito.when(ioBackEndRestConnector.getService(NOTIFICATION_QUEUE_DTO.getServiceId()))
+        .thenReturn(SERVICE_RESOURCE);
+    Mockito.when(notificationMarkdown.getSubjectCheckIbanKo()).thenReturn(SUBJECT);
+    Mockito.when(notificationMarkdown.getMarkdownCheckIbanKo()).thenReturn(MARKDOWN);
+    Mockito.when(
+            notificationDTOMapper.map(
+                Mockito.eq(FISCAL_CODE),
+                Mockito.any(Long.class),
+                Mockito.anyString(),
+                Mockito.anyString()))
+        .thenReturn(NOTIFICATION_DTO);
+    Mockito.when(notificationMapper.queueToNotification(NOTIFICATION_QUEUE_DTO))
+        .thenReturn(NOTIFICATION);
+    Request request =
+        Request.create(
+            Request.HttpMethod.POST, "url", new HashMap<>(), null, new RequestTemplate());
+    Mockito.doThrow(new FeignException.BadRequest("", request, new byte[0], null))
+        .when(ioBackEndRestConnector)
+        .notify(NOTIFICATION_DTO, PRIMARY_KEY);
+
+    try {
+      notificationManagerService.checkIbanKo(NOTIFICATION_QUEUE_DTO);
+    } catch (FeignException e) {
+      assertEquals(HttpStatus.BAD_REQUEST.value(), e.status());
+    }
+
+    Mockito.verify(notificationManagerRepository, Mockito.times(1))
+        .save(Mockito.any(Notification.class));
+  }
+
+  @Test
+  void checkIbanKo_ko_no_service_resource() {
+
+    Request request =
+        Request.create(Request.HttpMethod.GET, "url", new HashMap<>(), null, new RequestTemplate());
+    Mockito.doThrow(new FeignException.NotFound("", request, new byte[0], null))
+        .when(ioBackEndRestConnector)
+        .getService(NOTIFICATION_QUEUE_DTO.getServiceId());
+
+    notificationManagerService.checkIbanKo(NOTIFICATION_QUEUE_DTO);
+    Mockito.verify(notificationManagerRepository, Mockito.times(0))
+        .save(Mockito.any(Notification.class));
+  }
+
+  @Test
+  void checkIbanKo_ko_user_not_allowed() {
+    Mockito.when(pdvDecryptRestConnector.getPii(TEST_TOKEN)).thenReturn(FISCAL_CODE_RESOURCE);
+    Request request =
+        Request.create(Request.HttpMethod.GET, "url", new HashMap<>(), null, new RequestTemplate());
+    Mockito.doThrow(new FeignException.NotFound("", request, new byte[0], null))
+        .when(ioBackEndRestConnector)
+        .getProfile(FISCAL_CODE, PRIMARY_KEY);
+
+    notificationManagerService.checkIbanKo(NOTIFICATION_QUEUE_DTO);
 
     Mockito.verify(notificationManagerRepository, Mockito.times(0))
         .save(Mockito.any(Notification.class));
