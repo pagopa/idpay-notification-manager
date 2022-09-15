@@ -130,7 +130,7 @@ public class NotificationManagerServiceImpl implements NotificationManagerServic
           notificationMapper.queueToNotification(notificationQueueDTO);
 
       String subject = notificationMarkdown.getSubjectCheckIbanKo();
-      String markdown = "notificationMarkdown.getMarkdown(evaluationDTO)";
+      String markdown = notificationMarkdown.getMarkdownCheckIbanKo();
       try {
         NotificationDTO notificationDTO =
             notificationDTOMapper.map(fiscalCode, timeToLive, subject, markdown);
