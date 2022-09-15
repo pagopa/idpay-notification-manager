@@ -39,7 +39,7 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 @ExtendWith({SpringExtension.class, MockitoExtension.class})
 @ContextConfiguration(classes = NotificationManagerServiceImpl.class)
-@TestPropertySource(properties = {"notification.backend-io.ttl=3600"})
+@TestPropertySource(properties = {"rest-client.notification.backend-io.ttl=3600"})
 class NotificationManagerServiceTest {
 
   private static final String TEST_TOKEN = "TEST_TOKEN";

@@ -31,7 +31,7 @@ public class NotificationManagerServiceImpl implements NotificationManagerServic
   private final NotificationMapper notificationMapper;
   private final NotificationMarkdown notificationMarkdown;
 
-  @Value("${notification.backend-io.ttl}")
+  @Value("${rest-client.notification.backend-io.ttl}")
   private Long timeToLive;
 
   public NotificationManagerServiceImpl(
