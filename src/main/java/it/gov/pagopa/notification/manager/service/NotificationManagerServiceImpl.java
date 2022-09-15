@@ -145,6 +145,7 @@ public class NotificationManagerServiceImpl implements NotificationManagerServic
         notification.setNotificationCheckIbanStatus("KO");
       }
       notificationManagerRepository.save(notification);
+      return;
     }
     log.warn("The user is not enabled to receive notifications!");
   }

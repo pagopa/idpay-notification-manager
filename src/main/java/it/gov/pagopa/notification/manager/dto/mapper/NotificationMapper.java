@@ -14,6 +14,7 @@ public class NotificationMapper {
         .initiativeId(evaluationDTO.getInitiativeId())
         .userId(evaluationDTO.getUserId())
         .onboardingOutcome(evaluationDTO.getStatus())
+        .operationType("ONBOARDING")
         .rejectReasons(evaluationDTO.getOnboardingRejectionReasons())
         .build();
   }
