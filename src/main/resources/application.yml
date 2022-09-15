@@ -142,11 +142,11 @@ notification:
 
         Puoi trovare maggiori informazioni sul [sito](http://example.com/).}
     subject:
-      ko:
-        checkIban: ${SUBJECT_KO_CHECKIBAN:L'IBAN che hai inserito è errato}
-        tech: ${SUBJECT_KO_TECH:Abbiamo riscontrato dei problemi}
-        nodeValue: ${SUBJECT_KO:Non è stato possibile attivare %initiativeName%}
       ok: ${SUBJECT_OK:Il tuo Bonus è attivo}
+      ko: ${SUBJECT_KO:Non è stato possibile attivare %initiativeName%}
+      ko.checkIban: ${SUBJECT_KO_CHECKIBAN:L'IBAN che hai inserito è errato}
+      ko.tech: ${SUBJECT_KO_TECH:Abbiamo riscontrato dei problemi}
+      ko.nodeValue: ${SUBJECT_KO:Non è stato possibile attivare %initiativeName%}
 
 logging:
   level:
