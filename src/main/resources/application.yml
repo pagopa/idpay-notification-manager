@@ -5,16 +5,13 @@ rest-client:
     serviceCode: pdv-ms-tokenizer
   notification:
     backend-io:
-      notify:
-        url: ${IO_BACKEND_NOTIFY_URL:}
-      profile:
-        url: ${IO_BACKEND_PROFILE_URL:}
-      service:
-        url: ${IO_BACKEND_SERVICE_URL:}
+      notify.url: ${IO_BACKEND_NOTIFY_URL:}
+      profile.url: ${IO_BACKEND_PROFILE_URL:}
+      service.url: ${IO_BACKEND_SERVICE_URL:}
       token-value: ${IO_BACKEND_API_KEY:}
       ttl: 3600
-    base-url: ${IO_BACKEND_BASE_URL:}
-    serviceCode: backend-io-notification
+      base-url: ${IO_BACKEND_BASE_URL:}
+      serviceCode: backend-io-notification
 spring:
   application:
     name: idpay-notification-manager
@@ -119,22 +116,37 @@ spring:
       database: ${MONGODB_DBNAME}
       uri: ${MONGODB_URI}
 
-notification.manager:
-  markdown:
-    double.new.line: ${MARKDOWN_DOUBLE_NEW_LINE:\n\n}
-    ok: ${MARKDOWN_OK:Buone notizie! Hai ottenuto %initiativeName%. Da questo momento puoi visualizzare il bonus nella sezione Portafoglio dell'app IO.\n\nTi ricordiamo che per iniziare ad usufruire del bonus devi configurare almeno un metodo di pagamento.\n\nPuoi trovare maggiori informazioni sul [sito](http://example.com/).}
-    ko:
-      pdnd: ${MARKDOWN_KO_PDND:Purtroppo non hai i requisiti necessari per aderire a %initiativeName% per i seguenti motivi:}
-      ranking: ${MARKDOWN_KO_RANKING:Purtroppo non \u00e8 stato possibile attivare %initiativeName% in quanto i tuoi requisiti non rientrano nella graduatoria.}
-      mistake: ${MARKDOWN_KO_MISTAKE:Se ritieni che ci sia stato un errore puoi segnalarlo direttamente all'Ente erogatore dell'iniziativa.}
-      tech: ${MARKDOWN_KO_TECH:Si \u00e8 verificato un errore nel processare la tua richiesta di %initiativeName%.\nTi chiediamo di riprovare.}
-      apology: ${MARKDOWN_APOLOGY:Ci scusiamo per il disagio.}
-      checkIban: ${MARKDOWN_KO_CHECKIBAN:Il codice iban che hai inserito risulta essere\nerrato. Ti chiediamo di modificarlo per evitare di\nlasciare scoperte le iniziative associate e non\nricevere i rimborse(nel caso tu ne fossi\nbeneficiario. \n\nPer modificare l'IBAN errato ti basta andare\nProfilo>I tuoi dati>I tuoi IBAN e seguire le\nindicazioni, oppure cliccare direttamente qui\nsotto.}
-  subject:
-    ok: ${SUBJECT_OK:Il tuo Bonus \u00e8 attivo}
-    ko: ${SUBJECT_KO:Non \u00e8 stato possibile attivare %initiativeName%}
-    ko.tech: ${SUBJECT_KO_TECH:Abbiamo riscontrato dei problemi}
-    ko.checkIban: ${SUBJECT_KO_CHECKIBAN:L'IBAN che hai inserito \u00e8 errato}
+notification:
+  manager:
+    markdown:
+      ko:
+        ranking: ${MARKDOWN_KO_RANKING:Purtroppo non è stato possibile attivare %initiativeName% in quanto i tuoi requisiti non rientrano nella graduatoria.}
+        tech: |-
+          ${MARKDOWN_KO_TECH:Si è verificato un errore nel processare la tua richiesta di %initiativeName%.
+          Ti chiediamo di riprovare.}
+        apology: ${MARKDOWN_APOLOGY:Ci scusiamo per il disagio.}
+        mistake: ${MARKDOWN_KO_MISTAKE:Se ritieni che ci sia stato un errore puoi segnalarlo direttamente all'Ente erogatore dell'iniziativa.}
+        checkIban: |- 
+          ${MARKDOWN_KO_CHECKIBAN:Il codice iban che hai inserito risulta essere errato. Ti chiediamo di modificarlo per evitare lasciare scoperte le iniziative associate e non\nricevere i rimborsi (nel caso tu ne fossi beneficiario).
+          
+          Per modificare l'IBAN errato ti basta andare **Profilo > I tuoi dati > I tuoi IBAN** e seguire le indicazioni, oppure cliccare direttamente qui sotto.}
+        pdnd: ${MARKDOWN_KO_PDND:Purtroppo non hai i requisiti necessari per aderire a %initiativeName% per i seguenti motivi:}
+      double.new.line: |-
+            ${MARKDOWN_DOUBLE_NEW_LINE:
+
+            }
+      ok: |-
+        ${MARKDOWN_OK:Buone notizie! Hai ottenuto %initiativeName%. Da questo momento puoi visualizzare il bonus nella sezione Portafoglio dell'app IO.
+
+        Ti ricordiamo che per iniziare ad usufruire del bonus devi configurare almeno un metodo di pagamento.
+
+        Puoi trovare maggiori informazioni sul [sito](http://example.com/).}
+    subject:
+      ko:
+        checkIban: ${SUBJECT_KO_CHECKIBAN:L'IBAN che hai inserito è errato}
+        tech: ${SUBJECT_KO_TECH:Abbiamo riscontrato dei problemi}
+        nodeValue: ${SUBJECT_KO:Non è stato possibile attivare %initiativeName%}
+      ok: ${SUBJECT_OK:Il tuo Bonus è attivo}
 
 logging:
   level:

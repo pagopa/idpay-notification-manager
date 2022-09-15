@@ -15,8 +15,8 @@ import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 @FeignClient(
-    name = "${rest-client.notification.serviceCode}",
-    url = "${rest-client.notification.base-url}")
+    name = "${rest-client.notification.backend-io.serviceCode}",
+    url = "${rest-client.notification.backend-io.base-url}")
 public interface IOBackEndRestClient {
 
   @PostMapping(

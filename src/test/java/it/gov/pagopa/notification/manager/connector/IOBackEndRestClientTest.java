@@ -112,7 +112,7 @@ class IOBackEndRestClientTest {
       TestPropertySourceUtils.addInlinedPropertiesToEnvironment(
           applicationContext,
           String.format(
-              "rest-client.notification.base-url=http://%s:%d",
+              "rest-client.notification.backend-io.base-url=http://%s:%d",
               wireMockServer.getOptions().bindAddress(), wireMockServer.port()));
     }
   }
