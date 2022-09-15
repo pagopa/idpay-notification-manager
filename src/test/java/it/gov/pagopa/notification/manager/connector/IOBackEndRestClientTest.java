@@ -37,7 +37,7 @@ import org.springframework.test.context.support.TestPropertySourceUtils;
       HttpMessageConvertersAutoConfiguration.class
     })
 @TestPropertySource(
-    locations = "classpath:application.properties",
+    locations = "classpath:application.yml",
     properties = {
       "spring.application.name=idpay-notification-manager-integration-rest",
       "rest-client.notification.backend-io.notify.url=/api/v1/messages",

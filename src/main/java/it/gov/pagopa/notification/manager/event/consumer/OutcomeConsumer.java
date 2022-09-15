@@ -10,7 +10,7 @@ import org.springframework.context.annotation.Configuration;
 public class OutcomeConsumer {
 
   @Bean
-  public Consumer<EvaluationDTO> notificationConsumer(
+  public Consumer<EvaluationDTO> onboardingConsumer(
       NotificationManagerService notificationManagerService) {
     return notificationManagerService::notify;
   }

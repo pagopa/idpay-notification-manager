@@ -31,7 +31,7 @@ public class NotificationManagerServiceImpl implements NotificationManagerServic
   private final NotificationMapper notificationMapper;
   private final NotificationMarkdown notificationMarkdown;
 
-  @Value("${notification.backend-io.ttl}")
+  @Value("${rest-client.notification.backend-io.ttl}")
   private Long timeToLive;
 
   public NotificationManagerServiceImpl(
@@ -53,12 +53,14 @@ public class NotificationManagerServiceImpl implements NotificationManagerServic
 
   @Override
   public void notify(EvaluationDTO evaluationDTO) {
+    log.info("[notify] Sending request to /services with serviceId {}", evaluationDTO.getServiceId());
     ServiceResource serviceResource = getService(evaluationDTO.getServiceId());
 
     if (serviceResource == null) {
       return;
     }
 
+    log.info("[notify] Sending request to pdv");
     String fiscalCode = decryptUserToken(evaluationDTO.getUserId());
 
     if (isSenderAllowed(fiscalCode, serviceResource.getPrimaryKey())) {
