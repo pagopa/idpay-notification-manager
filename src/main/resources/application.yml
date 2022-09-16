@@ -127,7 +127,7 @@ notification:
         apology: ${MARKDOWN_APOLOGY:Ci scusiamo per il disagio.}
         mistake: ${MARKDOWN_KO_MISTAKE:Se ritieni che ci sia stato un errore puoi segnalarlo direttamente all'Ente erogatore dell'iniziativa.}
         checkIban: |- 
-          ${MARKDOWN_KO_CHECKIBAN:Il codice iban che hai inserito risulta essere errato. Ti chiediamo di modificarlo per evitare lasciare scoperte le iniziative associate e non\nricevere i rimborsi (nel caso tu ne fossi beneficiario).
+          ${MARKDOWN_KO_CHECKIBAN:Il codice iban che hai inserito risulta essere errato. Ti chiediamo di modificarlo per evitare lasciare scoperte le iniziative associate e non ricevere i rimborsi (nel caso tu ne fossi beneficiario).
           
           Per modificare l'IBAN errato ti basta andare **Profilo > I tuoi dati > I tuoi IBAN** e seguire le indicazioni, oppure cliccare direttamente qui sotto.}
         pdnd: ${MARKDOWN_KO_PDND:Purtroppo non hai i requisiti necessari per aderire a %initiativeName% per i seguenti motivi:}
