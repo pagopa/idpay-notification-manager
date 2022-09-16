@@ -22,11 +22,7 @@ public class Notification {
 
   private String notificationStatus;
 
-  private String notificationCheckIbanStatus;
-
   private LocalDateTime notificationDate;
-
-  private LocalDateTime notificationCheckIbanDate;
 
   private String operationType;
 

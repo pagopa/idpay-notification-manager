@@ -21,7 +21,7 @@ public class NotificationMapper {
 
   public Notification queueToNotification(NotificationQueueDTO notificationQueueDTO) {
     return Notification.builder()
-        .notificationCheckIbanDate(LocalDateTime.now())
+        .notificationDate(LocalDateTime.now())
         .initiativeId(notificationQueueDTO.getInitiativeId())
         .serviceId(notificationQueueDTO.getServiceId())
         .userId(notificationQueueDTO.getUserId())
