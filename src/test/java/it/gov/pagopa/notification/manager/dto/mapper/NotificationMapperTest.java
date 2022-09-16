@@ -72,7 +72,7 @@ class NotificationMapperTest {
   void queueToNotification() {
     Notification actual = notificationMapper.queueToNotification(NOTIFICATION_QUEUE_DTO);
 
-    NOTIFICATION_QUEUE.setNotificationCheckIbanDate(actual.getNotificationCheckIbanDate());
+    NOTIFICATION_QUEUE.setNotificationDate(actual.getNotificationDate());
 
     assertEquals(NOTIFICATION_QUEUE, actual);
   }

@@ -134,15 +134,16 @@ public class NotificationManagerServiceImpl implements NotificationManagerServic
       try {
         NotificationDTO notificationDTO =
             notificationDTOMapper.map(fiscalCode, timeToLive, subject, markdown);
-        notification.setNotificationCheckIbanStatus("OK");
 
         NotificationResource notificationResource =
             ioBackEndRestConnector.notify(notificationDTO, serviceResource.getPrimaryKey());
         notification.setNotificationId(notificationResource.getId());
+        notification.setNotificationStatus("OK");
+        log.info("Notification sent");
 
       } catch (FeignException e) {
         log.error("[%d] Cannot send notification: %s".formatted(e.status(), e.contentUTF8()));
-        notification.setNotificationCheckIbanStatus("KO");
+        notification.setNotificationStatus("KO");
       }
       notificationManagerRepository.save(notification);
       return;
