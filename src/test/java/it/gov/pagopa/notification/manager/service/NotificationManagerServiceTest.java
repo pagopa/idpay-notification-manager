@@ -301,7 +301,7 @@ class NotificationManagerServiceTest {
   @Test
   void checkIbanKo_ko_user_not_allowed() {
     Mockito.when(pdvDecryptRestConnector.getPii(TEST_TOKEN)).thenReturn(FISCAL_CODE_RESOURCE);
-    Mockito.when(ioBackEndRestConnector.getService(EVALUATION_DTO.getServiceId()))
+    Mockito.when(ioBackEndRestConnector.getService(NOTIFICATION_QUEUE_DTO.getServiceId()))
         .thenReturn(SERVICE_RESOURCE);
     Request request =
         Request.create(Request.HttpMethod.GET, "url", new HashMap<>(), null, new RequestTemplate());
