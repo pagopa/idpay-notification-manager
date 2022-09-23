@@ -59,7 +59,7 @@ spring:
       bindings:
         notificationQueue-out-0:
           binder: kafka-outcome-out
-          content-type: ${KAFKA_CONTENT_TYPE:application/json}TimelineRepository
+          content-type: ${KAFKA_CONTENT_TYPE:application/json}
           destination: ${KAFKA_TOPIC_OUTCOME}
         onboardingConsumer-in-0:
           binder: kafka-outcome
