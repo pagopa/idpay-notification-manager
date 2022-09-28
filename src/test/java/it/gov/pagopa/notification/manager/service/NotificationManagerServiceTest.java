@@ -48,6 +48,7 @@ class NotificationManagerServiceTest {
   private static final LocalDateTime TEST_DATE = LocalDateTime.now();
   private static final FiscalCodeResource FISCAL_CODE_RESOURCE = new FiscalCodeResource();
   private static final ProfileResource PROFILE_RESOURCE = new ProfileResource();
+  private static final ProfileResource PROFILE_RESOURCE_KO = new ProfileResource();
 
   private static final String FISCAL_CODE = "TEST_FISCAL_CODE";
   private static final String PRIMARY_KEY = "PRIMARY_KEY";
@@ -94,6 +95,7 @@ class NotificationManagerServiceTest {
   static {
     FISCAL_CODE_RESOURCE.setPii(FISCAL_CODE);
     PROFILE_RESOURCE.setSenderAllowed(true);
+    PROFILE_RESOURCE_KO.setSenderAllowed(false);
     NOTIFICATION_RESOURCE.setId(TEST_NOTIFICATION_ID);
 
     MessageContent messageContent = new MessageContent();
@@ -206,7 +208,7 @@ class NotificationManagerServiceTest {
   }
 
   @Test
-  void notify_ko_user_not_allowed() {
+  void notify_ko_user_not_allowed_feign() {
     Mockito.when(pdvDecryptRestConnector.getPii(TEST_TOKEN)).thenReturn(FISCAL_CODE_RESOURCE);
     Mockito.when(ioBackEndRestConnector.getService(EVALUATION_DTO.getServiceId()))
         .thenReturn(SERVICE_RESOURCE);
@@ -216,6 +218,22 @@ class NotificationManagerServiceTest {
         .when(ioBackEndRestConnector)
         .getProfile(FISCAL_CODE, PRIMARY_KEY);
 
+    Mockito.when(notificationMapper.evaluationToNotification(EVALUATION_DTO))
+        .thenReturn(NOTIFICATION);
+
+    notificationManagerService.notify(EVALUATION_DTO);
+
+    Mockito.verify(notificationManagerRepository, Mockito.times(1))
+        .save(Mockito.any(Notification.class));
+  }
+
+  @Test
+  void notify_ko_user_not_allowed() {
+    Mockito.when(pdvDecryptRestConnector.getPii(TEST_TOKEN)).thenReturn(FISCAL_CODE_RESOURCE);
+    Mockito.when(ioBackEndRestConnector.getService(EVALUATION_DTO.getServiceId()))
+        .thenReturn(SERVICE_RESOURCE);
+    Mockito.when(ioBackEndRestConnector.getProfile(FISCAL_CODE, PRIMARY_KEY))
+        .thenReturn(PROFILE_RESOURCE_KO);
     Mockito.when(notificationMapper.evaluationToNotification(EVALUATION_DTO))
         .thenReturn(NOTIFICATION);
 
@@ -327,7 +345,7 @@ class NotificationManagerServiceTest {
   }
 
   @Test
-  void checkIbanKo_ko_user_not_allowed() {
+  void checkIbanKo_ko_user_not_allowed_feign() {
     Mockito.when(pdvDecryptRestConnector.getPii(TEST_TOKEN)).thenReturn(FISCAL_CODE_RESOURCE);
     Mockito.when(ioBackEndRestConnector.getService(NOTIFICATION_QUEUE_DTO.getServiceId()))
         .thenReturn(SERVICE_RESOURCE);
@@ -337,6 +355,22 @@ class NotificationManagerServiceTest {
         .when(ioBackEndRestConnector)
         .getProfile(FISCAL_CODE, PRIMARY_KEY);
 
+    Mockito.when(notificationMapper.queueToNotification(NOTIFICATION_QUEUE_DTO))
+        .thenReturn(NOTIFICATION);
+
+    notificationManagerService.checkIbanKo(NOTIFICATION_QUEUE_DTO);
+
+    Mockito.verify(notificationManagerRepository, Mockito.times(1))
+        .save(Mockito.any(Notification.class));
+  }
+
+  @Test
+  void checkIbanKo_ko_user_not_allowed() {
+    Mockito.when(pdvDecryptRestConnector.getPii(TEST_TOKEN)).thenReturn(FISCAL_CODE_RESOURCE);
+    Mockito.when(ioBackEndRestConnector.getService(NOTIFICATION_QUEUE_DTO.getServiceId()))
+        .thenReturn(SERVICE_RESOURCE);
+    Mockito.when(ioBackEndRestConnector.getProfile(FISCAL_CODE, PRIMARY_KEY))
+        .thenReturn(PROFILE_RESOURCE_KO);
     Mockito.when(notificationMapper.queueToNotification(NOTIFICATION_QUEUE_DTO))
         .thenReturn(NOTIFICATION);
 
