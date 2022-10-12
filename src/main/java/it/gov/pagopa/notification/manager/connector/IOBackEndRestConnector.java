@@ -4,9 +4,10 @@ import it.gov.pagopa.notification.manager.dto.NotificationDTO;
 import it.gov.pagopa.notification.manager.dto.NotificationResource;
 import it.gov.pagopa.notification.manager.dto.ProfileResource;
 import it.gov.pagopa.notification.manager.dto.ServiceResource;
-import javax.validation.Valid;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
+
+import javax.validation.Valid;
 
 public interface IOBackEndRestConnector {
 

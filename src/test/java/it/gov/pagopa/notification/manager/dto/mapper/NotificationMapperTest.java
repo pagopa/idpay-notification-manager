@@ -1,18 +1,19 @@
 package it.gov.pagopa.notification.manager.dto.mapper;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-
 import it.gov.pagopa.notification.manager.dto.EvaluationDTO;
-import it.gov.pagopa.notification.manager.dto.NotificationQueueDTO;
+import it.gov.pagopa.notification.manager.dto.event.NotificationQueueDTO;
 import it.gov.pagopa.notification.manager.model.Notification;
-import java.math.BigDecimal;
-import java.time.LocalDateTime;
-import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
+
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.util.List;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @ExtendWith(SpringExtension.class)
 @ContextConfiguration(classes = NotificationMapper.class)

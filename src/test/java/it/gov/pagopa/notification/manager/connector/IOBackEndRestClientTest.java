@@ -1,17 +1,9 @@
 package it.gov.pagopa.notification.manager.connector;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-
 import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.core.WireMockConfiguration;
 import it.gov.pagopa.notification.manager.config.NotificationManagerConfig;
-import it.gov.pagopa.notification.manager.dto.MessageContent;
-import it.gov.pagopa.notification.manager.dto.NotificationDTO;
-import it.gov.pagopa.notification.manager.dto.NotificationResource;
-import it.gov.pagopa.notification.manager.dto.ProfileResource;
-import it.gov.pagopa.notification.manager.dto.ServiceResource;
+import it.gov.pagopa.notification.manager.dto.*;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,6 +17,8 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.context.support.TestPropertySourceUtils;
+
+import static org.junit.jupiter.api.Assertions.*;
 
 @ExtendWith(SpringExtension.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.NONE)

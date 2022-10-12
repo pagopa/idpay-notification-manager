@@ -4,10 +4,12 @@ import it.gov.pagopa.notification.manager.constants.NotificationConstants;
 import it.gov.pagopa.notification.manager.dto.EvaluationDTO;
 import it.gov.pagopa.notification.manager.dto.OnboardingRejectionReason;
 import it.gov.pagopa.notification.manager.dto.OnboardingRejectionReason.OnboardingRejectionReasonType;
-import java.util.List;
+import lombok.Getter;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
+
+import java.util.List;
 
 @Component
 public class NotificationMarkdown {
@@ -47,6 +49,14 @@ public class NotificationMarkdown {
 
   @Value("${notification.manager.markdown.ko.checkIban}")
   private String markdownCheckIbanKo;
+
+  @Getter
+  @Value("${notification.manager.subject.initiative.publishing}")
+  private String subjectInitiativePublishing;
+
+  @Getter
+  @Value("${notification.manager.markdown.initiative.publishing}")
+  private String markdownInitiativePublishing;
 
   public String getSubjectCheckIbanKo(){
     return this.subjectCheckIbanKo;

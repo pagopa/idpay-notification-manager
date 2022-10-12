@@ -1,18 +1,19 @@
 package it.gov.pagopa.notification.manager.event.consumer;
 
-import it.gov.pagopa.notification.manager.dto.NotificationQueueDTO;
+import it.gov.pagopa.notification.manager.dto.event.AnyOfNotificationQueueDTO;
 import it.gov.pagopa.notification.manager.service.NotificationManagerService;
-import java.util.function.Consumer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+import java.util.function.Consumer;
+
 @Configuration
-public class NotificationCheckIbanConsumer {
+public class NotificationConsumer {
 
   @Bean
-  public Consumer<NotificationQueueDTO> walletConsumer(
+  public Consumer<AnyOfNotificationQueueDTO> anyNotificationConsumer(
       NotificationManagerService notificationManagerService) {
-    return notificationManagerService::checkIbanKo;
+    return notificationQueueDTO -> notificationManagerService.sendNotificationFromOperationType(notificationQueueDTO);
   }
 
 }
