@@ -296,8 +296,10 @@ class NotificationManagerServiceTest {
                 Mockito.anyString(),
                 Mockito.anyString()))
         .thenReturn(NOTIFICATION_DTO);
-    Mockito.when(notificationMapper.queueToNotification(NOTIFICATION_QUEUE_DTO))
-        .thenReturn(NOTIFICATION);
+//    Mockito.when(notificationMapper.queueToNotification(NOTIFICATION_QUEUE_DTO))
+//        .thenReturn(NOTIFICATION);
+    Mockito.when(notificationMapper.toEntity(NOTIFICATION_QUEUE_DTO))
+            .thenReturn(NOTIFICATION);
     Mockito.when(ioBackEndRestConnector.notify(NOTIFICATION_DTO, PRIMARY_KEY))
         .thenReturn(NOTIFICATION_RESOURCE);
     try {
@@ -328,8 +330,10 @@ class NotificationManagerServiceTest {
                 Mockito.anyString(),
                 Mockito.anyString()))
         .thenReturn(NOTIFICATION_DTO);
-    Mockito.when(notificationMapper.queueToNotification(NOTIFICATION_QUEUE_DTO))
-        .thenReturn(NOTIFICATION);
+//    Mockito.when(notificationMapper.queueToNotification(NOTIFICATION_QUEUE_DTO))
+//        .thenReturn(NOTIFICATION);
+    Mockito.when(notificationMapper.toEntity(NOTIFICATION_QUEUE_DTO))
+            .thenReturn(NOTIFICATION);
     Request request =
         Request.create(
             Request.HttpMethod.POST, "url", new HashMap<>(), null, new RequestTemplate());
@@ -349,6 +353,7 @@ class NotificationManagerServiceTest {
 
   @Test
   void checkIbanKo_ko_no_service_resource() {
+    Mockito.when(pdvDecryptRestConnector.getPii(TEST_TOKEN)).thenReturn(FISCAL_CODE_RESOURCE);
 
     Request request =
         Request.create(Request.HttpMethod.GET, "url", new HashMap<>(), null, new RequestTemplate());
@@ -359,8 +364,10 @@ class NotificationManagerServiceTest {
             .when(initiativeRestConnector)
             .getIOTokens(NOTIFICATION_QUEUE_DTO.getInitiativeId());
 
-    Mockito.when(notificationMapper.queueToNotification(NOTIFICATION_QUEUE_DTO))
-        .thenReturn(NOTIFICATION);
+//    Mockito.when(notificationMapper.queueToNotification(NOTIFICATION_QUEUE_DTO))
+//        .thenReturn(NOTIFICATION);
+    Mockito.when(notificationMapper.toEntity(NOTIFICATION_QUEUE_DTO))
+            .thenReturn(NOTIFICATION);
 
     notificationManagerService.sendNotificationFromOperationType(NOTIFICATION_QUEUE_DTO);
     Mockito.verify(notificationManagerRepository, Mockito.times(1))
@@ -380,8 +387,10 @@ class NotificationManagerServiceTest {
         .when(ioBackEndRestConnector)
         .getProfile(FISCAL_CODE, PRIMARY_KEY);
 
-    Mockito.when(notificationMapper.queueToNotification(NOTIFICATION_QUEUE_DTO))
-        .thenReturn(NOTIFICATION);
+//    Mockito.when(notificationMapper.queueToNotification(NOTIFICATION_QUEUE_DTO))
+//        .thenReturn(NOTIFICATION);
+    Mockito.when(notificationMapper.toEntity(NOTIFICATION_QUEUE_DTO))
+            .thenReturn(NOTIFICATION);
 
     notificationManagerService.sendNotificationFromOperationType(NOTIFICATION_QUEUE_DTO);
 
@@ -398,8 +407,10 @@ class NotificationManagerServiceTest {
             .thenReturn(INITIATIVE_ADDITIONAL_INFO_DTO);
     Mockito.when(ioBackEndRestConnector.getProfile(FISCAL_CODE, PRIMARY_KEY))
         .thenReturn(PROFILE_RESOURCE_KO);
-    Mockito.when(notificationMapper.queueToNotification(NOTIFICATION_QUEUE_DTO))
-        .thenReturn(NOTIFICATION);
+//    Mockito.when(notificationMapper.queueToNotification(NOTIFICATION_QUEUE_DTO))
+//        .thenReturn(NOTIFICATION);
+    Mockito.when(notificationMapper.toEntity(NOTIFICATION_QUEUE_DTO))
+            .thenReturn(NOTIFICATION);
 
     notificationManagerService.sendNotificationFromOperationType(NOTIFICATION_QUEUE_DTO);
 
@@ -419,7 +430,9 @@ class NotificationManagerServiceTest {
         .when(pdvDecryptRestConnector)
         .getPii(TEST_TOKEN);
 
-    Mockito.when(notificationMapper.queueToNotification(NOTIFICATION_QUEUE_DTO))
+//    Mockito.when(notificationMapper.queueToNotification(NOTIFICATION_QUEUE_DTO))
+//        .thenReturn(NOTIFICATION);
+    Mockito.when(notificationMapper.toEntity(NOTIFICATION_QUEUE_DTO))
         .thenReturn(NOTIFICATION);
 
     notificationManagerService.sendNotificationFromOperationType(NOTIFICATION_QUEUE_DTO);

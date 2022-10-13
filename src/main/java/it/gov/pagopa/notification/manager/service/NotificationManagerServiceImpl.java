@@ -64,7 +64,12 @@ public class NotificationManagerServiceImpl implements NotificationManagerServic
         evaluationDTO.getServiceId());
     Notification notification = notificationMapper.evaluationToNotification(evaluationDTO);
 //    ServiceResource serviceResource = getService(evaluationDTO.getServiceId());
-    InitiativeAdditionalInfoDTO ioTokens = initiativeRestConnector.getIOTokens(evaluationDTO.getInitiativeId());
+    InitiativeAdditionalInfoDTO ioTokens = null;
+    try {
+      ioTokens = initiativeRestConnector.getIOTokens(evaluationDTO.getInitiativeId());
+    } catch (FeignException e) {
+      log.error("[NOTIFY] [%d] Cannot send request: %s".formatted(e.status(), e.contentUTF8()));
+    }
 
     if (ioTokens == null) {
       notificationKO(notification);
@@ -161,12 +166,17 @@ public class NotificationManagerServiceImpl implements NotificationManagerServic
     String markdown = "";
     InitiativeAdditionalInfoDTO ioTokens = null;
     if (anyOfNotificationQueueDTO instanceof NotificationCitizenOnQueueDTO notificationCitizenOnQueueDTO){
-      log.info(
-              "[NOTIFY] Sending request to IO getService with serviceId {}",
-              notificationCitizenOnQueueDTO.getServiceId());
+//      log.info(
+//              "[NOTIFY] Sending request to IO getService with serviceId {}",
+//              notificationCitizenOnQueueDTO.getServiceId());
       notification = notificationMapper.toEntity(notificationCitizenOnQueueDTO);
 //      serviceResource = getService(notificationCitizenOnQueueDTO.getServiceId());
-      ioTokens = initiativeRestConnector.getIOTokens(notificationCitizenOnQueueDTO.getInitiativeId());
+      log.debug("[NOTIFY] Getting IO Tokens");
+      try {
+        ioTokens = initiativeRestConnector.getIOTokens(notificationCitizenOnQueueDTO.getInitiativeId());
+      } catch (FeignException e) {
+        log.error("[NOTIFY] [%d] Cannot send request: %s".formatted(e.status(), e.contentUTF8()));
+      }
 
       log.info("[NOTIFY] Sending request to pdv");
       fiscalCode = decryptUserToken(notificationCitizenOnQueueDTO.getUserId());
@@ -175,12 +185,17 @@ public class NotificationManagerServiceImpl implements NotificationManagerServic
       markdown = notificationMarkdown.getMarkdownInitiativePublishing();
     }
     if (anyOfNotificationQueueDTO instanceof NotificationIbanQueueDTO notificationIbanQueueDTO){
-      log.info(
-              "[NOTIFY] Sending request to IO getService with serviceId {}",
-              notificationIbanQueueDTO.getServiceId());
+//      log.info(
+//              "[NOTIFY] Sending request to IO getService with serviceId {}",
+//              notificationIbanQueueDTO.getServiceId());
       notification = notificationMapper.toEntity(notificationIbanQueueDTO);
 //      serviceResource = getService(notificationIbanQueueDTO.getServiceId());
-      ioTokens = initiativeRestConnector.getIOTokens(notificationIbanQueueDTO.getInitiativeId());
+      log.debug("[NOTIFY] Getting IO Tokens");
+      try {
+        ioTokens = initiativeRestConnector.getIOTokens(notificationIbanQueueDTO.getInitiativeId());
+      } catch (FeignException e) {
+        log.error("[NOTIFY] [%d] Cannot send request: %s".formatted(e.status(), e.contentUTF8()));
+      }
 
       log.info("[NOTIFY] Sending request to pdv");
       fiscalCode = decryptUserToken(notificationIbanQueueDTO.getUserId());

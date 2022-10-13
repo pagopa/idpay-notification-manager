@@ -1,0 +1,16 @@
+{
+  "request": {
+    "method": "GET",
+    "urlPathPattern": "/idpay/initiative/.*/token"
+  },
+  "response": {
+    "status": "200",
+    "jsonBody": {
+      "primaryTokenIO": "pk",
+      "secondaryTokenIO": "sk"
+    },
+    "headers": {
+      "Content-Type": "application/json"
+    }
+  }
+}
