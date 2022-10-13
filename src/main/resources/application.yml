@@ -75,7 +75,9 @@ spring:
           content-type: ${KAFKA_CONTENT_TYPE:application/json}
           destination: ${KAFKA_TOPIC_NOTIFICATION:}
           group: ${KAFKA_NOTIFICATION_GROUP_IN:}
-#          concurrency: ${:2}
+          consumer:
+#can be used with a consumer group (non-exclusive queue) to process events in multiple threads
+            concurrency: ${KAFKA_NOTIFICATION_CONSUMER_CONCURRENCY:3} #translated as num.stream.threads by the binder, same as spring.cloud.stream.kafka.streams.binder.configuration.num.stream.threads
       kafka:
         binder:
           auto-create-topics: false
