@@ -12,13 +12,17 @@ rest-client:
       ttl: 3600
       base-url: ${IO_BACKEND_BASE_URL:}
       serviceCode: backend-io-notification
+  initiative:
+    service:
+      name: ms-initiative
+      base-url: ${INITIATIVE_MS_BASE_URL:}
 spring:
   application:
     name: idpay-notification-manager
   cloud:
     stream:
       function:
-        definition: notificationQueue;walletConsumer;onboardingConsumer
+        definition: notificationQueue;anyNotificationConsumer;onboardingConsumer
       binders:
         kafka-notification:
           type: kafka
@@ -66,11 +70,14 @@ spring:
           content-type: ${KAFKA_CONTENT_TYPE:application/json}
           destination: ${KAFKA_TOPIC_OUTCOME:}
           group: ${KAFKA_OUTCOME_GROUP_IN:}
-        walletConsumer-in-0:
+        anyNotificationConsumer-in-0:
           binder: kafka-notification
           content-type: ${KAFKA_CONTENT_TYPE:application/json}
           destination: ${KAFKA_TOPIC_NOTIFICATION:}
           group: ${KAFKA_NOTIFICATION_GROUP_IN:}
+          consumer:
+#can be used with a consumer group (non-exclusive queue) to process events in multiple threads
+            concurrency: ${KAFKA_NOTIFICATION_CONSUMER_CONCURRENCY:3} #translated as num.stream.threads by the binder, same as spring.cloud.stream.kafka.streams.binder.configuration.num.stream.threads
       kafka:
         binder:
           auto-create-topics: false
@@ -95,7 +102,7 @@ spring:
                   ms: ${KAFKA_OUTCOME_REQUEST_CONNECTION_TIMEOUT_MS:${KAFKA_CONSUMER_CONFIG_CONNECTION_TIMEOUT_MS:100000}}
               standardHeaders: ${KAFKA_OUTCOME_STANDARD_HEADERS:${KAFKA_CONSUMER_CONFIG_STANDARD_HEADERS:both}}
               startOffset: ${KAFKA_OUTCOME_REQUEST_START_OFFSET:${KAFKA_CONSUMER_CONFIG_START_OFFSET:earliest}}
-          walletConsumer-in-0:
+          anyNotificationConsumer-in-0:
             consumer:
               autoCommitOffset: ${KAFKA_NOTIFICATION_AUTO_COMMIT:${KAFKA_CONSUMER_CONFIG_AUTO_COMMIT:true}}
               configuration:
@@ -141,12 +148,23 @@ notification:
         Ti ricordiamo che per iniziare ad usufruire del bonus devi configurare almeno un metodo di pagamento.
 
         Puoi trovare maggiori informazioni sul [sito](http://example.com/).}
+      initiative:
+        publishing: |-
+          ${MARKDOWN_INITIATIVE_PUBLISHING:**Fino al 31 agosto 2022** puoi ottenere il tuo Bonus Cultura di 500 euro per acquistare:
+          biglietti per cinema, teatri, concerti, eventi culturali, musei, monumenti e parchi archeologici;
+          musica, libri, abbonamenti a quotidiani e periodici, anche in formato digitale;
+          corsi di teatro, musica, danza e lingue straniere.
+          
+          **Spendere il bonus è semplicissimo**: al momento dell’acquisto, online e presso gli esercenti fisici, **paga con la tua carta d’identità elettronica** o la tua tessera sanitaria. In alternativa, puoi sempre anticipare la spesa con uno dei tuoi metodi di pagamento...
+          }
     subject:
       ok: ${SUBJECT_OK:Il tuo Bonus è attivo}
       ko: ${SUBJECT_KO:Non è stato possibile attivare %initiativeName%}
       ko.checkIban: ${SUBJECT_KO_CHECKIBAN:L'IBAN che hai inserito è errato}
       ko.tech: ${SUBJECT_KO_TECH:Abbiamo riscontrato dei problemi}
       ko.nodeValue: ${SUBJECT_KO:Non è stato possibile attivare %initiativeName%}
+      initiative:
+        publishing: ${SUBJECT_INITIATIVE_PUBLISHING:Ottieni il tuo bonus da 500€!}
 
 logging:
   level:
