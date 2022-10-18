@@ -1,9 +1,9 @@
-package it.gov.pagopa.notification.manager.connector;
+package it.gov.pagopa.notification.manager.connector.initiative;
 
 import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.core.WireMockConfiguration;
 import it.gov.pagopa.notification.manager.config.NotificationManagerConfig;
-import it.gov.pagopa.notification.manager.dto.*;
+import it.gov.pagopa.notification.manager.dto.initiative.InitiativeAdditionalInfoDTO;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,14 +18,14 @@ import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.context.support.TestPropertySourceUtils;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 @ExtendWith(SpringExtension.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.NONE)
 @ContextConfiguration(
-    initializers = IOBackEndRestClientTest.WireMockInitializer.class,
+    initializers = InitiativeFeignRestClientTest.WireMockInitializer.class,
     classes = {
-      IOBackEndRestConnectorImpl.class,
+      InitiativeRestConnectorImpl.class,
       NotificationManagerConfig.class,
       FeignAutoConfiguration.class,
       HttpMessageConvertersAutoConfiguration.class
@@ -33,55 +33,17 @@ import static org.junit.jupiter.api.Assertions.*;
 @TestPropertySource(
     locations = "classpath:application.yml",
     properties = {
-      "spring.application.name=idpay-notification-manager-integration-rest",
-      "rest-client.notification.backend-io.notify.url=/api/v1/messages",
-      "rest-client.notification.backend-io.profile.url=/api/v1/profiles",
-      "rest-client.notification.backend-io.service.url=/api/v1/services"
+      "spring.application.name=idpay-notification-manager-integration-rest"
     })
-class IOBackEndRestClientTest {
+class InitiativeFeignRestClientTest {
+  private static final String INITIATIVE_ID = "INITIATIVE_ID";
 
-  private static final String FISCAL_CODE = "AAAAAA00A00A000A";
-  private static final String PRIMARY_KEY = "PRIMARY_KEY";
-  private static final String SERVICE_ID = "SERVICE_ID";
-
-  @Autowired private IOBackEndRestClient restClient;
-
-  @Autowired private IOBackEndRestConnector restConnector;
-
-  @Test
-  void notify_test() {
-
-
-    final NotificationDTO notification = new NotificationDTO();
-    notification.setFiscalCode("test");
-    notification.setTimeToLive(3600L);
-
-    MessageContent messageContent = new MessageContent();
-    messageContent.setSubject("subject");
-    messageContent.setMarkdown("markdown");
-
-    notification.setContent(messageContent);
-
-    final NotificationResource actualResponse = restConnector.notify(notification, PRIMARY_KEY);
-
-    assertNotNull(actualResponse);
-    assertEquals("ok", actualResponse.getId());
-  }
-
-  @Test
-  void getProfile_test() {
-
-    final ProfileResource actualResponse = restConnector.getProfile(FISCAL_CODE, PRIMARY_KEY);
-
-    assertNotNull(actualResponse);
-    assertTrue(actualResponse.isSenderAllowed());
-    assertNotNull(actualResponse.getPreferredLanguages());
-  }
+  @Autowired private InitiativeRestConnector initiativeRestConnector;
 
   @Test
   void getService_test() {
 
-    final ServiceResource actualResponse = restConnector.getService(SERVICE_ID);
+    final InitiativeAdditionalInfoDTO actualResponse = initiativeRestConnector.getIOTokens(INITIATIVE_ID);
 
     assertNotNull(actualResponse);
   }
@@ -106,7 +68,7 @@ class IOBackEndRestClientTest {
       TestPropertySourceUtils.addInlinedPropertiesToEnvironment(
           applicationContext,
           String.format(
-              "rest-client.notification.backend-io.base-url=http://%s:%d",
+              "rest-client.initiative.service.base-url=http://%s:%d/idpay/initiative",
               wireMockServer.getOptions().bindAddress(), wireMockServer.port()));
     }
   }

@@ -31,3 +31,6 @@ build/
 
 ### VS Code ###
 .vscode/
+
+### Spring application local ###
+/src/main/resources/application-default.yml

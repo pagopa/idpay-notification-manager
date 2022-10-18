@@ -9,4 +9,12 @@ public class NotificationConstants {
   public static final String STATUS_ONBOARDING_KO = "ONBOARDING_KO";
 
   private NotificationConstants(){}
+
+  public static final class AnyNotificationConsumer{
+    public static final class SubTypes{
+      public static final String ALLOWED_CITIZEN_PUBLISH = "ALLOWED_CITIZEN_PUBLISH";
+      public static final String CHECKIBAN_KO = "CHECKIBAN_KO";
+    }
+  }
+
 }

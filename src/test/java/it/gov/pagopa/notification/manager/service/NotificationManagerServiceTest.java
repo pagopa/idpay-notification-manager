@@ -1,31 +1,21 @@
 package it.gov.pagopa.notification.manager.service;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-
 import feign.FeignException;
 import feign.Request;
 import feign.RequestTemplate;
 import it.gov.pagopa.notification.manager.connector.IOBackEndRestConnector;
 import it.gov.pagopa.notification.manager.connector.PdvDecryptRestConnector;
+import it.gov.pagopa.notification.manager.connector.initiative.InitiativeRestConnector;
 import it.gov.pagopa.notification.manager.constants.NotificationConstants;
-import it.gov.pagopa.notification.manager.dto.EvaluationDTO;
-import it.gov.pagopa.notification.manager.dto.FiscalCodeResource;
-import it.gov.pagopa.notification.manager.dto.MessageContent;
-import it.gov.pagopa.notification.manager.dto.NotificationDTO;
-import it.gov.pagopa.notification.manager.dto.NotificationQueueDTO;
-import it.gov.pagopa.notification.manager.dto.NotificationResource;
-import it.gov.pagopa.notification.manager.dto.ProfileResource;
-import it.gov.pagopa.notification.manager.dto.ServiceResource;
+import it.gov.pagopa.notification.manager.dto.*;
+import it.gov.pagopa.notification.manager.dto.event.NotificationIbanQueueDTO;
+import it.gov.pagopa.notification.manager.dto.initiative.InitiativeAdditionalInfoDTO;
 import it.gov.pagopa.notification.manager.dto.mapper.NotificationDTOMapper;
 import it.gov.pagopa.notification.manager.dto.mapper.NotificationMapper;
 import it.gov.pagopa.notification.manager.event.producer.OutcomeProducer;
 import it.gov.pagopa.notification.manager.model.Notification;
 import it.gov.pagopa.notification.manager.model.NotificationMarkdown;
 import it.gov.pagopa.notification.manager.repository.NotificationManagerRepository;
-import java.math.BigDecimal;
-import java.time.LocalDateTime;
-import java.util.HashMap;
-import java.util.List;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -38,6 +28,13 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.util.HashMap;
+import java.util.List;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
 @ExtendWith({SpringExtension.class, MockitoExtension.class})
 @ContextConfiguration(classes = NotificationManagerServiceImpl.class)
 @TestPropertySource(properties = {"rest-client.notification.backend-io.ttl=3600"})
@@ -48,9 +45,11 @@ class NotificationManagerServiceTest {
   private static final LocalDateTime TEST_DATE = LocalDateTime.now();
   private static final FiscalCodeResource FISCAL_CODE_RESOURCE = new FiscalCodeResource();
   private static final ProfileResource PROFILE_RESOURCE = new ProfileResource();
+  private static final ProfileResource PROFILE_RESOURCE_KO = new ProfileResource();
 
   private static final String FISCAL_CODE = "TEST_FISCAL_CODE";
   private static final String PRIMARY_KEY = "PRIMARY_KEY";
+  private static final String SECONDARY_KEY = "SECONDARY_KEY";
   private static final String TEST_NOTIFICATION_ID = "NOTIFICATION_ID";
   private static final Long TTL = 3600L;
   private static final String SUBJECT = "SUBJECT";
@@ -82,8 +81,12 @@ class NotificationManagerServiceTest {
           .rejectReasons(EVALUATION_DTO.getOnboardingRejectionReasons())
           .build();
   private static final ServiceResource SERVICE_RESOURCE = new ServiceResource();
+  private static final InitiativeAdditionalInfoDTO INITIATIVE_ADDITIONAL_INFO_DTO = InitiativeAdditionalInfoDTO.builder()
+          .primaryTokenIO(PRIMARY_KEY)
+          .secondaryTokenIO(SECONDARY_KEY)
+          .build();
 
-  private static final NotificationQueueDTO NOTIFICATION_QUEUE_DTO = NotificationQueueDTO.builder()
+  private static final NotificationIbanQueueDTO NOTIFICATION_QUEUE_DTO = NotificationIbanQueueDTO.builder()
       .operationType(OPERATION_TYPE)
       .userId(TEST_TOKEN)
       .initiativeId(INITIATIVE_ID)
@@ -94,6 +97,7 @@ class NotificationManagerServiceTest {
   static {
     FISCAL_CODE_RESOURCE.setPii(FISCAL_CODE);
     PROFILE_RESOURCE.setSenderAllowed(true);
+    PROFILE_RESOURCE_KO.setSenderAllowed(false);
     NOTIFICATION_RESOURCE.setId(TEST_NOTIFICATION_ID);
 
     MessageContent messageContent = new MessageContent();
@@ -112,6 +116,7 @@ class NotificationManagerServiceTest {
   @MockBean NotificationManagerRepository notificationManagerRepository;
   @MockBean PdvDecryptRestConnector pdvDecryptRestConnector;
   @MockBean IOBackEndRestConnector ioBackEndRestConnector;
+  @MockBean InitiativeRestConnector initiativeRestConnector;
   @MockBean NotificationMarkdown notificationMarkdown;
 
   @Test
@@ -128,8 +133,10 @@ class NotificationManagerServiceTest {
     Mockito.when(pdvDecryptRestConnector.getPii(TEST_TOKEN)).thenReturn(FISCAL_CODE_RESOURCE);
     Mockito.when(ioBackEndRestConnector.getProfile(FISCAL_CODE, PRIMARY_KEY))
         .thenReturn(PROFILE_RESOURCE);
-    Mockito.when(ioBackEndRestConnector.getService(EVALUATION_DTO.getServiceId()))
-        .thenReturn(SERVICE_RESOURCE);
+//    Mockito.when(ioBackEndRestConnector.getService(EVALUATION_DTO.getServiceId()))
+//        .thenReturn(SERVICE_RESOURCE);
+    Mockito.when(initiativeRestConnector.getIOTokens(EVALUATION_DTO.getInitiativeId()))
+        .thenReturn(INITIATIVE_ADDITIONAL_INFO_DTO);
     Mockito.when(notificationMarkdown.getSubject(EVALUATION_DTO)).thenReturn(SUBJECT);
     Mockito.when(notificationMarkdown.getMarkdown(EVALUATION_DTO)).thenReturn(MARKDOWN);
     Mockito.when(
@@ -158,8 +165,10 @@ class NotificationManagerServiceTest {
     Mockito.when(pdvDecryptRestConnector.getPii(TEST_TOKEN)).thenReturn(FISCAL_CODE_RESOURCE);
     Mockito.when(ioBackEndRestConnector.getProfile(FISCAL_CODE, PRIMARY_KEY))
         .thenReturn(PROFILE_RESOURCE);
-    Mockito.when(ioBackEndRestConnector.getService(EVALUATION_DTO.getServiceId()))
-        .thenReturn(SERVICE_RESOURCE);
+//    Mockito.when(ioBackEndRestConnector.getService(EVALUATION_DTO.getServiceId()))
+//        .thenReturn(SERVICE_RESOURCE);
+    Mockito.when(initiativeRestConnector.getIOTokens(EVALUATION_DTO.getInitiativeId()))
+            .thenReturn(INITIATIVE_ADDITIONAL_INFO_DTO);
     Mockito.when(notificationMarkdown.getSubject(EVALUATION_DTO)).thenReturn(SUBJECT);
     Mockito.when(notificationMarkdown.getMarkdown(EVALUATION_DTO)).thenReturn(MARKDOWN);
     Mockito.when(
@@ -193,29 +202,79 @@ class NotificationManagerServiceTest {
 
     Request request =
         Request.create(Request.HttpMethod.GET, "url", new HashMap<>(), null, new RequestTemplate());
+//    Mockito.doThrow(new FeignException.NotFound("", request, new byte[0], null))
+//        .when(ioBackEndRestConnector)
+//        .getService(EVALUATION_DTO.getServiceId());
     Mockito.doThrow(new FeignException.NotFound("", request, new byte[0], null))
-        .when(ioBackEndRestConnector)
-        .getService(EVALUATION_DTO.getServiceId());
+        .when(initiativeRestConnector)
+        .getIOTokens(EVALUATION_DTO.getInitiativeId());
+
+    Mockito.when(notificationMapper.evaluationToNotification(EVALUATION_DTO))
+        .thenReturn(NOTIFICATION);
 
     notificationManagerService.notify(EVALUATION_DTO);
-    Mockito.verify(notificationManagerRepository, Mockito.times(0))
+    Mockito.verify(notificationManagerRepository, Mockito.times(1))
         .save(Mockito.any(Notification.class));
   }
 
   @Test
-  void notify_ko_user_not_allowed() {
+  void notify_ko_user_not_allowed_feign() {
     Mockito.when(pdvDecryptRestConnector.getPii(TEST_TOKEN)).thenReturn(FISCAL_CODE_RESOURCE);
-    Mockito.when(ioBackEndRestConnector.getService(EVALUATION_DTO.getServiceId()))
-        .thenReturn(SERVICE_RESOURCE);
+//    Mockito.when(ioBackEndRestConnector.getService(EVALUATION_DTO.getServiceId()))
+//        .thenReturn(SERVICE_RESOURCE);
+    Mockito.when(initiativeRestConnector.getIOTokens(EVALUATION_DTO.getInitiativeId()))
+            .thenReturn(INITIATIVE_ADDITIONAL_INFO_DTO);
     Request request =
         Request.create(Request.HttpMethod.GET, "url", new HashMap<>(), null, new RequestTemplate());
     Mockito.doThrow(new FeignException.NotFound("", request, new byte[0], null))
         .when(ioBackEndRestConnector)
         .getProfile(FISCAL_CODE, PRIMARY_KEY);
 
+    Mockito.when(notificationMapper.evaluationToNotification(EVALUATION_DTO))
+        .thenReturn(NOTIFICATION);
+
     notificationManagerService.notify(EVALUATION_DTO);
 
-    Mockito.verify(notificationManagerRepository, Mockito.times(0))
+    Mockito.verify(notificationManagerRepository, Mockito.times(1))
+        .save(Mockito.any(Notification.class));
+  }
+
+  @Test
+  void notify_ko_user_not_allowed() {
+    Mockito.when(pdvDecryptRestConnector.getPii(TEST_TOKEN)).thenReturn(FISCAL_CODE_RESOURCE);
+//    Mockito.when(ioBackEndRestConnector.getService(EVALUATION_DTO.getServiceId()))
+//        .thenReturn(SERVICE_RESOURCE);
+    Mockito.when(initiativeRestConnector.getIOTokens(EVALUATION_DTO.getInitiativeId()))
+            .thenReturn(INITIATIVE_ADDITIONAL_INFO_DTO);
+    Mockito.when(ioBackEndRestConnector.getProfile(FISCAL_CODE, PRIMARY_KEY))
+        .thenReturn(PROFILE_RESOURCE_KO);
+    Mockito.when(notificationMapper.evaluationToNotification(EVALUATION_DTO))
+        .thenReturn(NOTIFICATION);
+
+    notificationManagerService.notify(EVALUATION_DTO);
+
+    Mockito.verify(notificationManagerRepository, Mockito.times(1))
+        .save(Mockito.any(Notification.class));
+  }
+
+  @Test
+  void notify_ko_no_cf() {
+//    Mockito.when(ioBackEndRestConnector.getService(EVALUATION_DTO.getServiceId()))
+//        .thenReturn(SERVICE_RESOURCE);
+    Mockito.when(initiativeRestConnector.getIOTokens(EVALUATION_DTO.getInitiativeId()))
+            .thenReturn(INITIATIVE_ADDITIONAL_INFO_DTO);
+    Request request =
+        Request.create(Request.HttpMethod.GET, "url", new HashMap<>(), null, new RequestTemplate());
+    Mockito.doThrow(new FeignException.NotFound("", request, new byte[0], null))
+        .when(pdvDecryptRestConnector)
+        .getPii(TEST_TOKEN);
+
+    Mockito.when(notificationMapper.evaluationToNotification(EVALUATION_DTO))
+        .thenReturn(NOTIFICATION);
+
+    notificationManagerService.notify(EVALUATION_DTO);
+
+    Mockito.verify(notificationManagerRepository, Mockito.times(1))
         .save(Mockito.any(Notification.class));
   }
 
@@ -224,8 +283,10 @@ class NotificationManagerServiceTest {
     Mockito.when(pdvDecryptRestConnector.getPii(TEST_TOKEN)).thenReturn(FISCAL_CODE_RESOURCE);
     Mockito.when(ioBackEndRestConnector.getProfile(FISCAL_CODE, PRIMARY_KEY))
         .thenReturn(PROFILE_RESOURCE);
-    Mockito.when(ioBackEndRestConnector.getService(NOTIFICATION_QUEUE_DTO.getServiceId()))
-        .thenReturn(SERVICE_RESOURCE);
+//    Mockito.when(ioBackEndRestConnector.getService(NOTIFICATION_QUEUE_DTO.getServiceId()))
+//        .thenReturn(SERVICE_RESOURCE);
+    Mockito.when(initiativeRestConnector.getIOTokens(NOTIFICATION_QUEUE_DTO.getInitiativeId()))
+            .thenReturn(INITIATIVE_ADDITIONAL_INFO_DTO);
     Mockito.when(notificationMarkdown.getSubjectCheckIbanKo()).thenReturn(SUBJECT);
     Mockito.when(notificationMarkdown.getMarkdownCheckIbanKo()).thenReturn(MARKDOWN);
     Mockito.when(
@@ -235,12 +296,14 @@ class NotificationManagerServiceTest {
                 Mockito.anyString(),
                 Mockito.anyString()))
         .thenReturn(NOTIFICATION_DTO);
-    Mockito.when(notificationMapper.queueToNotification(NOTIFICATION_QUEUE_DTO))
-        .thenReturn(NOTIFICATION);
+//    Mockito.when(notificationMapper.queueToNotification(NOTIFICATION_QUEUE_DTO))
+//        .thenReturn(NOTIFICATION);
+    Mockito.when(notificationMapper.toEntity(NOTIFICATION_QUEUE_DTO))
+            .thenReturn(NOTIFICATION);
     Mockito.when(ioBackEndRestConnector.notify(NOTIFICATION_DTO, PRIMARY_KEY))
         .thenReturn(NOTIFICATION_RESOURCE);
     try {
-      notificationManagerService.checkIbanKo(NOTIFICATION_QUEUE_DTO);
+      notificationManagerService.sendNotificationFromOperationType(NOTIFICATION_QUEUE_DTO);
     } catch (FeignException e) {
       Assertions.fail();
     }
@@ -254,8 +317,10 @@ class NotificationManagerServiceTest {
     Mockito.when(pdvDecryptRestConnector.getPii(TEST_TOKEN)).thenReturn(FISCAL_CODE_RESOURCE);
     Mockito.when(ioBackEndRestConnector.getProfile(FISCAL_CODE, PRIMARY_KEY))
         .thenReturn(PROFILE_RESOURCE);
-    Mockito.when(ioBackEndRestConnector.getService(NOTIFICATION_QUEUE_DTO.getServiceId()))
-        .thenReturn(SERVICE_RESOURCE);
+//    Mockito.when(ioBackEndRestConnector.getService(NOTIFICATION_QUEUE_DTO.getServiceId()))
+//        .thenReturn(SERVICE_RESOURCE);
+    Mockito.when(initiativeRestConnector.getIOTokens(NOTIFICATION_QUEUE_DTO.getInitiativeId()))
+            .thenReturn(INITIATIVE_ADDITIONAL_INFO_DTO);
     Mockito.when(notificationMarkdown.getSubjectCheckIbanKo()).thenReturn(SUBJECT);
     Mockito.when(notificationMarkdown.getMarkdownCheckIbanKo()).thenReturn(MARKDOWN);
     Mockito.when(
@@ -265,8 +330,10 @@ class NotificationManagerServiceTest {
                 Mockito.anyString(),
                 Mockito.anyString()))
         .thenReturn(NOTIFICATION_DTO);
-    Mockito.when(notificationMapper.queueToNotification(NOTIFICATION_QUEUE_DTO))
-        .thenReturn(NOTIFICATION);
+//    Mockito.when(notificationMapper.queueToNotification(NOTIFICATION_QUEUE_DTO))
+//        .thenReturn(NOTIFICATION);
+    Mockito.when(notificationMapper.toEntity(NOTIFICATION_QUEUE_DTO))
+            .thenReturn(NOTIFICATION);
     Request request =
         Request.create(
             Request.HttpMethod.POST, "url", new HashMap<>(), null, new RequestTemplate());
@@ -275,7 +342,7 @@ class NotificationManagerServiceTest {
         .notify(NOTIFICATION_DTO, PRIMARY_KEY);
 
     try {
-      notificationManagerService.checkIbanKo(NOTIFICATION_QUEUE_DTO);
+      notificationManagerService.sendNotificationFromOperationType(NOTIFICATION_QUEUE_DTO);
     } catch (FeignException e) {
       assertEquals(HttpStatus.BAD_REQUEST.value(), e.status());
     }
@@ -286,32 +353,91 @@ class NotificationManagerServiceTest {
 
   @Test
   void checkIbanKo_ko_no_service_resource() {
+    Mockito.when(pdvDecryptRestConnector.getPii(TEST_TOKEN)).thenReturn(FISCAL_CODE_RESOURCE);
 
     Request request =
         Request.create(Request.HttpMethod.GET, "url", new HashMap<>(), null, new RequestTemplate());
+//    Mockito.doThrow(new FeignException.NotFound("", request, new byte[0], null))
+//        .when(ioBackEndRestConnector)
+//        .getService(NOTIFICATION_QUEUE_DTO.getServiceId());
     Mockito.doThrow(new FeignException.NotFound("", request, new byte[0], null))
-        .when(ioBackEndRestConnector)
-        .getService(NOTIFICATION_QUEUE_DTO.getServiceId());
+            .when(initiativeRestConnector)
+            .getIOTokens(NOTIFICATION_QUEUE_DTO.getInitiativeId());
 
-    notificationManagerService.checkIbanKo(NOTIFICATION_QUEUE_DTO);
-    Mockito.verify(notificationManagerRepository, Mockito.times(0))
+//    Mockito.when(notificationMapper.queueToNotification(NOTIFICATION_QUEUE_DTO))
+//        .thenReturn(NOTIFICATION);
+    Mockito.when(notificationMapper.toEntity(NOTIFICATION_QUEUE_DTO))
+            .thenReturn(NOTIFICATION);
+
+    notificationManagerService.sendNotificationFromOperationType(NOTIFICATION_QUEUE_DTO);
+    Mockito.verify(notificationManagerRepository, Mockito.times(1))
         .save(Mockito.any(Notification.class));
   }
 
   @Test
-  void checkIbanKo_ko_user_not_allowed() {
+  void checkIbanKo_ko_user_not_allowed_feign() {
     Mockito.when(pdvDecryptRestConnector.getPii(TEST_TOKEN)).thenReturn(FISCAL_CODE_RESOURCE);
-    Mockito.when(ioBackEndRestConnector.getService(NOTIFICATION_QUEUE_DTO.getServiceId()))
-        .thenReturn(SERVICE_RESOURCE);
+//    Mockito.when(ioBackEndRestConnector.getService(NOTIFICATION_QUEUE_DTO.getServiceId()))
+//        .thenReturn(SERVICE_RESOURCE);
+    Mockito.when(initiativeRestConnector.getIOTokens(NOTIFICATION_QUEUE_DTO.getInitiativeId()))
+            .thenReturn(INITIATIVE_ADDITIONAL_INFO_DTO);
     Request request =
         Request.create(Request.HttpMethod.GET, "url", new HashMap<>(), null, new RequestTemplate());
     Mockito.doThrow(new FeignException.NotFound("", request, new byte[0], null))
         .when(ioBackEndRestConnector)
         .getProfile(FISCAL_CODE, PRIMARY_KEY);
 
-    notificationManagerService.checkIbanKo(NOTIFICATION_QUEUE_DTO);
+//    Mockito.when(notificationMapper.queueToNotification(NOTIFICATION_QUEUE_DTO))
+//        .thenReturn(NOTIFICATION);
+    Mockito.when(notificationMapper.toEntity(NOTIFICATION_QUEUE_DTO))
+            .thenReturn(NOTIFICATION);
 
-    Mockito.verify(notificationManagerRepository, Mockito.times(0))
+    notificationManagerService.sendNotificationFromOperationType(NOTIFICATION_QUEUE_DTO);
+
+    Mockito.verify(notificationManagerRepository, Mockito.times(1))
+        .save(Mockito.any(Notification.class));
+  }
+
+  @Test
+  void checkIbanKo_ko_user_not_allowed() {
+    Mockito.when(pdvDecryptRestConnector.getPii(TEST_TOKEN)).thenReturn(FISCAL_CODE_RESOURCE);
+//    Mockito.when(ioBackEndRestConnector.getService(NOTIFICATION_QUEUE_DTO.getServiceId()))
+//        .thenReturn(SERVICE_RESOURCE);
+    Mockito.when(initiativeRestConnector.getIOTokens(NOTIFICATION_QUEUE_DTO.getInitiativeId()))
+            .thenReturn(INITIATIVE_ADDITIONAL_INFO_DTO);
+    Mockito.when(ioBackEndRestConnector.getProfile(FISCAL_CODE, PRIMARY_KEY))
+        .thenReturn(PROFILE_RESOURCE_KO);
+//    Mockito.when(notificationMapper.queueToNotification(NOTIFICATION_QUEUE_DTO))
+//        .thenReturn(NOTIFICATION);
+    Mockito.when(notificationMapper.toEntity(NOTIFICATION_QUEUE_DTO))
+            .thenReturn(NOTIFICATION);
+
+    notificationManagerService.sendNotificationFromOperationType(NOTIFICATION_QUEUE_DTO);
+
+    Mockito.verify(notificationManagerRepository, Mockito.times(1))
+        .save(Mockito.any(Notification.class));
+  }
+
+  @Test
+  void checkIbanKo_ko_no_cf() {
+//    Mockito.when(ioBackEndRestConnector.getService(NOTIFICATION_QUEUE_DTO.getServiceId()))
+//        .thenReturn(SERVICE_RESOURCE);
+    Mockito.when(initiativeRestConnector.getIOTokens(NOTIFICATION_QUEUE_DTO.getInitiativeId()))
+            .thenReturn(INITIATIVE_ADDITIONAL_INFO_DTO);
+    Request request =
+        Request.create(Request.HttpMethod.GET, "url", new HashMap<>(), null, new RequestTemplate());
+    Mockito.doThrow(new FeignException.NotFound("", request, new byte[0], null))
+        .when(pdvDecryptRestConnector)
+        .getPii(TEST_TOKEN);
+
+//    Mockito.when(notificationMapper.queueToNotification(NOTIFICATION_QUEUE_DTO))
+//        .thenReturn(NOTIFICATION);
+    Mockito.when(notificationMapper.toEntity(NOTIFICATION_QUEUE_DTO))
+        .thenReturn(NOTIFICATION);
+
+    notificationManagerService.sendNotificationFromOperationType(NOTIFICATION_QUEUE_DTO);
+
+    Mockito.verify(notificationManagerRepository, Mockito.times(1))
         .save(Mockito.any(Notification.class));
   }
 }

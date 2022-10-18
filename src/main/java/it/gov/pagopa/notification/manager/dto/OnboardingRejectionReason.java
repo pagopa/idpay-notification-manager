@@ -1,8 +1,9 @@
 package it.gov.pagopa.notification.manager.dto;
 
-import javax.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+
+import javax.validation.constraints.NotNull;
 
 @Getter
 @AllArgsConstructor
