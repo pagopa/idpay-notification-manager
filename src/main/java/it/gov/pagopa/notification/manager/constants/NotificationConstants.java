@@ -7,11 +7,15 @@ public class NotificationConstants {
   public static final String MARKDOWN_TAG = "%";
   public static final String MARKDOWN_NA = "N.A.";
   public static final String STATUS_ONBOARDING_KO = "ONBOARDING_KO";
+  public static final String REQUEST_PDV = "[NOTIFY] Sending request to pdv";
+  public static final String FEIGN_KO = "[NOTIFY] [%d] Cannot send request: %s";
 
   private NotificationConstants(){}
 
   public static final class AnyNotificationConsumer{
+    private AnyNotificationConsumer(){}
     public static final class SubTypes{
+      private SubTypes(){}
       public static final String ALLOWED_CITIZEN_PUBLISH = "ALLOWED_CITIZEN_PUBLISH";
       public static final String CHECKIBAN_KO = "CHECKIBAN_KO";
     }
