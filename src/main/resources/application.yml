@@ -15,7 +15,7 @@ rest-client:
   initiative:
     service:
       name: ms-initiative
-      base-url: ${INITIATIVE_MS_BASE_URL:}/idpay/initiative
+      base-url: ${INITIATIVE_MS_BASE_URL:}
 spring:
   application:
     name: idpay-notification-manager
