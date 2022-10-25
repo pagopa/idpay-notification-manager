@@ -592,5 +592,26 @@ class NotificationManagerServiceTest {
     Mockito.verify(notificationManagerRepository, Mockito.times(1))
         .save(Mockito.any(Notification.class));
   }
+  @Test
+  void sendNotificationFromOperationType_notification_notNull_ioTokens_null() {
+    Mockito.when(notificationMapper.toEntity(NOTIFICATION_CITIZEN_ON_QUEUE_DTO))
+        .thenReturn(NOTIFICATION);
+
+    Mockito.when(initiativeRestConnector.getIOTokens(INITIATIVE_ID))
+        .thenReturn(null);
+
+    Mockito.when(pdvDecryptRestConnector.getPii(TEST_TOKEN)).thenReturn(FISCAL_CODE_RESOURCE);
+    Mockito.when(notificationMarkdown.getMarkdownInitiativePublishing()).thenReturn(SUBJECT);
+
+    Mockito.when(notificationMarkdown.getSubjectInitiativePublishing()).thenReturn(MARKDOWN);
+    try {
+      notificationManagerService.sendNotificationFromOperationType(NOTIFICATION_CITIZEN_ON_QUEUE_DTO);
+    } catch (FeignException e) {
+      Assertions.fail();
+    }
+
+    Mockito.verify(notificationManagerRepository, Mockito.times(1))
+        .save(NOTIFICATION);
+  }
 
 }
