@@ -186,11 +186,11 @@ util:
       secret-type:
         pbe:
           algorithm: ${UTIL_CRYPTO_AES_SECRET_TYPE_PBE_ALGORITHM:PBKDF2WithHmacSHA1}
-          salt: ${UTIL_CRYPTO_AES_SECRET_TYPE_PBE_SALT:32}
+          salt: ${UTIL_CRYPTO_AES_SECRET_TYPE_PBE_SALT:}
           keySize: ${UTIL_CRYPTO_AES_SECRET_TYPE_PBE_KEY_SIZE:256}
           iterationCount: ${UTIL_CRYPTO_AES_SECRET_TYPE_PBE_ITERATION_COUNT:10000}
-          passphrase: ${UTIL_CRYPTO_AES_SECRET_TYPE_PBE_PASSPHRASE:12345}
+          passphrase: ${UTIL_CRYPTO_AES_SECRET_TYPE_PBE_PASSPHRASE:}
       mode:
         gcm:
-          iv: ${UTIL_CRYPTO_AES_MODE_GCM_IV:12}
+          iv: ${UTIL_CRYPTO_AES_MODE_GCM_IV:}
           tLen: ${UTIL_CRYPTO_AES_MODE_GCM_TAG_LEN:16}
