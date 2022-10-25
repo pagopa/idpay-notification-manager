@@ -29,7 +29,7 @@ import org.springframework.stereotype.Service;
 @Slf4j
 public class NotificationManagerServiceImpl implements NotificationManagerService {
   @Autowired
-  AESUtil AESUtil;
+  AESUtil aesUtil;
   @Autowired
   OutcomeProducer outcomeProducer;
   @Autowired
@@ -77,7 +77,7 @@ public class NotificationManagerServiceImpl implements NotificationManagerServic
     }
 
     log.info("[NOTIFY] Sending request to DECRYPT_TOKEN");
-    String tokenDecrypt = AESUtil.decrypt(passphrase, ioTokens.getPrimaryTokenIO());
+    String tokenDecrypt = aesUtil.decrypt(passphrase, ioTokens.getPrimaryTokenIO());
     log.info(tokenDecrypt);
 
     if (isNotSenderAllowed(fiscalCode, tokenDecrypt)) {
@@ -197,7 +197,7 @@ public class NotificationManagerServiceImpl implements NotificationManagerServic
       return;
     }
 
-    String tokenDecrypt = AESUtil.decrypt(passphrase, ioTokens.getPrimaryTokenIO());
+    String tokenDecrypt = aesUtil.decrypt(passphrase, ioTokens.getPrimaryTokenIO());
     log.info("tokenDecrypted: " + tokenDecrypt);
     if (isNotSenderAllowed(fiscalCode, tokenDecrypt)) {
       notificationKO(notification);
