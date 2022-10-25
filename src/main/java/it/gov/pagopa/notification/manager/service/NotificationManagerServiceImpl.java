@@ -98,7 +98,7 @@ public class NotificationManagerServiceImpl implements NotificationManagerServic
       return;
     }
 
-    log.info("[NOTIFY] Notification ID: {}", notification.getNotificationId());
+    log.info("[NOTIFY] Notification ID: {}", notificationId);
 
     notification.setNotificationId(notificationId);
     notification.setNotificationStatus("OK");
@@ -119,6 +119,7 @@ public class NotificationManagerServiceImpl implements NotificationManagerServic
     try {
       NotificationResource notificationResource =
           ioBackEndRestConnector.notify(notificationDTO, primaryKey);
+      log.info("[NOTIFY] Notification sent");
       return notificationResource.getId();
     } catch (FeignException e) {
       log.error("[NOTIFY] [{}] Cannot send notification: {}", e.status(), e.contentUTF8());
