@@ -593,7 +593,7 @@ class NotificationManagerServiceTest {
         .save(Mockito.any(Notification.class));
   }
   @Test
-  void sendNotificationFromOperationType_notification_notNull_ioTokens_null() {
+  void sendNotificationFromOperationType_notification_notNull_ioTokens_notNull() {
     Mockito.when(notificationMapper.toEntity(NOTIFICATION_CITIZEN_ON_QUEUE_DTO))
         .thenReturn(NOTIFICATION);
 
@@ -614,9 +614,9 @@ class NotificationManagerServiceTest {
         .save(NOTIFICATION);
   }
   @Test
-  void sendNotificationFromOperationType_checkiban_notification_notNull_ioTokens_null() {
+  void sendNotificationFromOperationType_checkiban_notification_Null_ioTokens_null() {
     Mockito.when(notificationMapper.toEntity(NOTIFICATION_IBAN_QUEUE_DTO))
-        .thenReturn(NOTIFICATION);
+        .thenReturn(null);
 
     Mockito.when(initiativeRestConnector.getIOTokens(INITIATIVE_ID))
         .thenReturn(null);
@@ -630,9 +630,6 @@ class NotificationManagerServiceTest {
     } catch (FeignException e) {
       Assertions.fail();
     }
-
-    Mockito.verify(notificationManagerRepository, Mockito.times(1))
-        .save(NOTIFICATION);
   }
 
 }
