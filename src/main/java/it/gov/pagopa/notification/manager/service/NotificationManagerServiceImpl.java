@@ -4,6 +4,7 @@ import feign.FeignException;
 import it.gov.pagopa.notification.manager.connector.IOBackEndRestConnector;
 import it.gov.pagopa.notification.manager.connector.PdvDecryptRestConnector;
 import it.gov.pagopa.notification.manager.connector.initiative.InitiativeRestConnector;
+import it.gov.pagopa.notification.manager.constants.NotificationConstants;
 import it.gov.pagopa.notification.manager.dto.EvaluationDTO;
 import it.gov.pagopa.notification.manager.dto.NotificationDTO;
 import it.gov.pagopa.notification.manager.dto.NotificationResource;
@@ -18,57 +19,48 @@ import it.gov.pagopa.notification.manager.event.producer.OutcomeProducer;
 import it.gov.pagopa.notification.manager.model.Notification;
 import it.gov.pagopa.notification.manager.model.NotificationMarkdown;
 import it.gov.pagopa.notification.manager.repository.NotificationManagerRepository;
+import it.gov.pagopa.notification.manager.utils.AESUtil;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 @Service
 @Slf4j
 public class NotificationManagerServiceImpl implements NotificationManagerService {
-
-  private final OutcomeProducer outcomeProducer;
-  private final InitiativeRestConnector initiativeRestConnector;
-  private final IOBackEndRestConnector ioBackEndRestConnector;
-  private final NotificationManagerRepository notificationManagerRepository;
-  private final NotificationDTOMapper notificationDTOMapper;
-  private final PdvDecryptRestConnector pdvDecryptRestConnector;
-  private final NotificationMapper notificationMapper;
-  private final NotificationMarkdown notificationMarkdown;
-
+  @Autowired
+  AESUtil aesUtil;
+  @Autowired
+  OutcomeProducer outcomeProducer;
+  @Autowired
+  InitiativeRestConnector initiativeRestConnector;
+  @Autowired
+  IOBackEndRestConnector ioBackEndRestConnector;
+  @Autowired
+  NotificationManagerRepository notificationManagerRepository;
+  @Autowired
+  NotificationDTOMapper notificationDTOMapper;
+  @Autowired
+  PdvDecryptRestConnector pdvDecryptRestConnector;
+  @Autowired
+  NotificationMapper notificationMapper;
+  @Autowired
+  NotificationMarkdown notificationMarkdown;
+  @Value("${util.crypto.aes.secret-type.pbe.passphrase}")
+  private String passphrase;
   @Value("${rest-client.notification.backend-io.ttl}")
   private Long timeToLive;
 
-  public NotificationManagerServiceImpl(
-      OutcomeProducer outcomeProducer,
-      InitiativeRestConnector initiativeRestConnector,
-      IOBackEndRestConnector ioBackEndRestConnector,
-      PdvDecryptRestConnector pdvDecryptRestConnector,
-      NotificationManagerRepository notificationManagerRepository,
-      NotificationDTOMapper notificationDTOMapper,
-      NotificationMapper notificationMapper,
-      NotificationMarkdown notificationMarkdown) {
-    this.outcomeProducer = outcomeProducer;
-    this.initiativeRestConnector = initiativeRestConnector;
-    this.ioBackEndRestConnector = ioBackEndRestConnector;
-    this.pdvDecryptRestConnector = pdvDecryptRestConnector;
-    this.notificationManagerRepository = notificationManagerRepository;
-    this.notificationDTOMapper = notificationDTOMapper;
-    this.notificationMapper = notificationMapper;
-    this.notificationMarkdown = notificationMarkdown;
-  }
-
   @Override
   public void notify(EvaluationDTO evaluationDTO) {
-    log.info(
-        "[NOTIFY] Sending request to IO getService with serviceId {}",
-        evaluationDTO.getServiceId());
     Notification notification = notificationMapper.evaluationToNotification(evaluationDTO);
-//    ServiceResource serviceResource = getService(evaluationDTO.getServiceId());
     InitiativeAdditionalInfoDTO ioTokens = null;
+
     try {
+      log.info("[NOTIFY] Sending request to INITIATIVE");
       ioTokens = initiativeRestConnector.getIOTokens(evaluationDTO.getInitiativeId());
     } catch (FeignException e) {
-      log.error("[NOTIFY] [%d] Cannot send request: %s".formatted(e.status(), e.contentUTF8()));
+      log.error(NotificationConstants.FEIGN_KO.formatted(e.status(), e.contentUTF8()));
     }
 
     if (ioTokens == null) {
@@ -76,7 +68,7 @@ public class NotificationManagerServiceImpl implements NotificationManagerServic
       return;
     }
 
-    log.info("[NOTIFY] Sending request to pdv");
+    log.info(NotificationConstants.REQUEST_PDV);
     String fiscalCode = decryptUserToken(evaluationDTO.getUserId());
 
     if (fiscalCode == null) {
@@ -84,7 +76,11 @@ public class NotificationManagerServiceImpl implements NotificationManagerServic
       return;
     }
 
-    if (isNotSenderAllowed(fiscalCode, ioTokens.getPrimaryTokenIO())) {
+    log.info("[NOTIFY] Sending request to DECRYPT_TOKEN");
+    String tokenDecrypt = aesUtil.decrypt(passphrase, ioTokens.getPrimaryTokenIO());
+    log.info(tokenDecrypt);
+
+    if (isNotSenderAllowed(fiscalCode, tokenDecrypt)) {
       notificationKO(notification);
       return;
     }
@@ -95,14 +91,14 @@ public class NotificationManagerServiceImpl implements NotificationManagerServic
     NotificationDTO notificationDTO =
         notificationDTOMapper.map(fiscalCode, timeToLive, subject, markdown);
 
-    String notificationId = sendNotification(notificationDTO, ioTokens.getPrimaryTokenIO());
+    String notificationId = sendNotification(notificationDTO, tokenDecrypt);
 
     if (notificationId == null) {
       notificationKO(notification);
       return;
     }
 
-    log.info("[NOTIFY] Notification ID: {}", notification.getNotificationId());
+    log.info("[NOTIFY] Notification ID: {}", notificationId);
 
     notification.setNotificationId(notificationId);
     notification.setNotificationStatus("OK");
@@ -123,6 +119,7 @@ public class NotificationManagerServiceImpl implements NotificationManagerServic
     try {
       NotificationResource notificationResource =
           ioBackEndRestConnector.notify(notificationDTO, primaryKey);
+      log.info("[NOTIFY] Notification sent");
       return notificationResource.getId();
     } catch (FeignException e) {
       log.error("[NOTIFY] [{}] Cannot send notification: {}", e.status(), e.contentUTF8());
@@ -148,63 +145,47 @@ public class NotificationManagerServiceImpl implements NotificationManagerServic
     }
   }
 
-//  private ServiceResource getService(String serviceId) {
-//    try {
-//      return ioBackEndRestConnector.getService(serviceId);
-//    } catch (FeignException e) {
-//      log.error("[NOTIFY] [%d] Cannot send request: %s".formatted(e.status(), e.contentUTF8()));
-//      return null;
-//    }
-//  }
-
   @Override
   public void sendNotificationFromOperationType(AnyOfNotificationQueueDTO anyOfNotificationQueueDTO) {
     String fiscalCode = null;
-//    ServiceResource serviceResource = null;
     Notification notification = null;
     String subject = "";
     String markdown = "";
     InitiativeAdditionalInfoDTO ioTokens = null;
+
     if (anyOfNotificationQueueDTO instanceof NotificationCitizenOnQueueDTO notificationCitizenOnQueueDTO){
-//      log.info(
-//              "[NOTIFY] Sending request to IO getService with serviceId {}",
-//              notificationCitizenOnQueueDTO.getServiceId());
+
       notification = notificationMapper.toEntity(notificationCitizenOnQueueDTO);
-//      serviceResource = getService(notificationCitizenOnQueueDTO.getServiceId());
       log.debug("[NOTIFY] Getting IO Tokens");
       try {
         ioTokens = initiativeRestConnector.getIOTokens(notificationCitizenOnQueueDTO.getInitiativeId());
       } catch (FeignException e) {
-        log.error("[NOTIFY] [%d] Cannot send request: %s".formatted(e.status(), e.contentUTF8()));
+        log.error(NotificationConstants.FEIGN_KO.formatted(e.status(), e.contentUTF8()));
       }
 
-      log.info("[NOTIFY] Sending request to pdv");
+      log.info(NotificationConstants.REQUEST_PDV);
       fiscalCode = decryptUserToken(notificationCitizenOnQueueDTO.getUserId());
 
       subject = notificationMarkdown.getSubjectInitiativePublishing();
       markdown = notificationMarkdown.getMarkdownInitiativePublishing();
     }
     if (anyOfNotificationQueueDTO instanceof NotificationIbanQueueDTO notificationIbanQueueDTO){
-//      log.info(
-//              "[NOTIFY] Sending request to IO getService with serviceId {}",
-//              notificationIbanQueueDTO.getServiceId());
+
       notification = notificationMapper.toEntity(notificationIbanQueueDTO);
-//      serviceResource = getService(notificationIbanQueueDTO.getServiceId());
       log.debug("[NOTIFY] Getting IO Tokens");
       try {
         ioTokens = initiativeRestConnector.getIOTokens(notificationIbanQueueDTO.getInitiativeId());
       } catch (FeignException e) {
-        log.error("[NOTIFY] [%d] Cannot send request: %s".formatted(e.status(), e.contentUTF8()));
+        log.error(NotificationConstants.FEIGN_KO.formatted(e.status(), e.contentUTF8()));
       }
 
-      log.info("[NOTIFY] Sending request to pdv");
+      log.info(NotificationConstants.REQUEST_PDV);
       fiscalCode = decryptUserToken(notificationIbanQueueDTO.getUserId());
 
       subject = notificationMarkdown.getSubjectCheckIbanKo();
       markdown = notificationMarkdown.getMarkdownCheckIbanKo();
     }
 
-//    if (serviceResource == null) {
     if (ioTokens == null) {
       if (notification != null) {
         notificationKO(notification);
@@ -217,7 +198,9 @@ public class NotificationManagerServiceImpl implements NotificationManagerServic
       return;
     }
 
-    if (isNotSenderAllowed(fiscalCode, ioTokens.getPrimaryTokenIO())) {
+    String tokenDecrypt = aesUtil.decrypt(passphrase, ioTokens.getPrimaryTokenIO());
+    log.info("tokenDecrypted: " + tokenDecrypt);
+    if (isNotSenderAllowed(fiscalCode, tokenDecrypt)) {
       notificationKO(notification);
       return;
     }
@@ -225,7 +208,7 @@ public class NotificationManagerServiceImpl implements NotificationManagerServic
     NotificationDTO notificationDTO =
         notificationDTOMapper.map(fiscalCode, timeToLive, subject, markdown);
 
-    String notificationId = sendNotification(notificationDTO, ioTokens.getPrimaryTokenIO());
+    String notificationId = sendNotification(notificationDTO, tokenDecrypt);
 
     if (notificationId == null) {
       notificationKO(notification);

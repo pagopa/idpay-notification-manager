@@ -13,7 +13,7 @@ public class NotificationConsumer {
   @Bean
   public Consumer<AnyOfNotificationQueueDTO> anyNotificationConsumer(
       NotificationManagerService notificationManagerService) {
-    return notificationQueueDTO -> notificationManagerService.sendNotificationFromOperationType(notificationQueueDTO);
+    return notificationManagerService::sendNotificationFromOperationType;
   }
 
 }

@@ -177,3 +177,20 @@ logging:
     it:
       gov:
         pagopa: ${LOG_LEVEL_PAGOPA:DEBUG}
+
+util:
+  crypto:
+    aes:
+      cipherInstance: ${UTIL_CRYPTO_AES_CIPHER_INSTANCE:AES/GCM/NoPadding}
+      encoding: ${UTIL_CRYPTO_AES_ENCODING:UTF-8}
+      secret-type:
+        pbe:
+          algorithm: ${UTIL_CRYPTO_AES_SECRET_TYPE_PBE_ALGORITHM:PBKDF2WithHmacSHA1}
+          salt: ${UTIL_CRYPTO_AES_SECRET_TYPE_PBE_SALT:}
+          keySize: ${UTIL_CRYPTO_AES_SECRET_TYPE_PBE_KEY_SIZE:256}
+          iterationCount: ${UTIL_CRYPTO_AES_SECRET_TYPE_PBE_ITERATION_COUNT:10000}
+          passphrase: ${UTIL_CRYPTO_AES_SECRET_TYPE_PBE_PASSPHRASE:}
+      mode:
+        gcm:
+          iv: ${UTIL_CRYPTO_AES_MODE_GCM_IV:}
+          tLen: ${UTIL_CRYPTO_AES_MODE_GCM_TAG_LEN:16}
