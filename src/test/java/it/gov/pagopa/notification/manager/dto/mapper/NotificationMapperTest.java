@@ -40,7 +40,9 @@ class NotificationMapperTest {
   private static final Notification NOTIFICATION =
       Notification.builder()
           .initiativeId(INITIATIVE_ID)
+          .initiativeName(INITIATIVE_ID)
           .userId(USER_ID)
+          .serviceId(INITIATIVE_ID)
           .onboardingOutcome(STATUS)
           .operationType("ONBOARDING")
           .rejectReasons(List.of())
@@ -70,11 +72,9 @@ class NotificationMapperTest {
   }
 
   @Test
-  void queueToNotification() {
-    Notification actual = notificationMapper.queueToNotification(NOTIFICATION_QUEUE_DTO);
-
-    NOTIFICATION_QUEUE.setNotificationDate(actual.getNotificationDate());
-
+  void toEntity(){
+    Notification actual = notificationMapper.toEntity(NOTIFICATION_QUEUE_DTO);
     assertEquals(NOTIFICATION_QUEUE, actual);
   }
+
 }
