@@ -10,13 +10,14 @@ parameters:
 trigger:
   branches:
     include:
-      - release-dev
-      - release-uat
-      - release-prod
+      - release-*
+      - main
   paths:
     include:
       - src/*
+      - helm/*
       - pom.xml
+      - Dockerfile
 
 pr: none
 
@@ -50,12 +51,14 @@ variables:
     containerRegistry: '$(UAT_CONTAINER_REGISTRY_NAME)'
     selfHostedAgentPool: $(UAT_AGENT_POOL)
 
-  ${{ elseif startsWith(variables['Build.SourceBranch'], 'refs/heads/release-prod') }}:
+  ${{ elseif or(eq(variables['Build.SourceBranch'], 'refs/heads/main'),eq(variables['Build.SourceBranch'], 'refs/heads/release-prod')) }}:
     environment: 'PROD'
     dockerRegistryServiceConnection: '$(PROD_CONTAINER_REGISTRY_SERVICE_CONN)'
     kubernetesServiceConnection: '$(PROD_KUBERNETES_SERVICE_CONN)'
     containerRegistry: '$(PROD_CONTAINER_REGISTRY_NAME)'
     selfHostedAgentPool: $(PROD_AGENT_POOL)
+    # postman environment secure file - not used in prod
+    postmanEnvFile: idpay_uat.postman_environment.json
 
   ${{ else }}:
     environment: 'DEV'
@@ -178,3 +181,13 @@ stages:
                     install: true
                     waitForExecution: true
                     arguments: "--timeout 3m0s --debug"
+                - task: KubernetesManifest@0
+                  displayName: Patch
+                  inputs:
+                    kubernetesServiceConnection: ${{ variables.kubernetesServiceConnection }}
+                    namespace: '$(deployNamespace)'
+                    action: patch
+                    kind: deployment
+                    name: '$(helmReleaseName)-microservice-chart'
+                    mergeStrategy: strategic
+                    patch: '{"spec":{"template":{"metadata":{"annotations":{"buildNumber":"$(Build.BuildNumber)"}}}}}'

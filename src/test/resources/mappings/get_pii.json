@@ -1,0 +1,15 @@
+{
+  "request": {
+    "method": "GET",
+    "urlPathPattern": "/tokens/.*/pii"
+  },
+  "response": {
+    "status": "200",
+    "jsonBody": {
+      "pii": "AAAAAA00A00A000A"
+    },
+    "headers": {
+      "Content-Type": "application/json"
+    }
+  }
+}

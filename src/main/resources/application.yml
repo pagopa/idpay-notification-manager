@@ -1,0 +1,196 @@
+rest-client:
+  decrypt:
+    api-key: ${PDV_DECRYPT_API_KEY:}
+    base-url: ${PDV_DECRYPT_BASE_URL:}
+    serviceCode: pdv-ms-tokenizer
+  notification:
+    backend-io:
+      notify.url: ${IO_BACKEND_NOTIFY_URL:}
+      profile.url: ${IO_BACKEND_PROFILE_URL:}
+      service.url: ${IO_BACKEND_SERVICE_URL:}
+      token-value: ${IO_BACKEND_API_KEY:}
+      ttl: 3600
+      base-url: ${IO_BACKEND_BASE_URL:}
+      serviceCode: backend-io-notification
+  initiative:
+    service:
+      name: ms-initiative
+      base-url: ${INITIATIVE_MS_BASE_URL:}/idpay/initiative
+spring:
+  application:
+    name: idpay-notification-manager
+  cloud:
+    stream:
+      function:
+        definition: notificationQueue;anyNotificationConsumer;onboardingConsumer
+      binders:
+        kafka-notification:
+          type: kafka
+          environment:
+            spring:
+              cloud:
+                stream:
+                  kafka:
+                    binder:
+                      configuration:
+                        sasl:
+                          jaas:
+                            config: ${KAFKA_NOTIFICATION_SASL_JAAS_CONFIG:}
+        kafka-outcome:
+          type: kafka
+          environment:
+            spring:
+              cloud:
+                stream:
+                  kafka:
+                    binder:
+                      configuration:
+                        sasl:
+                          jaas:
+                            config: ${KAFKA_OUTCOME_SASL_JAAS_CONFIG:}
+        kafka-outcome-out:
+          type: kafka
+          environment:
+            spring:
+              cloud:
+                stream:
+                  kafka:
+                    binder:
+                      configuration:
+                        sasl:
+                          jaas:
+                            config: ${KAFKA_OUTCOME_OUT_SASL_JAAS_CONFIG:}
+      bindings:
+        notificationQueue-out-0:
+          binder: kafka-outcome-out
+          content-type: ${KAFKA_CONTENT_TYPE:application/json}
+          destination: ${KAFKA_TOPIC_OUTCOME}
+        onboardingConsumer-in-0:
+          binder: kafka-outcome
+          content-type: ${KAFKA_CONTENT_TYPE:application/json}
+          destination: ${KAFKA_TOPIC_OUTCOME:}
+          group: ${KAFKA_OUTCOME_GROUP_IN:}
+        anyNotificationConsumer-in-0:
+          binder: kafka-notification
+          content-type: ${KAFKA_CONTENT_TYPE:application/json}
+          destination: ${KAFKA_TOPIC_NOTIFICATION:}
+          group: ${KAFKA_NOTIFICATION_GROUP_IN:}
+          consumer:
+#can be used with a consumer group (non-exclusive queue) to process events in multiple threads
+            concurrency: ${KAFKA_NOTIFICATION_CONSUMER_CONCURRENCY:3} #translated as num.stream.threads by the binder, same as spring.cloud.stream.kafka.streams.binder.configuration.num.stream.threads
+      kafka:
+        binder:
+          auto-create-topics: false
+          brokers: ${KAFKA_BINDER_BROKER_ENDPOINT_LIST:}
+          configuration:
+            heartbeat.interval.ms: ${KAFKA_CONFIG_HEARTBEAT_INTERVAL_MS:30000}
+            request.timeout.ms: ${KAFKA_CONFIG_REQUEST_TIMEOUT_MS:60000}
+            session.timeout.ms: ${KAFKA_CONFIG_SESSION_TIMEOUT_MS:60000}
+            sasl.mechanism: ${KAFKA_NOTIFICATION_SASL_MECHANISM:}
+            security.protocol: ${KAFKA_NOTIFICATION_SECURITY_PROTOCOL:}
+        bindings:
+          onboardingConsumer-in-0:
+            consumer:
+              autoCommitOffset: ${KAFKA_OUTCOME_AUTO_COMMIT:${KAFKA_CONSUMER_CONFIG_AUTO_COMMIT:true}}
+              configuration:
+                connections.max.idle.ms: ${KAFKA_OUTCOME_REQUEST_CONNECTIONS_MAX_IDLE_MS:${KAFKA_CONSUMER_CONFIG_CONNECTIONS_MAX_IDLE_MS:300000}}
+                max.poll:
+                  interval.ms: ${KAFKA_OUTCOME_INTERVAL_TIMEOUT_MS:${KAFKA_CONFIG_MAX_POLL_INTERVAL_TIMEOUT_MS:300000}}
+                  records: ${KAFKA_OUTCOME_MAX_POLL_SIZE:${KAFKA_CONSUMER_CONFIG_MAX_POLL_SIZE:500}}
+                socket.connection.setup.timeout:
+                  max.ms: ${KAFKA_OUTCOME_REQUEST_CONNECTION_TIMEOUT_MAX_MS:${KAFKA_CONSUMER_CONFIG_CONNECTION_TIMEOUT_MAX_MS:200000}}
+                  ms: ${KAFKA_OUTCOME_REQUEST_CONNECTION_TIMEOUT_MS:${KAFKA_CONSUMER_CONFIG_CONNECTION_TIMEOUT_MS:100000}}
+              standardHeaders: ${KAFKA_OUTCOME_STANDARD_HEADERS:${KAFKA_CONSUMER_CONFIG_STANDARD_HEADERS:both}}
+              startOffset: ${KAFKA_OUTCOME_REQUEST_START_OFFSET:${KAFKA_CONSUMER_CONFIG_START_OFFSET:earliest}}
+          anyNotificationConsumer-in-0:
+            consumer:
+              autoCommitOffset: ${KAFKA_NOTIFICATION_AUTO_COMMIT:${KAFKA_CONSUMER_CONFIG_AUTO_COMMIT:true}}
+              configuration:
+                connections.max.idle.ms: ${KAFKA_NOTIFICATION_REQUEST_CONNECTIONS_MAX_IDLE_MS:${KAFKA_CONSUMER_CONFIG_CONNECTIONS_MAX_IDLE_MS:300000}}
+                max.poll:
+                  interval.ms: ${KAFKA_NOTIFICATION_INTERVAL_TIMEOUT_MS:${KAFKA_CONFIG_MAX_POLL_INTERVAL_TIMEOUT_MS:300000}}
+                  records: ${KAFKA_NOTIFICATION_MAX_POLL_SIZE:${KAFKA_CONSUMER_CONFIG_MAX_POLL_SIZE:500}}
+                socket.connection.setup.timeout:
+                  max.ms: ${KAFKA_NOTIFICATION_REQUEST_CONNECTION_TIMEOUT_MAX_MS:${KAFKA_CONSUMER_CONFIG_CONNECTION_TIMEOUT_MAX_MS:200000}}
+                  ms: ${KAFKA_NOTIFICATION_REQUEST_CONNECTION_TIMEOUT_MS:${KAFKA_CONSUMER_CONFIG_CONNECTION_TIMEOUT_MS:100000}}
+              standardHeaders: ${KAFKA_NOTIFICATION_STANDARD_HEADERS:${KAFKA_CONSUMER_CONFIG_STANDARD_HEADERS:both}}
+              startOffset: ${KAFKA_NOTIFICATION_REQUEST_START_OFFSET:${KAFKA_CONSUMER_CONFIG_START_OFFSET:earliest}}
+  config:
+    activate:
+      on-profile: default
+  data:
+    mongodb:
+      database: ${MONGODB_DBNAME}
+      uri: ${MONGODB_URI}
+
+notification:
+  manager:
+    markdown:
+      ko:
+        ranking: ${MARKDOWN_KO_RANKING:Purtroppo non è stato possibile attivare %initiativeName% in quanto i tuoi requisiti non rientrano nella graduatoria.}
+        tech: |-
+          ${MARKDOWN_KO_TECH:Si è verificato un errore nel processare la tua richiesta di %initiativeName%.
+          Ti chiediamo di riprovare.}
+        apology: ${MARKDOWN_APOLOGY:Ci scusiamo per il disagio.}
+        mistake: ${MARKDOWN_KO_MISTAKE:Se ritieni che ci sia stato un errore puoi segnalarlo direttamente all'Ente erogatore dell'iniziativa.}
+        checkIban: |- 
+          ${MARKDOWN_KO_CHECKIBAN:Il codice iban che hai inserito risulta essere errato. Ti chiediamo di modificarlo per evitare lasciare scoperte le iniziative associate e non ricevere i rimborsi (nel caso tu ne fossi beneficiario).
+          
+          Per modificare l'IBAN errato ti basta andare **Profilo > I tuoi dati > I tuoi IBAN** e seguire le indicazioni, oppure cliccare direttamente qui sotto.}
+        pdnd: ${MARKDOWN_KO_PDND:Purtroppo non hai i requisiti necessari per aderire a %initiativeName% per i seguenti motivi:}
+      double.new.line: |-
+            ${MARKDOWN_DOUBLE_NEW_LINE:
+
+            }
+      ok: |-
+        ${MARKDOWN_OK:Buone notizie! Hai ottenuto %initiativeName%. Da questo momento puoi visualizzare il bonus nella sezione Portafoglio dell'app IO.
+
+        Ti ricordiamo che per iniziare ad usufruire del bonus devi configurare almeno un metodo di pagamento.
+
+        Puoi trovare maggiori informazioni sul [sito](http://example.com/).}
+      initiative:
+        publishing: |-
+          ${MARKDOWN_INITIATIVE_PUBLISHING:**Fino al 31 agosto 2022** puoi ottenere il tuo Bonus Cultura di 500 euro per acquistare:
+          biglietti per cinema, teatri, concerti, eventi culturali, musei, monumenti e parchi archeologici;
+          musica, libri, abbonamenti a quotidiani e periodici, anche in formato digitale;
+          corsi di teatro, musica, danza e lingue straniere.
+          
+          **Spendere il bonus è semplicissimo**: al momento dell’acquisto, online e presso gli esercenti fisici, **paga con la tua carta d’identità elettronica** o la tua tessera sanitaria. In alternativa, puoi sempre anticipare la spesa con uno dei tuoi metodi di pagamento...
+          }
+    subject:
+      ok: ${SUBJECT_OK:Il tuo Bonus è attivo}
+      ko: ${SUBJECT_KO:Non è stato possibile attivare %initiativeName%}
+      ko.checkIban: ${SUBJECT_KO_CHECKIBAN:L'IBAN che hai inserito è errato}
+      ko.tech: ${SUBJECT_KO_TECH:Abbiamo riscontrato dei problemi}
+      ko.nodeValue: ${SUBJECT_KO:Non è stato possibile attivare %initiativeName%}
+      initiative:
+        publishing: ${SUBJECT_INITIATIVE_PUBLISHING:Ottieni il tuo bonus da 500€!}
+
+logging:
+  level:
+    org:
+      springframework:
+        cloud: ${LOG_LEVEL_SPRING_CLOUD:WARN}
+        boot: ${LOG_LEVEL_SPRING_BOOT:INFO}
+        data: ${LOG_LEVEL_SPRING_DATA:INFO}
+    root: ${LOG_LEVEL_ROOT:INFO}
+    it:
+      gov:
+        pagopa: ${LOG_LEVEL_PAGOPA:DEBUG}
+
+util:
+  crypto:
+    aes:
+      cipherInstance: ${UTIL_CRYPTO_AES_CIPHER_INSTANCE:AES/GCM/NoPadding}
+      encoding: ${UTIL_CRYPTO_AES_ENCODING:UTF-8}
+      secret-type:
+        pbe:
+          algorithm: ${UTIL_CRYPTO_AES_SECRET_TYPE_PBE_ALGORITHM:PBKDF2WithHmacSHA1}
+          salt: ${UTIL_CRYPTO_AES_SECRET_TYPE_PBE_SALT:}
+          keySize: ${UTIL_CRYPTO_AES_SECRET_TYPE_PBE_KEY_SIZE:256}
+          iterationCount: ${UTIL_CRYPTO_AES_SECRET_TYPE_PBE_ITERATION_COUNT:10000}
+          passphrase: ${UTIL_CRYPTO_AES_SECRET_TYPE_PBE_PASSPHRASE:}
+      mode:
+        gcm:
+          iv: ${UTIL_CRYPTO_AES_MODE_GCM_IV:}
+          tLen: ${UTIL_CRYPTO_AES_MODE_GCM_TAG_LEN:16}

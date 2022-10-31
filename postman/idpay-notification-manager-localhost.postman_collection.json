@@ -1,0 +1,183 @@
+{
+	"info": {
+		"_postman_id": "33097009-890a-4bea-83d8-c148610a0115",
+		"name": "Notification Manager",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "21721440"
+	},
+	"item": [
+		{
+			"name": "Queue PUT - ONBOARDING_OK",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Queue PUT - ONBOARDING_OK\", function () {\r",
+							"    pm.response.to.have.status(200);\r",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "PUT",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n\t\"userId\" : \"cd07268c-73e8-4df4-8305-a35085e32eff\",\r\n\t\"initiativeId\" : \"servizio_di_test_ok\",\r\n\t\"status\" : \"ONBOARDING_OK\",\r\n\t\"admissibilityCheckDate\" : \"2022-07-01T09:41:17.970\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{baseUrl}}/idpay/notifications/",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"idpay",
+						"notifications",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Queue PUT - ONBOARDING_KO [PDND]",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Queue PUT - ONBOARDING_KO [PDND]\", function () {\r",
+							"    pm.response.to.have.status(200);\r",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "PUT",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n\t\"userId\" : \"cd07268c-73e8-4df4-8305-a35085e32eff\",\r\n\t\"initiativeId\" : \"servizio_di_test_ko_pdnd\",\r\n\t\"status\" : \"ONBOARDING_KO\",\r\n\t\"admissibilityCheckDate\" : \"2022-07-01T09:41:17.970\",\r\n    \"onboardingRejectionReasons\": [\"AUTOMATED_CRITERIA_ISEE_FAIL\"]\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{baseUrl}}/idpay/notifications/",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"idpay",
+						"notifications",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Queue PUT - ONBOARDING_KO [RANKING]",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Queue PUT - ONBOARDING_KO [RANKING]\", function () {\r",
+							"    pm.response.to.have.status(200);\r",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "PUT",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n\t\"userId\" : \"cd07268c-73e8-4df4-8305-a35085e32eff\",\r\n\t\"initiativeId\" : \"servizio_di_test_ko_ranking\",\r\n\t\"status\" : \"ONBOARDING_KO\",\r\n\t\"admissibilityCheckDate\" : \"2022-07-01T09:41:17.970\",\r\n    \"onboardingRejectionReasons\": [\"RANKING_FAIL\"]\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{baseUrl}}/idpay/notifications/",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"idpay",
+						"notifications",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Queue PUT - ONBOARDING_KO [TECH]",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Queue PUT - ONBOARDING_KO [RANKING]\", function () {\r",
+							"    pm.response.to.have.status(200);\r",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "PUT",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n\t\"userId\" : \"cd07268c-73e8-4df4-8305-a35085e32eff\",\r\n\t\"initiativeId\" : \"servizio_di_test_ko_tech\",\r\n\t\"status\" : \"ONBOARDING_KO\",\r\n\t\"admissibilityCheckDate\" : \"2022-07-01T09:41:17.970\",\r\n    \"onboardingRejectionReasons\": [\"TECH_FAIL\"]\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{baseUrl}}/idpay/notifications/",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"idpay",
+						"notifications",
+						""
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}

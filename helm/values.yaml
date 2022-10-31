@@ -1,0 +1,97 @@
+microservice-chart:
+  namespace: "idpay"
+  nameOverride: ""
+  fullnameOverride: ""
+
+  livenessProbe:
+    httpGet:
+      path: /actuator/health
+      port: 8080
+    initialDelaySeconds: 120
+    failureThreshold: 6
+    periodSeconds: 10
+
+  readinessProbe:
+    httpGet:
+      path: /actuator/health
+      port: 8080
+    initialDelaySeconds: 120
+    failureThreshold: 10
+    periodSeconds: 30
+
+  deployment:
+    create: true
+
+  service:
+    create: true
+    type: ClusterIP
+    port: 8080
+
+  ingress:
+    create: true
+    path: /idpaynotificationmanager/(.*)
+
+  serviceAccount:
+    create: false
+    annotations: {}
+    name: ""
+
+  podAnnotations: {}
+
+  podSecurityContext:
+    seccompProfile:
+      type: RuntimeDefault
+
+  securityContext:
+    allowPrivilegeEscalation: false
+
+  resources:
+    requests:
+      memory: "256Mi"
+      cpu: "40m"
+    limits:
+      memory: "4Gi"
+      cpu: "200m"
+
+  envConfig:
+    MONGODB_DBNAME: idpay
+    APPLICATIONINSIGHTS_ROLE_NAME: "idpaynotificationmanager"
+    APPLICATIONINSIGHTS_INSTRUMENTATION_LOGGING_LEVEL: "OFF"
+    APPLICATIONINSIGHTS_INSTRUMENTATION_MICROMETER_ENABLED: "false"
+
+  envConfigMapExternals:
+    idpay-common:
+      TZ: TZ
+    rest-client:
+      IO_BACKEND_BASE_URL: io_backend_base_url
+      IO_BACKEND_NOTIFY_URL: io_backend_message_url
+      IO_BACKEND_PROFILE_URL: io_backend_profile_url
+      IO_BACKEND_SERVICE_URL: io_backend_service_url
+      PDV_DECRYPT_BASE_URL: pdv_decrypt_base_url
+      INITIATIVE_MS_BASE_URL: initiative_ms_base_url
+    idpay-eventhub-00:
+      KAFKA_BINDER_BROKER_ENDPOINT_LIST: kafka_broker
+      KAFKA_NOTIFICATION_SASL_MECHANISM: kafka_sasl_mechanism
+      KAFKA_NOTIFICATION_SECURITY_PROTOCOL: kafka_security_protocol
+      KAFKA_TOPIC_OUTCOME: idpay_onboarding_outcome_topic
+      KAFKA_OUTCOME_GROUP_IN: idpay-onboarding-outcome-notify-consumer-group
+      KAFKA_TOPIC_NOTIFICATION: idpay_notification_request_topic
+      KAFKA_NOTIFICATION_GROUP_IN: idpay-notification-request-consumer-group
+      
+  envSecret:
+    MONGODB_URI: mongodb-connection-string
+    KAFKA_OUTCOME_SASL_JAAS_CONFIG: evh-idpay-onboarding-outcome-idpay-onboarding-outcome-consumer-jaas-config-idpay-00
+    KAFKA_OUTCOME_OUT_SASL_JAAS_CONFIG: evh-idpay-onboarding-outcome-idpay-onboarding-outcome-producer-jaas-config-idpay-00
+    KAFKA_NOTIFICATION_SASL_JAAS_CONFIG: evh-idpay-notification-request-idpay-notification-request-consumer-jaas-config-idpay-00
+    PDV_DECRYPT_API_KEY: pdv-api-key
+    IO_BACKEND_API_KEY: io-backend-aggregate-api-key
+    UTIL_CRYPTO_AES_SECRET_TYPE_PBE_SALT: notification-token-salt
+    UTIL_CRYPTO_AES_SECRET_TYPE_PBE_PASSPHRASE: notification-token-passphrase
+    UTIL_CRYPTO_AES_MODE_GCM_IV: notification-token-iv
+#    APPLICATIONINSIGHTS_CONNECTION_STRING: appinsights-instrumentation-key
+
+  # nodeSelector: {}
+
+  # tolerations: []
+
+  # affinity: {}
