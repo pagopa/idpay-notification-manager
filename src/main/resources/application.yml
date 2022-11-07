@@ -83,9 +83,9 @@ spring:
           auto-create-topics: false
           brokers: ${KAFKA_BINDER_BROKER_ENDPOINT_LIST:}
           configuration:
-            heartbeat.interval.ms: ${KAFKA_CONFIG_HEARTBEAT_INTERVAL_MS:30000}
+            heartbeat.interval.ms: ${KAFKA_CONFIG_HEARTBEAT_INTERVAL_MS:3000}
+            session.timeout.ms: ${KAFKA_CONFIG_SESSION_TIMEOUT_MS:30000}
             request.timeout.ms: ${KAFKA_CONFIG_REQUEST_TIMEOUT_MS:60000}
-            session.timeout.ms: ${KAFKA_CONFIG_SESSION_TIMEOUT_MS:60000}
             sasl.mechanism: ${KAFKA_NOTIFICATION_SASL_MECHANISM:}
             security.protocol: ${KAFKA_NOTIFICATION_SECURITY_PROTOCOL:}
         bindings:
@@ -93,7 +93,7 @@ spring:
             consumer:
               autoCommitOffset: ${KAFKA_OUTCOME_AUTO_COMMIT:${KAFKA_CONSUMER_CONFIG_AUTO_COMMIT:true}}
               configuration:
-                connections.max.idle.ms: ${KAFKA_OUTCOME_REQUEST_CONNECTIONS_MAX_IDLE_MS:${KAFKA_CONSUMER_CONFIG_CONNECTIONS_MAX_IDLE_MS:300000}}
+                connections.max.idle.ms: ${KAFKA_OUTCOME_REQUEST_CONNECTIONS_MAX_IDLE_MS:${KAFKA_CONSUMER_CONFIG_CONNECTIONS_MAX_IDLE_MS:180000}}
                 max.poll:
                   interval.ms: ${KAFKA_OUTCOME_INTERVAL_TIMEOUT_MS:${KAFKA_CONFIG_MAX_POLL_INTERVAL_TIMEOUT_MS:300000}}
                   records: ${KAFKA_OUTCOME_MAX_POLL_SIZE:${KAFKA_CONSUMER_CONFIG_MAX_POLL_SIZE:500}}
@@ -106,7 +106,7 @@ spring:
             consumer:
               autoCommitOffset: ${KAFKA_NOTIFICATION_AUTO_COMMIT:${KAFKA_CONSUMER_CONFIG_AUTO_COMMIT:true}}
               configuration:
-                connections.max.idle.ms: ${KAFKA_NOTIFICATION_REQUEST_CONNECTIONS_MAX_IDLE_MS:${KAFKA_CONSUMER_CONFIG_CONNECTIONS_MAX_IDLE_MS:300000}}
+                connections.max.idle.ms: ${KAFKA_NOTIFICATION_REQUEST_CONNECTIONS_MAX_IDLE_MS:${KAFKA_CONSUMER_CONFIG_CONNECTIONS_MAX_IDLE_MS:180000}}
                 max.poll:
                   interval.ms: ${KAFKA_NOTIFICATION_INTERVAL_TIMEOUT_MS:${KAFKA_CONFIG_MAX_POLL_INTERVAL_TIMEOUT_MS:300000}}
                   records: ${KAFKA_NOTIFICATION_MAX_POLL_SIZE:${KAFKA_CONSUMER_CONFIG_MAX_POLL_SIZE:500}}
@@ -122,6 +122,15 @@ spring:
     mongodb:
       database: ${MONGODB_DBNAME}
       uri: ${MONGODB_URI}
+        # custom configured properties
+      config:
+        connectionPool:
+          maxSize: ${MONGODB_CONNECTIONPOOL_MAX_SIZE:100}
+          minSize: ${MONGODB_CONNECTIONPOOL_MIN_SIZE:0}
+          maxWaitTimeMS: ${MONGODB_CONNECTIONPOOL_MAX_WAIT_MS:120000}
+          maxConnectionLifeTimeMS: ${MONGODB_CONNECTIONPOOL_MAX_CONNECTION_LIFE_MS:0}
+          maxConnectionIdleTimeMS: ${MONGODB_CONNECTIONPOOL_MAX_CONNECTION_IDLE_MS:120000}
+          maxConnecting: ${MONGODB_CONNECTIONPOOL_MAX_CONNECTING:2}
 
 notification:
   manager:
