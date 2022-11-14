@@ -55,6 +55,18 @@
             <artifactId>feign-okhttp</artifactId>
         </dependency>
 
+        <!--Cache-->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-cache</artifactId>
+            <version>2.7.5</version>
+        </dependency>
+        <dependency>
+            <groupId>com.hazelcast</groupId>
+            <artifactId>hazelcast</artifactId>
+            <version>5.2.0</version>
+        </dependency>
+
         <!--TEST-->
         <dependency>
             <groupId>org.springframework.boot</groupId>

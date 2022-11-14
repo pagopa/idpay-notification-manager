@@ -17,6 +17,7 @@ import javax.crypto.spec.GCMParameterSpec;
 import javax.crypto.spec.PBEKeySpec;
 import javax.crypto.spec.SecretKeySpec;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -57,7 +58,7 @@ public class AESUtil {
       throw fail(e);
     }
   }
-
+  @Cacheable(value = "IoTokenCache")
   public String decrypt(String passphrase, String ciphertext) {
     try {
       SecretKey key = generateKey(passphrase);
