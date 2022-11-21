@@ -78,14 +78,6 @@ class IOBackEndRestClientTest {
     assertNotNull(actualResponse.getPreferredLanguages());
   }
 
-  @Test
-  void getService_test() {
-
-    final ServiceResource actualResponse = restConnector.getService(SERVICE_ID);
-
-    assertNotNull(actualResponse);
-  }
-
   public static class WireMockInitializer
       implements ApplicationContextInitializer<ConfigurableApplicationContext> {
 

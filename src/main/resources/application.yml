@@ -8,7 +8,6 @@ rest-client:
       notify.url: ${IO_BACKEND_NOTIFY_URL:}
       profile.url: ${IO_BACKEND_PROFILE_URL:}
       service.url: ${IO_BACKEND_SERVICE_URL:}
-      token-value: ${IO_BACKEND_API_KEY:}
       ttl: 3600
       base-url: ${IO_BACKEND_BASE_URL:}
       serviceCode: backend-io-notification

@@ -19,8 +19,6 @@ public class Notification {
 
   private String notificationId;
 
-  private String serviceId;
-
   private String notificationStatus;
 
   private LocalDateTime notificationDate;

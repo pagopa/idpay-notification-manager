@@ -42,7 +42,6 @@ class NotificationMapperTest {
           .initiativeId(INITIATIVE_ID)
           .initiativeName(INITIATIVE_ID)
           .userId(USER_ID)
-          .serviceId(INITIATIVE_ID)
           .onboardingOutcome(STATUS)
           .operationType("ONBOARDING")
           .rejectReasons(List.of())
