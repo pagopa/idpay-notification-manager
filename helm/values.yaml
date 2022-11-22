@@ -84,7 +84,6 @@ microservice-chart:
     KAFKA_OUTCOME_OUT_SASL_JAAS_CONFIG: evh-idpay-onboarding-outcome-idpay-onboarding-outcome-producer-jaas-config-idpay-00
     KAFKA_NOTIFICATION_SASL_JAAS_CONFIG: evh-idpay-notification-request-idpay-notification-request-consumer-jaas-config-idpay-00
     PDV_DECRYPT_API_KEY: pdv-api-key
-    IO_BACKEND_API_KEY: io-backend-aggregate-api-key
     UTIL_CRYPTO_AES_SECRET_TYPE_PBE_SALT: notification-token-salt
     UTIL_CRYPTO_AES_SECRET_TYPE_PBE_PASSPHRASE: notification-token-passphrase
     UTIL_CRYPTO_AES_MODE_GCM_IV: notification-token-iv

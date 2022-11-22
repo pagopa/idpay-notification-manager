@@ -58,12 +58,32 @@ public class NotificationMarkdown {
   @Value("${notification.manager.markdown.initiative.publishing}")
   private String markdownInitiativePublishing;
 
+  @Value("${notification.manager.subject.ok.refund}")
+  private String subjectRefundOk;
+
+  @Value("${notification.manager.markdown.ok.refund}")
+  private String markdownRefundOk;
+
+  @Value("${notification.manager.subject.ko.refund}")
+  private String subjectRefundKo;
+
+  @Value("${notification.manager.markdown.ko.refund}")
+  private String markdownRefundKo;
+
   public String getSubjectCheckIbanKo(){
     return this.subjectCheckIbanKo;
   }
 
   public String getMarkdownCheckIbanKo(){
     return this.markdownCheckIbanKo;
+  }
+
+  public String getSubjectRefund(String status){
+    return ("ACCEPTED".equals(status)) ? subjectRefundOk : subjectRefundKo;
+  }
+
+  public String getMarkdownRefund(String status){
+    return ("ACCEPTED".equals(status)) ? markdownRefundOk : markdownRefundKo;
   }
 
   public String getSubject(EvaluationDTO evaluationDTO) {

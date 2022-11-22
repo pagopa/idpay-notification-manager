@@ -12,13 +12,9 @@ import javax.validation.Valid;
 @Service
 public class IOBackEndRestConnectorImpl implements IOBackEndRestConnector {
 
-  private final String subscriptionKey;
   private final IOBackEndRestClient ioBackEndRestClient;
 
-  public IOBackEndRestConnectorImpl(
-      @Value("${rest-client.notification.backend-io.token-value}") String subscriptionKey,
-      IOBackEndRestClient ioBackEndRestClient) {
-    this.subscriptionKey = subscriptionKey;
+  public IOBackEndRestConnectorImpl(IOBackEndRestClient ioBackEndRestClient) {
     this.ioBackEndRestClient = ioBackEndRestClient;
   }
 
@@ -31,10 +27,4 @@ public class IOBackEndRestConnectorImpl implements IOBackEndRestConnector {
   public ProfileResource getProfile(String fiscalCode, String primaryKey) {
     return ioBackEndRestClient.getProfile(fiscalCode, primaryKey);
   }
-
-  @Override
-  public ServiceResource getService(String serviceId) {
-    return ioBackEndRestClient.getService(serviceId, subscriptionKey);
-  }
-
 }
