@@ -1,6 +1,6 @@
 package it.gov.pagopa.notification.manager.dto.event;
 
-import java.time.LocalDateTime;
+import java.time.LocalDate;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -17,7 +17,7 @@ public class NotificationRefundQueueDTO extends NotificationQueueDTO {
   private Long refundReward;
   private String rejectionCode;
   private String rejectionReason;
-  private LocalDateTime refundDate;
+  private LocalDate refundDate;
   private Long refundFeedbackProgressive;
   private String refundCro;
   private String status;
