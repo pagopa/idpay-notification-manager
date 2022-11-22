@@ -28,6 +28,7 @@ import it.gov.pagopa.notification.manager.model.NotificationMarkdown;
 import it.gov.pagopa.notification.manager.repository.NotificationManagerRepository;
 import it.gov.pagopa.notification.manager.utils.AESUtil;
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -54,6 +55,7 @@ class NotificationManagerServiceTest {
   private static final String TEST_TOKEN = "TEST_TOKEN";
   private static final String INITIATIVE_ID = "INITIATIVE_ID";
   private static final LocalDateTime TEST_DATE = LocalDateTime.now();
+  private static final LocalDate TEST_DATE_ONLY_DATE = LocalDate.now();
   private static final FiscalCodeResource FISCAL_CODE_RESOURCE = new FiscalCodeResource();
   private static final List<String> PREFERRED_LANGUAGES = new ArrayList<>();
   private static final ProfileResource PROFILE_RESOURCE = new ProfileResource(true,
@@ -77,13 +79,12 @@ class NotificationManagerServiceTest {
           TEST_TOKEN,
           INITIATIVE_ID,
           INITIATIVE_ID,
-          TEST_DATE,
+          TEST_DATE_ONLY_DATE,
           INITIATIVE_ID,
           NotificationConstants.STATUS_ONBOARDING_OK,
           TEST_DATE,
           List.of(),
-          new BigDecimal(500),
-          INITIATIVE_ID);
+          new BigDecimal(500));
   private static final NotificationResource NOTIFICATION_RESOURCE = new NotificationResource();
   private static final NotificationDTO NOTIFICATION_DTO = new NotificationDTO();
   private static final Notification NOTIFICATION =

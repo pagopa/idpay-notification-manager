@@ -5,6 +5,7 @@ import it.gov.pagopa.notification.manager.dto.EvaluationDTO;
 import it.gov.pagopa.notification.manager.dto.OnboardingRejectionReason;
 import it.gov.pagopa.notification.manager.dto.OnboardingRejectionReason.OnboardingRejectionReasonCode;
 import it.gov.pagopa.notification.manager.dto.OnboardingRejectionReason.OnboardingRejectionReasonType;
+import java.time.LocalDate;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -43,25 +44,25 @@ class NotificationMarkdownTest {
   private static final String USER_ID = "USER_ID";
   private static final String INITIATIVE_ID = "Iniziativa di test";
   private static final LocalDateTime TEST_DATE = LocalDateTime.now();
+  private static final LocalDate TEST_DATE_ONLY_DATE = LocalDate.now();
 
   private static final EvaluationDTO EVALUATION_DTO =
       new EvaluationDTO(
           USER_ID,
           INITIATIVE_ID,
           INITIATIVE_ID,
-          TEST_DATE,
+          TEST_DATE_ONLY_DATE,
           INITIATIVE_ID,
           NotificationConstants.STATUS_ONBOARDING_OK,
           TEST_DATE,
           List.of(),
-          new BigDecimal(500),
-          INITIATIVE_ID);
+          new BigDecimal(500));
   private static final EvaluationDTO EVALUATION_DTO_KO_PDND =
       new EvaluationDTO(
           USER_ID,
           INITIATIVE_ID,
           INITIATIVE_ID,
-          TEST_DATE,
+          TEST_DATE_ONLY_DATE,
           INITIATIVE_ID,
           NotificationConstants.STATUS_ONBOARDING_KO,
           TEST_DATE,
@@ -72,15 +73,14 @@ class NotificationMarkdownTest {
                   "AUTHORITY",
                   "LABEL",
                   "DETAIL")),
-          new BigDecimal(500),
-          INITIATIVE_ID);
+          new BigDecimal(500));
 
   private static final EvaluationDTO EVALUATION_DTO_KO_RANKING =
       new EvaluationDTO(
           USER_ID,
           INITIATIVE_ID,
           INITIATIVE_ID,
-          TEST_DATE,
+          TEST_DATE_ONLY_DATE,
           INITIATIVE_ID,
           NotificationConstants.STATUS_ONBOARDING_KO,
           TEST_DATE,
@@ -91,15 +91,14 @@ class NotificationMarkdownTest {
                   "AUTHORITY",
                   "LABEL",
                   "DETAIL")),
-          new BigDecimal(500),
-          INITIATIVE_ID);
+          new BigDecimal(500));
 
   private static final EvaluationDTO EVALUATION_DTO_KO_TECH =
       new EvaluationDTO(
           USER_ID,
           INITIATIVE_ID,
           INITIATIVE_ID,
-          TEST_DATE,
+          TEST_DATE_ONLY_DATE,
           INITIATIVE_ID,
           NotificationConstants.STATUS_ONBOARDING_KO,
           TEST_DATE,
@@ -110,8 +109,7 @@ class NotificationMarkdownTest {
                   "AUTHORITY",
                   "LABEL",
                   "DETAIL")),
-          new BigDecimal(500),
-          INITIATIVE_ID);
+          new BigDecimal(500));
 
   @Autowired NotificationMarkdown notificationMarkdown;
 
