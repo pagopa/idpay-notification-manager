@@ -146,6 +146,11 @@ notification:
           
           Per modificare l'IBAN errato ti basta andare **Profilo > I tuoi dati > I tuoi IBAN** e seguire le indicazioni, oppure cliccare direttamente qui sotto.}
         pdnd: ${MARKDOWN_KO_PDND:Purtroppo non hai i requisiti necessari per aderire a %initiativeName% per i seguenti motivi:}
+        refund: ${MARKDOWN_KO_REFUND:Purtroppo non è stato possibile accreditarti il rimborso.
+          
+                Ti chiediamo di modificare l'IBAN.
+                Per modificare l'IBAN errato ti basta andare **Profilo > I tuoi dati > I tuoi IBAN** e seguire le indicazioni.
+                }
       double.new.line: |-
             ${MARKDOWN_DOUBLE_NEW_LINE:
 
@@ -156,6 +161,7 @@ notification:
         Ti ricordiamo che per iniziare ad usufruire del bonus devi configurare almeno un metodo di pagamento.
 
         Puoi trovare maggiori informazioni sul [sito](http://example.com/).}
+      ok.refund: ${MARKDOWN_OK_REFUND:Ti è stato accreditato un rimborso!}
       initiative:
         publishing: |-
           ${MARKDOWN_INITIATIVE_PUBLISHING:**Fino al 31 agosto 2022** puoi ottenere il tuo Bonus Cultura di 500 euro per acquistare:
@@ -167,7 +173,9 @@ notification:
           }
     subject:
       ok: ${SUBJECT_OK:Il tuo Bonus è attivo}
+      ok.refund: ${SUBJECT_OK_REFUND:Ti è stato accreditato un rimborso!}
       ko: ${SUBJECT_KO:Non è stato possibile attivare %initiativeName%}
+      ko.refund: ${SUBJECT_KO_REFUND:Non è stato possibile effettuare il rimborso}
       ko.checkIban: ${SUBJECT_KO_CHECKIBAN:L'IBAN che hai inserito è errato}
       ko.tech: ${SUBJECT_KO_TECH:Abbiamo riscontrato dei problemi}
       ko.nodeValue: ${SUBJECT_KO:Non è stato possibile attivare %initiativeName%}

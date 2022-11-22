@@ -162,4 +162,28 @@ class NotificationMarkdownTest {
     String actual = notificationMarkdown.getMarkdown(EVALUATION_DTO_KO_TECH);
     log.info(actual);
   }
+
+  @Test
+  void getSubjectRefund_ok(){
+    String actual = notificationMarkdown.getSubjectRefund("ACCEPTED");
+    log.info(actual);
+  }
+
+  @Test
+  void getSubjectRefund_ko(){
+    String actual = notificationMarkdown.getSubjectRefund("REJECTED");
+    log.info(actual);
+  }
+
+  @Test
+  void getMarkdownRefund_ok(){
+    String actual = notificationMarkdown.getMarkdownRefund("ACCEPTED");
+    log.info(actual);
+  }
+
+  @Test
+  void getMarkdownRefund_ko(){
+    String actual = notificationMarkdown.getMarkdownRefund("REJECTED");
+    log.info(actual);
+  }
 }

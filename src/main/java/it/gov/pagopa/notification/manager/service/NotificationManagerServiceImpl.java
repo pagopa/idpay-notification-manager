@@ -12,6 +12,7 @@ import it.gov.pagopa.notification.manager.dto.ProfileResource;
 import it.gov.pagopa.notification.manager.dto.event.AnyOfNotificationQueueDTO;
 import it.gov.pagopa.notification.manager.dto.event.NotificationCitizenOnQueueDTO;
 import it.gov.pagopa.notification.manager.dto.event.NotificationIbanQueueDTO;
+import it.gov.pagopa.notification.manager.dto.event.NotificationRefundQueueDTO;
 import it.gov.pagopa.notification.manager.dto.initiative.InitiativeAdditionalInfoDTO;
 import it.gov.pagopa.notification.manager.dto.mapper.NotificationDTOMapper;
 import it.gov.pagopa.notification.manager.dto.mapper.NotificationMapper;
@@ -128,6 +129,7 @@ public class NotificationManagerServiceImpl implements NotificationManagerServic
   }
 
   private String decryptUserToken(String token) {
+    log.info(NotificationConstants.REQUEST_PDV);
     try {
       return pdvDecryptRestConnector.getPii(token).getPii();
     } catch (FeignException e) {
@@ -145,6 +147,16 @@ public class NotificationManagerServiceImpl implements NotificationManagerServic
     }
   }
 
+  private InitiativeAdditionalInfoDTO getIoTokens(String initiativeId){
+    log.debug(NotificationConstants.IO_TOKENS);
+    try {
+      return initiativeRestConnector.getIOTokens(initiativeId);
+    } catch (FeignException e) {
+      log.error(NotificationConstants.FEIGN_KO.formatted(e.status(), e.contentUTF8()));
+      return null;
+    }
+  }
+
   @Override
   public void sendNotificationFromOperationType(AnyOfNotificationQueueDTO anyOfNotificationQueueDTO) {
     String fiscalCode = null;
@@ -156,14 +168,9 @@ public class NotificationManagerServiceImpl implements NotificationManagerServic
     if (anyOfNotificationQueueDTO instanceof NotificationCitizenOnQueueDTO notificationCitizenOnQueueDTO){
 
       notification = notificationMapper.toEntity(notificationCitizenOnQueueDTO);
-      log.debug("[NOTIFY] Getting IO Tokens");
-      try {
-        ioTokens = initiativeRestConnector.getIOTokens(notificationCitizenOnQueueDTO.getInitiativeId());
-      } catch (FeignException e) {
-        log.error(NotificationConstants.FEIGN_KO.formatted(e.status(), e.contentUTF8()));
-      }
 
-      log.info(NotificationConstants.REQUEST_PDV);
+      ioTokens = getIoTokens(notificationCitizenOnQueueDTO.getInitiativeId());
+
       fiscalCode = decryptUserToken(notificationCitizenOnQueueDTO.getUserId());
 
       subject = notificationMarkdown.getSubjectInitiativePublishing();
@@ -172,18 +179,25 @@ public class NotificationManagerServiceImpl implements NotificationManagerServic
     if (anyOfNotificationQueueDTO instanceof NotificationIbanQueueDTO notificationIbanQueueDTO){
 
       notification = notificationMapper.toEntity(notificationIbanQueueDTO);
-      log.debug("[NOTIFY] Getting IO Tokens");
-      try {
-        ioTokens = initiativeRestConnector.getIOTokens(notificationIbanQueueDTO.getInitiativeId());
-      } catch (FeignException e) {
-        log.error(NotificationConstants.FEIGN_KO.formatted(e.status(), e.contentUTF8()));
-      }
 
-      log.info(NotificationConstants.REQUEST_PDV);
+      ioTokens = getIoTokens(notificationIbanQueueDTO.getInitiativeId());
+
       fiscalCode = decryptUserToken(notificationIbanQueueDTO.getUserId());
 
       subject = notificationMarkdown.getSubjectCheckIbanKo();
       markdown = notificationMarkdown.getMarkdownCheckIbanKo();
+    }
+
+    if (anyOfNotificationQueueDTO instanceof NotificationRefundQueueDTO notificationRefundOnQueueDTO){
+
+      notification = notificationMapper.toEntity(notificationRefundOnQueueDTO);
+
+      ioTokens = getIoTokens(notificationRefundOnQueueDTO.getInitiativeId());
+
+      fiscalCode = decryptUserToken(notificationRefundOnQueueDTO.getUserId());
+
+      subject = notificationMarkdown.getSubjectRefund(notificationRefundOnQueueDTO.getStatus());
+      markdown = notificationMarkdown.getMarkdownRefund(notificationRefundOnQueueDTO.getStatus());
     }
 
     if (ioTokens == null) {
