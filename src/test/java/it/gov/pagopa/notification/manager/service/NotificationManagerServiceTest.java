@@ -111,6 +111,7 @@ class NotificationManagerServiceTest {
 
   private static final NotificationRefundQueueDTO NOTIFICATION_REFUND_QUEUE_DTO = NotificationRefundQueueDTO.builder()
       .operationType(OPERATION_TYPE)
+      .refundReward(10000L)
       .userId(TEST_TOKEN)
       .initiativeId(INITIATIVE_ID)
       .serviceId(SERVICE_ID)
@@ -654,7 +655,7 @@ class NotificationManagerServiceTest {
     Mockito.when(pdvDecryptRestConnector.getPii(TEST_TOKEN)).thenReturn(FISCAL_CODE_RESOURCE);
     Mockito.when(notificationMarkdown.getSubjectRefund(NOTIFICATION_REFUND_QUEUE_DTO.getStatus())).thenReturn(SUBJECT);
 
-    Mockito.when(notificationMarkdown.getMarkdownRefund(NOTIFICATION_REFUND_QUEUE_DTO.getStatus())).thenReturn(MARKDOWN);
+    Mockito.when(notificationMarkdown.getMarkdownRefund(Mockito.eq(NOTIFICATION_REFUND_QUEUE_DTO.getStatus()), Mockito.anyString())).thenReturn(MARKDOWN);
 
     Mockito.when(aesUtil.decrypt(PASSPHRASE, PRIMARY_KEY))
         .thenReturn(TOKEN);

@@ -161,7 +161,10 @@ notification:
         Ti ricordiamo che per iniziare ad usufruire del bonus devi configurare almeno un metodo di pagamento.
 
         Puoi trovare maggiori informazioni sul [sito](http://example.com/).}
-      ok.refund: ${MARKDOWN_OK_REFUND:Ti è stato accreditato un rimborso!}
+      ok.refund: |-
+        ${MARKDOWN_OK_REFUND:Ti è stato accreditato un rimborso di %effectiveReward% euro!
+        
+        Puoi controllare il bonus disponibile direttamente nella pagina dell'iniziativa.}
       initiative:
         publishing: |-
           ${MARKDOWN_INITIATIVE_PUBLISHING:**Fino al 31 agosto 2022** puoi ottenere il tuo Bonus Cultura di 500 euro per acquistare:

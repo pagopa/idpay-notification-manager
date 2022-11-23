@@ -21,6 +21,8 @@ import it.gov.pagopa.notification.manager.model.Notification;
 import it.gov.pagopa.notification.manager.model.NotificationMarkdown;
 import it.gov.pagopa.notification.manager.repository.NotificationManagerRepository;
 import it.gov.pagopa.notification.manager.utils.AESUtil;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -79,7 +81,6 @@ public class NotificationManagerServiceImpl implements NotificationManagerServic
 
     log.info("[NOTIFY] Sending request to DECRYPT_TOKEN");
     String tokenDecrypt = aesUtil.decrypt(passphrase, ioTokens.getPrimaryTokenIO());
-    log.info(tokenDecrypt);
 
     if (isNotSenderAllowed(fiscalCode, tokenDecrypt)) {
       notificationKO(notification);
@@ -197,7 +198,8 @@ public class NotificationManagerServiceImpl implements NotificationManagerServic
       fiscalCode = decryptUserToken(notificationRefundOnQueueDTO.getUserId());
 
       subject = notificationMarkdown.getSubjectRefund(notificationRefundOnQueueDTO.getStatus());
-      markdown = notificationMarkdown.getMarkdownRefund(notificationRefundOnQueueDTO.getStatus());
+      markdown = notificationMarkdown.getMarkdownRefund(notificationRefundOnQueueDTO.getStatus(),
+          BigDecimal.valueOf(notificationRefundOnQueueDTO.getRefundReward()).divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_DOWN).toString());
     }
 
     if (ioTokens == null) {
@@ -213,7 +215,7 @@ public class NotificationManagerServiceImpl implements NotificationManagerServic
     }
 
     String tokenDecrypt = aesUtil.decrypt(passphrase, ioTokens.getPrimaryTokenIO());
-    log.info("tokenDecrypted: " + tokenDecrypt);
+
     if (isNotSenderAllowed(fiscalCode, tokenDecrypt)) {
       notificationKO(notification);
       return;
