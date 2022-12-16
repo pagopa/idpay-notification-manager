@@ -5,6 +5,7 @@ import it.gov.pagopa.notification.manager.dto.EvaluationDTO;
 import it.gov.pagopa.notification.manager.dto.OnboardingRejectionReason;
 import it.gov.pagopa.notification.manager.dto.OnboardingRejectionReason.OnboardingRejectionReasonCode;
 import it.gov.pagopa.notification.manager.dto.OnboardingRejectionReason.OnboardingRejectionReasonType;
+import java.time.LocalDate;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -26,9 +27,11 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
     properties = {
       "notification.manager.markdown.double.new.line=\\n\\n",
       "notification.manager.subject.ok=Il tuo Bonus è attivo",
+      "notification.manager.subject.ok.refund=Ti è stato accreditato un rimborso!",
       "notification.manager.subject.ko=Non è stato possibile attivare %initiativeName%",
       "notification.manager.subject.ko.tech=Abbiamo riscontrato dei problemi",
       "notification.manager.markdown.ok=Buone notizie! Hai ottenuto %initiativeName%. Da questo momento puoi visualizzare il bonus nella sezione Portafoglio dell'app IO.\\n\\nTi ricordiamo che per iniziare ad usufruire del bonus devi configurare almeno un metodo di pagamento.\\n\\nPuoi trovare maggiori informazioni sul [sito](http://example.com/).",
+      "notification.manager.markdown.ok=Hai ottenuto un rimborso di %effectiveReward% euro!",
       "notification.manager.markdown.ko.pdnd=Purtroppo non hai i requisiti necessari per aderire a %initiativeName% per i seguenti motivi:",
       "notification.manager.markdown.ko.ranking=Purtroppo non è stato possibile attivare %initiativeName% in quanto i tuoi requisiti non rientrano nella graduatoria.",
       "notification.manager.markdown.ko.mistake=Se ritieni che ci sia stato un errore puoi segnalarlo direttamente all'Ente erogatore dell'iniziativa.",
@@ -43,27 +46,29 @@ class NotificationMarkdownTest {
   private static final String USER_ID = "USER_ID";
   private static final String INITIATIVE_ID = "Iniziativa di test";
   private static final LocalDateTime TEST_DATE = LocalDateTime.now();
+  private static final LocalDate TEST_DATE_ONLY_DATE = LocalDate.now();
 
   private static final EvaluationDTO EVALUATION_DTO =
       new EvaluationDTO(
           USER_ID,
           INITIATIVE_ID,
           INITIATIVE_ID,
-          TEST_DATE,
+          TEST_DATE_ONLY_DATE,
           INITIATIVE_ID,
           NotificationConstants.STATUS_ONBOARDING_OK,
           TEST_DATE,
+          TEST_DATE,
           List.of(),
-          new BigDecimal(500),
-          INITIATIVE_ID);
+          new BigDecimal(500), 1L);
   private static final EvaluationDTO EVALUATION_DTO_KO_PDND =
       new EvaluationDTO(
           USER_ID,
           INITIATIVE_ID,
           INITIATIVE_ID,
-          TEST_DATE,
+          TEST_DATE_ONLY_DATE,
           INITIATIVE_ID,
           NotificationConstants.STATUS_ONBOARDING_KO,
+          TEST_DATE,
           TEST_DATE,
           List.of(
               new OnboardingRejectionReason(
@@ -72,17 +77,17 @@ class NotificationMarkdownTest {
                   "AUTHORITY",
                   "LABEL",
                   "DETAIL")),
-          new BigDecimal(500),
-          INITIATIVE_ID);
+          new BigDecimal(500), 1L);
 
   private static final EvaluationDTO EVALUATION_DTO_KO_RANKING =
       new EvaluationDTO(
           USER_ID,
           INITIATIVE_ID,
           INITIATIVE_ID,
-          TEST_DATE,
+          TEST_DATE_ONLY_DATE,
           INITIATIVE_ID,
           NotificationConstants.STATUS_ONBOARDING_KO,
+          TEST_DATE,
           TEST_DATE,
           List.of(
               new OnboardingRejectionReason(
@@ -91,17 +96,17 @@ class NotificationMarkdownTest {
                   "AUTHORITY",
                   "LABEL",
                   "DETAIL")),
-          new BigDecimal(500),
-          INITIATIVE_ID);
+          new BigDecimal(500),1L);
 
   private static final EvaluationDTO EVALUATION_DTO_KO_TECH =
       new EvaluationDTO(
           USER_ID,
           INITIATIVE_ID,
           INITIATIVE_ID,
-          TEST_DATE,
+          TEST_DATE_ONLY_DATE,
           INITIATIVE_ID,
           NotificationConstants.STATUS_ONBOARDING_KO,
+          TEST_DATE,
           TEST_DATE,
           List.of(
               new OnboardingRejectionReason(
@@ -110,8 +115,7 @@ class NotificationMarkdownTest {
                   "AUTHORITY",
                   "LABEL",
                   "DETAIL")),
-          new BigDecimal(500),
-          INITIATIVE_ID);
+          new BigDecimal(500), 1L);
 
   @Autowired NotificationMarkdown notificationMarkdown;
 
@@ -160,6 +164,30 @@ class NotificationMarkdownTest {
   @Test
   void getMarkdown_status_ko_tech() {
     String actual = notificationMarkdown.getMarkdown(EVALUATION_DTO_KO_TECH);
+    log.info(actual);
+  }
+
+  @Test
+  void getSubjectRefund_ok(){
+    String actual = notificationMarkdown.getSubjectRefund("ACCEPTED");
+    log.info(actual);
+  }
+
+  @Test
+  void getSubjectRefund_ko(){
+    String actual = notificationMarkdown.getSubjectRefund("REJECTED");
+    log.info(actual);
+  }
+
+  @Test
+  void getMarkdownRefund_ok(){
+    String actual = notificationMarkdown.getMarkdownRefund("ACCEPTED", "500");
+    log.info(actual);
+  }
+
+  @Test
+  void getMarkdownRefund_ko(){
+    String actual = notificationMarkdown.getMarkdownRefund("REJECTED", "500");
     log.info(actual);
   }
 }
