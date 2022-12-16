@@ -83,8 +83,9 @@ class NotificationManagerServiceTest {
           INITIATIVE_ID,
           NotificationConstants.STATUS_ONBOARDING_OK,
           TEST_DATE,
+          TEST_DATE,
           List.of(),
-          new BigDecimal(500));
+          new BigDecimal(500), 1L);
   private static final NotificationResource NOTIFICATION_RESOURCE = new NotificationResource();
   private static final NotificationDTO NOTIFICATION_DTO = new NotificationDTO();
   private static final Notification NOTIFICATION =

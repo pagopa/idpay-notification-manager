@@ -27,7 +27,9 @@ public class EvaluationDTO {
   private String status;
   @NotNull
   private LocalDateTime admissibilityCheckDate;
+  private LocalDateTime criteriaConsensusTimestamp;
   @NotNull
   private List<OnboardingRejectionReason> onboardingRejectionReasons;
   private BigDecimal beneficiaryBudget;
+  private Long rankingValue;
 }

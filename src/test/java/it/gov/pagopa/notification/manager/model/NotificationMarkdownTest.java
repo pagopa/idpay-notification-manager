@@ -57,8 +57,9 @@ class NotificationMarkdownTest {
           INITIATIVE_ID,
           NotificationConstants.STATUS_ONBOARDING_OK,
           TEST_DATE,
+          TEST_DATE,
           List.of(),
-          new BigDecimal(500));
+          new BigDecimal(500), 1L);
   private static final EvaluationDTO EVALUATION_DTO_KO_PDND =
       new EvaluationDTO(
           USER_ID,
@@ -68,6 +69,7 @@ class NotificationMarkdownTest {
           INITIATIVE_ID,
           NotificationConstants.STATUS_ONBOARDING_KO,
           TEST_DATE,
+          TEST_DATE,
           List.of(
               new OnboardingRejectionReason(
                   OnboardingRejectionReasonType.AUTOMATED_CRITERIA_FAIL,
@@ -75,7 +77,7 @@ class NotificationMarkdownTest {
                   "AUTHORITY",
                   "LABEL",
                   "DETAIL")),
-          new BigDecimal(500));
+          new BigDecimal(500), 1L);
 
   private static final EvaluationDTO EVALUATION_DTO_KO_RANKING =
       new EvaluationDTO(
@@ -86,6 +88,7 @@ class NotificationMarkdownTest {
           INITIATIVE_ID,
           NotificationConstants.STATUS_ONBOARDING_KO,
           TEST_DATE,
+          TEST_DATE,
           List.of(
               new OnboardingRejectionReason(
                   OnboardingRejectionReasonType.OUT_OF_RANKING,
@@ -93,7 +96,7 @@ class NotificationMarkdownTest {
                   "AUTHORITY",
                   "LABEL",
                   "DETAIL")),
-          new BigDecimal(500));
+          new BigDecimal(500),1L);
 
   private static final EvaluationDTO EVALUATION_DTO_KO_TECH =
       new EvaluationDTO(
@@ -104,6 +107,7 @@ class NotificationMarkdownTest {
           INITIATIVE_ID,
           NotificationConstants.STATUS_ONBOARDING_KO,
           TEST_DATE,
+          TEST_DATE,
           List.of(
               new OnboardingRejectionReason(
                   OnboardingRejectionReasonType.TECHNICAL_ERROR,
@@ -111,7 +115,7 @@ class NotificationMarkdownTest {
                   "AUTHORITY",
                   "LABEL",
                   "DETAIL")),
-          new BigDecimal(500));
+          new BigDecimal(500), 1L);
 
   @Autowired NotificationMarkdown notificationMarkdown;
 

@@ -41,8 +41,9 @@ class NotificationManagerControllerTest {
           INITIATIVE_ID,
           NotificationConstants.STATUS_ONBOARDING_OK,
           TEST_DATE.atStartOfDay(),
+          TEST_DATE.atStartOfDay(),
           List.of(),
-          new BigDecimal(500));
+          new BigDecimal(500), 1L);
 
   @MockBean NotificationManagerService notificationManagerServiceMock;
 

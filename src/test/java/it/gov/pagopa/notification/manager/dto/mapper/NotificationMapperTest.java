@@ -32,8 +32,9 @@ class NotificationMapperTest {
           INITIATIVE_ID,
           STATUS,
           TEST_DATE.atStartOfDay(),
+          TEST_DATE.atStartOfDay(),
           List.of(),
-          new BigDecimal(500));
+          new BigDecimal(500), 1L);
 
   private static final Notification NOTIFICATION =
       Notification.builder()
