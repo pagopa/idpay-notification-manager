@@ -18,6 +18,7 @@ import it.gov.pagopa.notification.manager.dto.ProfileResource;
 import it.gov.pagopa.notification.manager.dto.ServiceResource;
 import it.gov.pagopa.notification.manager.dto.event.NotificationCitizenOnQueueDTO;
 import it.gov.pagopa.notification.manager.dto.event.NotificationIbanQueueDTO;
+import it.gov.pagopa.notification.manager.dto.event.NotificationRefundQueueDTO;
 import it.gov.pagopa.notification.manager.dto.initiative.InitiativeAdditionalInfoDTO;
 import it.gov.pagopa.notification.manager.dto.mapper.NotificationDTOMapper;
 import it.gov.pagopa.notification.manager.dto.mapper.NotificationMapper;
@@ -27,6 +28,7 @@ import it.gov.pagopa.notification.manager.model.NotificationMarkdown;
 import it.gov.pagopa.notification.manager.repository.NotificationManagerRepository;
 import it.gov.pagopa.notification.manager.utils.AESUtil;
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -53,6 +55,7 @@ class NotificationManagerServiceTest {
   private static final String TEST_TOKEN = "TEST_TOKEN";
   private static final String INITIATIVE_ID = "INITIATIVE_ID";
   private static final LocalDateTime TEST_DATE = LocalDateTime.now();
+  private static final LocalDate TEST_DATE_ONLY_DATE = LocalDate.now();
   private static final FiscalCodeResource FISCAL_CODE_RESOURCE = new FiscalCodeResource();
   private static final List<String> PREFERRED_LANGUAGES = new ArrayList<>();
   private static final ProfileResource PROFILE_RESOURCE = new ProfileResource(true,
@@ -76,13 +79,13 @@ class NotificationManagerServiceTest {
           TEST_TOKEN,
           INITIATIVE_ID,
           INITIATIVE_ID,
-          TEST_DATE,
+          TEST_DATE_ONLY_DATE,
           INITIATIVE_ID,
           NotificationConstants.STATUS_ONBOARDING_OK,
           TEST_DATE,
+          TEST_DATE,
           List.of(),
-          new BigDecimal(500),
-          INITIATIVE_ID);
+          new BigDecimal(500), 1L);
   private static final NotificationResource NOTIFICATION_RESOURCE = new NotificationResource();
   private static final NotificationDTO NOTIFICATION_DTO = new NotificationDTO();
   private static final Notification NOTIFICATION =
@@ -105,6 +108,15 @@ class NotificationManagerServiceTest {
       .initiativeId(INITIATIVE_ID)
       .serviceId(SERVICE_ID)
       .iban(IBAN)
+      .build();
+
+  private static final NotificationRefundQueueDTO NOTIFICATION_REFUND_QUEUE_DTO = NotificationRefundQueueDTO.builder()
+      .operationType(OPERATION_TYPE)
+      .refundReward(10000L)
+      .userId(TEST_TOKEN)
+      .initiativeId(INITIATIVE_ID)
+      .serviceId(SERVICE_ID)
+      .status("ACCEPTED")
       .build();
   private static final NotificationCitizenOnQueueDTO NOTIFICATION_CITIZEN_ON_QUEUE_DTO = NotificationCitizenOnQueueDTO.builder()
       .initiativeName(INITIATIVE_NAME)
@@ -630,6 +642,46 @@ class NotificationManagerServiceTest {
     } catch (FeignException e) {
       Assertions.fail();
     }
+  }
+
+  @Test
+  void sendNotificationFromOperationType_refund_ok() {
+
+    Mockito.when(notificationMapper.toEntity(NOTIFICATION_REFUND_QUEUE_DTO))
+        .thenReturn(NOTIFICATION);
+
+    Mockito.when(initiativeRestConnector.getIOTokens(NOTIFICATION_REFUND_QUEUE_DTO.getInitiativeId()))
+        .thenReturn(INITIATIVE_ADDITIONAL_INFO_DTO);
+
+    Mockito.when(pdvDecryptRestConnector.getPii(TEST_TOKEN)).thenReturn(FISCAL_CODE_RESOURCE);
+    Mockito.when(notificationMarkdown.getSubjectRefund(NOTIFICATION_REFUND_QUEUE_DTO.getStatus())).thenReturn(SUBJECT);
+
+    Mockito.when(notificationMarkdown.getMarkdownRefund(Mockito.eq(NOTIFICATION_REFUND_QUEUE_DTO.getStatus()), Mockito.anyString())).thenReturn(MARKDOWN);
+
+    Mockito.when(aesUtil.decrypt(PASSPHRASE, PRIMARY_KEY))
+        .thenReturn(TOKEN);
+
+    Mockito.when(ioBackEndRestConnector.getProfile(FISCAL_CODE, TOKEN))
+        .thenReturn(PROFILE_RESOURCE);
+
+    Mockito.when(
+            notificationDTOMapper.map(
+                Mockito.eq(FISCAL_CODE),
+                Mockito.any(Long.class),
+                Mockito.anyString(),
+                Mockito.anyString()))
+        .thenReturn(NOTIFICATION_DTO);
+
+    Mockito.when(ioBackEndRestConnector.notify(NOTIFICATION_DTO, TOKEN))
+        .thenReturn(NOTIFICATION_RESOURCE);
+    try {
+      notificationManagerService.sendNotificationFromOperationType(NOTIFICATION_REFUND_QUEUE_DTO);
+    } catch (FeignException e) {
+      Assertions.fail();
+    }
+
+    Mockito.verify(notificationManagerRepository, Mockito.times(1))
+        .save(NOTIFICATION);
   }
 
 }
