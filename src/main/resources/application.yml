@@ -88,6 +88,7 @@ spring:
             metadata.max.age.ms: ${KAFKA_CONFIG_METADATA_MAX_AGE:180000}
             sasl.mechanism: ${KAFKA_NOTIFICATION_SASL_MECHANISM:}
             security.protocol: ${KAFKA_NOTIFICATION_SECURITY_PROTOCOL:}
+            max.request.size: ${KAFKA_CONFIG_MAX_REQUEST_SIZE:1000000}
         bindings:
           onboardingConsumer-in-0:
             consumer:
