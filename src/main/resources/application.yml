@@ -15,9 +15,12 @@ rest-client:
     service:
       name: ms-initiative
       base-url: ${INITIATIVE_MS_BASE_URL:}/idpay/initiative
+management.endpoints:
+  web:
+    exposure.include: info, health
 spring:
   application:
-    name: idpay-notification-manager
+    name: "@project.artifactId@"
   cloud:
     stream:
       function:
