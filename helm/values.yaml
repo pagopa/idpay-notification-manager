@@ -8,7 +8,7 @@ microservice-chart:
       path: /actuator/health
       port: 8080
     initialDelaySeconds: 120
-    failureThreshold: 6
+    failureThreshold: 15
     periodSeconds: 10
 
   readinessProbe:
@@ -16,8 +16,8 @@ microservice-chart:
       path: /actuator/health
       port: 8080
     initialDelaySeconds: 120
-    failureThreshold: 10
-    periodSeconds: 30
+    failureThreshold: 15
+    periodSeconds: 10
 
   deployment:
     create: true

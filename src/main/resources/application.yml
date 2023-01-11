@@ -21,6 +21,8 @@ management.endpoints:
 spring:
   application:
     name: "@project.artifactId@"
+    version: "@project.version@"
+  jmx.enabled: true
   cloud:
     stream:
       function:
