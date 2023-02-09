@@ -56,6 +56,8 @@ public class NotificationManagerServiceImpl implements NotificationManagerServic
 
   @Override
   public void notify(EvaluationDTO evaluationDTO) {
+    long startTime = System.currentTimeMillis();
+
     Notification notification = notificationMapper.evaluationToNotification(evaluationDTO);
     InitiativeAdditionalInfoDTO ioTokens = null;
 
@@ -67,7 +69,7 @@ public class NotificationManagerServiceImpl implements NotificationManagerServic
     }
 
     if (ioTokens == null) {
-      notificationKO(notification);
+      notificationKO(notification, startTime);
       return;
     }
 
@@ -75,7 +77,7 @@ public class NotificationManagerServiceImpl implements NotificationManagerServic
     String fiscalCode = decryptUserToken(evaluationDTO.getUserId());
 
     if (fiscalCode == null) {
-      notificationKO(notification);
+      notificationKO(notification, startTime);
       return;
     }
 
@@ -83,7 +85,7 @@ public class NotificationManagerServiceImpl implements NotificationManagerServic
     String tokenDecrypt = aesUtil.decrypt(passphrase, ioTokens.getPrimaryTokenIO());
 
     if (isNotSenderAllowed(fiscalCode, tokenDecrypt)) {
-      notificationKO(notification);
+      notificationKO(notification, startTime);
       return;
     }
 
@@ -96,7 +98,7 @@ public class NotificationManagerServiceImpl implements NotificationManagerServic
     String notificationId = sendNotification(notificationDTO, tokenDecrypt);
 
     if (notificationId == null) {
-      notificationKO(notification);
+      notificationKO(notification, startTime);
       return;
     }
 
@@ -105,11 +107,13 @@ public class NotificationManagerServiceImpl implements NotificationManagerServic
     notification.setNotificationId(notificationId);
     notification.setNotificationStatus("OK");
     notificationManagerRepository.save(notification);
+    performanceLog(startTime);
   }
 
-  private void notificationKO(Notification notification) {
+  private void notificationKO(Notification notification, long startTime) {
     notification.setNotificationStatus("KO");
     notificationManagerRepository.save(notification);
+    performanceLog(startTime);
   }
 
   @Override
@@ -160,6 +164,8 @@ public class NotificationManagerServiceImpl implements NotificationManagerServic
 
   @Override
   public void sendNotificationFromOperationType(AnyOfNotificationQueueDTO anyOfNotificationQueueDTO) {
+    long startTime = System.currentTimeMillis();
+
     String fiscalCode = null;
     Notification notification = null;
     String subject = "";
@@ -204,20 +210,20 @@ public class NotificationManagerServiceImpl implements NotificationManagerServic
 
     if (ioTokens == null) {
       if (notification != null) {
-        notificationKO(notification);
+        notificationKO(notification, startTime);
       }
       return;
     }
 
     if (fiscalCode == null) {
-      notificationKO(notification);
+      notificationKO(notification, startTime);
       return;
     }
 
     String tokenDecrypt = aesUtil.decrypt(passphrase, ioTokens.getPrimaryTokenIO());
 
     if (isNotSenderAllowed(fiscalCode, tokenDecrypt)) {
-      notificationKO(notification);
+      notificationKO(notification, startTime);
       return;
     }
 
@@ -227,7 +233,7 @@ public class NotificationManagerServiceImpl implements NotificationManagerServic
     String notificationId = sendNotification(notificationDTO, tokenDecrypt);
 
     if (notificationId == null) {
-      notificationKO(notification);
+      notificationKO(notification, startTime);
       return;
     }
 
@@ -236,5 +242,13 @@ public class NotificationManagerServiceImpl implements NotificationManagerServic
     notification.setNotificationId(notificationId);
     notification.setNotificationStatus("OK");
     notificationManagerRepository.save(notification);
+
+    performanceLog(startTime);
+  }
+
+  private void performanceLog(long startTime){
+    log.info(
+        "[PERFORMANCE_LOG] [NOTIFY] Time occurred to perform business logic: {} ms",
+        System.currentTimeMillis() - startTime);
   }
 }
