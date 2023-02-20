@@ -23,6 +23,10 @@ spring:
     name: "@project.artifactId@"
     version: "@project.version@"
   jmx.enabled: true
+  cache:
+    type: redis
+  redis:
+    url: ${REDIS_CONNECTION_URL:redis://@localhost:6379}
   cloud:
     stream:
       function:
