@@ -4,7 +4,11 @@ import it.gov.pagopa.notification.manager.constants.NotificationConstants;
 import it.gov.pagopa.notification.manager.dto.EvaluationDTO;
 import it.gov.pagopa.notification.manager.dto.OnboardingRejectionReason;
 import it.gov.pagopa.notification.manager.dto.OnboardingRejectionReason.OnboardingRejectionReasonType;
+import java.math.BigDecimal;
+import java.text.DecimalFormat;
+import java.text.DecimalFormatSymbols;
 import lombok.Getter;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
@@ -12,6 +16,7 @@ import org.springframework.util.StringUtils;
 import java.util.List;
 
 @Component
+@Slf4j
 public class NotificationMarkdown {
 
   @Value("${notification.manager.markdown.double.new.line}")
@@ -82,9 +87,14 @@ public class NotificationMarkdown {
     return ("ACCEPTED".equals(status)) ? subjectRefundOk : subjectRefundKo;
   }
 
-  public String getMarkdownRefund(String status, String effectiveReward) {
+  public String getMarkdownRefund(String status, BigDecimal effectiveReward) {
+    DecimalFormatSymbols symbols = new DecimalFormatSymbols();
+    symbols.setDecimalSeparator(',');
+
+    DecimalFormat df = new DecimalFormat("###.00", symbols);
+    df.setGroupingUsed(false);
     return ("ACCEPTED".equals(status))
-        ? replaceMessageItem(markdownRefundOk, "effectiveReward", effectiveReward)
+        ? replaceMessageItem(markdownRefundOk, "effectiveReward", df.format(effectiveReward))
         : markdownRefundKo;
   }
 

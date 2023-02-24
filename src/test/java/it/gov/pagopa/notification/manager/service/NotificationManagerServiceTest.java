@@ -656,7 +656,7 @@ class NotificationManagerServiceTest {
     Mockito.when(pdvDecryptRestConnector.getPii(TEST_TOKEN)).thenReturn(FISCAL_CODE_RESOURCE);
     Mockito.when(notificationMarkdown.getSubjectRefund(NOTIFICATION_REFUND_QUEUE_DTO.getStatus())).thenReturn(SUBJECT);
 
-    Mockito.when(notificationMarkdown.getMarkdownRefund(Mockito.eq(NOTIFICATION_REFUND_QUEUE_DTO.getStatus()), Mockito.anyString())).thenReturn(MARKDOWN);
+    Mockito.when(notificationMarkdown.getMarkdownRefund(Mockito.eq(NOTIFICATION_REFUND_QUEUE_DTO.getStatus()), Mockito.any())).thenReturn(MARKDOWN);
 
     Mockito.when(aesUtil.decrypt(PASSPHRASE, PRIMARY_KEY))
         .thenReturn(TOKEN);
