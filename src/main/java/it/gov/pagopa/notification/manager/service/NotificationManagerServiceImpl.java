@@ -23,6 +23,8 @@ import it.gov.pagopa.notification.manager.repository.NotificationManagerReposito
 import it.gov.pagopa.notification.manager.utils.AESUtil;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.text.DecimalFormat;
+import java.text.DecimalFormatSymbols;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -197,6 +199,8 @@ public class NotificationManagerServiceImpl implements NotificationManagerServic
 
     if (anyOfNotificationQueueDTO instanceof NotificationRefundQueueDTO notificationRefundOnQueueDTO){
 
+      BigDecimal refund = BigDecimal.valueOf(notificationRefundOnQueueDTO.getRefundReward()).divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_DOWN);
+
       notification = notificationMapper.toEntity(notificationRefundOnQueueDTO);
 
       ioTokens = getIoTokens(notificationRefundOnQueueDTO.getInitiativeId());
@@ -204,8 +208,7 @@ public class NotificationManagerServiceImpl implements NotificationManagerServic
       fiscalCode = decryptUserToken(notificationRefundOnQueueDTO.getUserId());
 
       subject = notificationMarkdown.getSubjectRefund(notificationRefundOnQueueDTO.getStatus());
-      markdown = notificationMarkdown.getMarkdownRefund(notificationRefundOnQueueDTO.getStatus(),
-          BigDecimal.valueOf(notificationRefundOnQueueDTO.getRefundReward()).divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_DOWN).toString());
+      markdown = notificationMarkdown.getMarkdownRefund(notificationRefundOnQueueDTO.getStatus(), refund);
     }
 
     if (ioTokens == null) {
