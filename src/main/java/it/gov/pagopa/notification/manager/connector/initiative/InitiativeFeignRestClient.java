@@ -1,6 +1,7 @@
 package it.gov.pagopa.notification.manager.connector.initiative;
 
 import it.gov.pagopa.notification.manager.dto.initiative.InitiativeAdditionalInfoDTO;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -17,6 +18,7 @@ public interface InitiativeFeignRestClient {
       value = "/{initiativeId}/token",
       produces = MediaType.APPLICATION_JSON_VALUE)
   @ResponseBody
+  @Cacheable(value = "initiativeToken", key = "#initiativeId")
   ResponseEntity<InitiativeAdditionalInfoDTO> getTokens(
           @PathVariable("initiativeId") String initiativeId);
 }
