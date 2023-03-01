@@ -23,37 +23,4 @@ public class NotificationConstants {
       public static final String REFUND = "REFUND";
     }
   }
-
-  public static final class CtaConstant {
-
-    private CtaConstant(){}
-
-    public static final String START = "---\n";
-    public static final String IT = "it:\n    ";
-    public static final String CTA_1_IT = "cta_1: \n        ";
-    public static final String TEXT_IT = "text: \"Vai all'iniziativa\"\n        ";
-    public static final String ACTION_IT = "action: \"ioit://idpay/initiative/%initiativeId%";
-    public static final String EN = "\"\nen:\n    ";
-    public static final String CTA_1_EN = "cta_1: \n        ";
-    public static final String TEXT_EN = "text: \"Go to the bonus page\"\n        ";
-    public static final String ACTION_EN = "action: \"ioit://idpay/initiative/%initiativeId%";
-    public static final String END = "\"\n---";
-
-    public static String getCta(){
-      StringBuilder sb = new StringBuilder();
-      sb.append(START);
-      sb.append(IT);
-      sb.append(CTA_1_IT);
-      sb.append(TEXT_IT);
-      sb.append(ACTION_IT);
-      sb.append(EN);
-      sb.append(CTA_1_EN);
-      sb.append(TEXT_EN);
-      sb.append(ACTION_EN);
-      sb.append(END);
-      return sb.toString();
-    }
-
-  }
-
 }

@@ -28,6 +28,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
       "notification.manager.markdown.double.new.line=\\n\\n",
       "notification.manager.subject.ok=Il tuo Bonus è attivo",
       "notification.manager.subject.ok.refund=Ti è stato accreditato un rimborso!",
+      "notification.manager.markdown.ok.cta=---\\nit:\\n    cta_1: \\n        text: \"Vai all'iniziativa\"\\n        action: \"ioit://idpay/initiative/%initiativeId%\"\\nen:\\n    cta_1: \\n        text: \"Go to the bonus page\"\\n        action: \"ioit://idpay/initiative/%initiativeId%\"\\n---",
       "notification.manager.subject.ko=Non è stato possibile attivare %initiativeName%",
       "notification.manager.subject.ko.tech=Abbiamo riscontrato dei problemi",
       "notification.manager.markdown.ok=Buone notizie! Hai ottenuto %initiativeName%. Da questo momento puoi visualizzare il bonus nella sezione Portafoglio dell'app IO.\\n\\nTi ricordiamo che per iniziare ad usufruire del bonus devi configurare almeno un metodo di pagamento.\\n\\nPuoi trovare maggiori informazioni sul [sito](http://example.com/).",
