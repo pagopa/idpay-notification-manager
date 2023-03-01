@@ -178,18 +178,6 @@ notification:
         
         Puoi controllare il bonus disponibile direttamente nella pagina dell'iniziativa.}
 
-      ok.cta: |-
-        ${MARKDOWN_OK_CTA:---
-        it:
-            cta_1: 
-                text: "Vai all'iniziativa"
-                action: "ioit://idpay/initiative/%initiativeId%"
-        en:
-            cta_1: 
-                text: "Go to the bonus page"
-                action: "ioit://idpay/initiative/%initiativeId%"
-        ---}
-
       initiative:
         publishing: |-
           ${MARKDOWN_INITIATIVE_PUBLISHING:**Fino al 31 agosto 2022** puoi ottenere il tuo Bonus Cultura di 500 euro per acquistare:
