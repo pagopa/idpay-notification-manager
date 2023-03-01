@@ -34,9 +34,6 @@ public class NotificationMarkdown {
   @Value("${notification.manager.markdown.ok}")
   private String markdownOk;
 
-  @Value("${notification.manager.markdown.ok.cta}")
-  private String onboardingOkCta;
-
   @Value("${notification.manager.markdown.ko.pdnd}")
   private String markdownKoPdnd;
 
@@ -124,9 +121,10 @@ public class NotificationMarkdown {
                 this.markdownOk,
                 NotificationConstants.INITIATIVE_NAME_KEY,
                 evaluationDTO.getInitiativeName())
+            .concat(this.markdownDoubleNewLine)
             .concat(
                 replaceMessageItem(
-                    this.onboardingOkCta,
+                    NotificationConstants.CtaConstant.getCta(),
                     NotificationConstants.INITIATIVE_ID_KEY,
                     evaluationDTO.getInitiativeId()))
         : getMarkdownKo(

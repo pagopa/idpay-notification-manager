@@ -31,7 +31,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
       "notification.manager.subject.ko=Non è stato possibile attivare %initiativeName%",
       "notification.manager.subject.ko.tech=Abbiamo riscontrato dei problemi",
       "notification.manager.markdown.ok=Buone notizie! Hai ottenuto %initiativeName%. Da questo momento puoi visualizzare il bonus nella sezione Portafoglio dell'app IO.\\n\\nTi ricordiamo che per iniziare ad usufruire del bonus devi configurare almeno un metodo di pagamento.\\n\\nPuoi trovare maggiori informazioni sul [sito](http://example.com/).",
-      "notification.manager.markdown.ok.cta=---\\nit:\\n    cta_1: \\n        text: \"Vai all'iniziativa\"\\n        action: \"ioit://idpay/initiative/%initiativeId%\"\\nen:\\n    cta_1: \\n        text: \"Go to the bonus page\"\\n        action: \"ioit://idpay/initiative/%initiativeId%\"\\n---",
       "notification.manager.markdown.ok.refund=Hai ottenuto un rimborso di %effectiveReward% euro!",
       "notification.manager.markdown.ko.pdnd=Purtroppo non hai i requisiti necessari per aderire a %initiativeName% per i seguenti motivi:",
       "notification.manager.markdown.ko.ranking=Purtroppo non è stato possibile attivare %initiativeName% in quanto i tuoi requisiti non rientrano nella graduatoria.",
