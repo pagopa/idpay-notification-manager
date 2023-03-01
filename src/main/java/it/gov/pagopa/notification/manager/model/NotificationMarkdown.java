@@ -34,6 +34,9 @@ public class NotificationMarkdown {
   @Value("${notification.manager.markdown.ok}")
   private String markdownOk;
 
+  @Value("${notification.manager.markdown.ok.cta}")
+  private String markdownOkCta;
+
   @Value("${notification.manager.markdown.ko.pdnd}")
   private String markdownKoPdnd;
 
@@ -118,15 +121,14 @@ public class NotificationMarkdown {
   public String getMarkdown(EvaluationDTO evaluationDTO) {
     return evaluationDTO.getStatus().equals(NotificationConstants.STATUS_ONBOARDING_OK)
         ? replaceMessageItem(
+        this.markdownOkCta,
+        NotificationConstants.INITIATIVE_ID_KEY,
+        evaluationDTO.getInitiativeId())
+            .concat(this.markdownDoubleNewLine)
+            .concat(replaceMessageItem(
                 this.markdownOk,
                 NotificationConstants.INITIATIVE_NAME_KEY,
-                evaluationDTO.getInitiativeName())
-            .concat(this.markdownDoubleNewLine)
-            .concat(
-                replaceMessageItem(
-                    NotificationConstants.CtaConstant.getCta(),
-                    NotificationConstants.INITIATIVE_ID_KEY,
-                    evaluationDTO.getInitiativeId()))
+                evaluationDTO.getInitiativeName()))
         : getMarkdownKo(
             evaluationDTO.getInitiativeName(), evaluationDTO.getOnboardingRejectionReasons());
   }
