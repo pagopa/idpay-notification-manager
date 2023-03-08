@@ -25,6 +25,7 @@ import it.gov.pagopa.notification.manager.dto.mapper.NotificationMapper;
 import it.gov.pagopa.notification.manager.event.producer.OutcomeProducer;
 import it.gov.pagopa.notification.manager.model.Notification;
 import it.gov.pagopa.notification.manager.model.NotificationMarkdown;
+import it.gov.pagopa.notification.manager.repository.NotificationManagerRecoverRepository;
 import it.gov.pagopa.notification.manager.repository.NotificationManagerRepository;
 import it.gov.pagopa.notification.manager.utils.AESUtil;
 import java.math.BigDecimal;
@@ -151,6 +152,8 @@ class NotificationManagerServiceTest {
   NotificationMapper notificationMapper;
   @MockBean
   NotificationManagerRepository notificationManagerRepository;
+  @MockBean
+  NotificationManagerRecoverRepository notificationRecoverRepository;
   @MockBean
   PdvDecryptRestConnector pdvDecryptRestConnector;
   @MockBean

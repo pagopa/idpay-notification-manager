@@ -209,6 +209,8 @@ notification:
       ko.nodeValue: ${SUBJECT_KO:Non è stato possibile attivare %initiativeName%}
       initiative:
         publishing: ${SUBJECT_INITIATIVE_PUBLISHING:Ottieni il tuo bonus da 500€!}
+    recover:
+      schedule: ${SCHEDULE_RECOVER_KO_NOTIFICATION:1800000} # every 30 minutes
 
 logging:
   level:

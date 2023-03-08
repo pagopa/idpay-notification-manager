@@ -19,239 +19,326 @@ import it.gov.pagopa.notification.manager.dto.mapper.NotificationMapper;
 import it.gov.pagopa.notification.manager.event.producer.OutcomeProducer;
 import it.gov.pagopa.notification.manager.model.Notification;
 import it.gov.pagopa.notification.manager.model.NotificationMarkdown;
+import it.gov.pagopa.notification.manager.repository.NotificationManagerRecoverRepository;
 import it.gov.pagopa.notification.manager.repository.NotificationManagerRepository;
 import it.gov.pagopa.notification.manager.utils.AESUtil;
+
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.text.DecimalFormat;
-import java.text.DecimalFormatSymbols;
+import java.time.LocalDateTime;
+import java.util.List;
+
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 @Service
 @Slf4j
 public class NotificationManagerServiceImpl implements NotificationManagerService {
-  @Autowired
-  AESUtil aesUtil;
-  @Autowired
-  OutcomeProducer outcomeProducer;
-  @Autowired
-  InitiativeRestConnector initiativeRestConnector;
-  @Autowired
-  IOBackEndRestConnector ioBackEndRestConnector;
-  @Autowired
-  NotificationManagerRepository notificationManagerRepository;
-  @Autowired
-  NotificationDTOMapper notificationDTOMapper;
-  @Autowired
-  PdvDecryptRestConnector pdvDecryptRestConnector;
-  @Autowired
-  NotificationMapper notificationMapper;
-  @Autowired
-  NotificationMarkdown notificationMarkdown;
-  @Value("${util.crypto.aes.secret-type.pbe.passphrase}")
-  private String passphrase;
-  @Value("${rest-client.notification.backend-io.ttl}")
-  private Long timeToLive;
+    @Autowired
+    AESUtil aesUtil;
+    @Autowired
+    OutcomeProducer outcomeProducer;
+    @Autowired
+    InitiativeRestConnector initiativeRestConnector;
+    @Autowired
+    IOBackEndRestConnector ioBackEndRestConnector;
+    @Autowired
+    NotificationManagerRepository notificationManagerRepository;
+    @Autowired
+    NotificationManagerRecoverRepository notificationRecoverRepository;
+    @Autowired
+    NotificationDTOMapper notificationDTOMapper;
+    @Autowired
+    PdvDecryptRestConnector pdvDecryptRestConnector;
+    @Autowired
+    NotificationMapper notificationMapper;
+    @Autowired
+    NotificationMarkdown notificationMarkdown;
+    @Value("${util.crypto.aes.secret-type.pbe.passphrase}")
+    private String passphrase;
+    @Value("${rest-client.notification.backend-io.ttl}")
+    private Long timeToLive;
 
-  @Override
-  public void notify(EvaluationDTO evaluationDTO) {
-    long startTime = System.currentTimeMillis();
-
-    Notification notification = notificationMapper.evaluationToNotification(evaluationDTO);
-    InitiativeAdditionalInfoDTO ioTokens = null;
-
-    try {
-      log.info("[NOTIFY] Sending request to INITIATIVE");
-      ioTokens = initiativeRestConnector.getIOTokens(evaluationDTO.getInitiativeId());
-    } catch (FeignException e) {
-      log.error(NotificationConstants.FEIGN_KO.formatted(e.status(), e.contentUTF8()));
+    @Scheduled(fixedRateString = "${notification.manager.recover.schedule}")
+    void schedule() {
+        log.debug("[NOTIFY] Starting schedule to recover KO notifications");
+        this.recoverKoNotifications();
     }
 
-    if (ioTokens == null) {
-      notificationKO(notification, startTime);
-      return;
+    @Override
+    public void notify(EvaluationDTO evaluationDTO) {
+        long startTime = System.currentTimeMillis();
+
+        Notification notification = notificationMapper.evaluationToNotification(evaluationDTO);
+        InitiativeAdditionalInfoDTO ioTokens = null;
+
+        try {
+            log.info("[NOTIFY] Sending request to INITIATIVE");
+            ioTokens = initiativeRestConnector.getIOTokens(evaluationDTO.getInitiativeId());
+        } catch (FeignException e) {
+            log.error(NotificationConstants.FEIGN_KO.formatted(e.status(), e.contentUTF8()));
+        }
+
+        if (ioTokens == null) {
+            notificationKO(notification, startTime);
+            return;
+        }
+
+        log.info(NotificationConstants.REQUEST_PDV);
+        String fiscalCode = decryptUserToken(evaluationDTO.getUserId());
+
+        if (fiscalCode == null) {
+            notificationKO(notification, startTime);
+            return;
+        }
+
+        log.info("[NOTIFY] Sending request to DECRYPT_TOKEN");
+        String tokenDecrypt = aesUtil.decrypt(passphrase, ioTokens.getPrimaryTokenIO());
+
+        if (isNotSenderAllowed(fiscalCode, tokenDecrypt)) {
+            notificationKO(notification, startTime);
+            return;
+        }
+
+        String subject = notificationMarkdown.getSubject(evaluationDTO);
+        String markdown = notificationMarkdown.getMarkdown(evaluationDTO);
+
+        NotificationDTO notificationDTO =
+                notificationDTOMapper.map(fiscalCode, timeToLive, subject, markdown);
+
+        String notificationId = sendNotification(notificationDTO, tokenDecrypt);
+
+        if (notificationId == null) {
+            notificationKO(notification, startTime);
+            return;
+        }
+
+        logNotificationId(notificationId);
+
+        notificationSent(notification, notificationId);
+        performanceLog(startTime);
     }
 
-    log.info(NotificationConstants.REQUEST_PDV);
-    String fiscalCode = decryptUserToken(evaluationDTO.getUserId());
+    @Override
+    public void notify(Notification notification) {
+        long startTime = System.currentTimeMillis();
 
-    if (fiscalCode == null) {
-      notificationKO(notification, startTime);
-      return;
+        notification.setNotificationDate(LocalDateTime.now());
+        InitiativeAdditionalInfoDTO ioTokens = null;
+
+        try {
+            log.info("[NOTIFY] Sending request to INITIATIVE");
+            ioTokens = initiativeRestConnector.getIOTokens(notification.getInitiativeId());
+        } catch (FeignException e) {
+            log.error(NotificationConstants.FEIGN_KO.formatted(e.status(), e.contentUTF8()));
+        }
+
+        if (ioTokens == null) {
+            notificationKO(notification, startTime);
+            return;
+        }
+
+        log.info(NotificationConstants.REQUEST_PDV);
+        String fiscalCode = decryptUserToken(notification.getUserId());
+
+        if (fiscalCode == null) {
+            notificationKO(notification, startTime);
+            return;
+        }
+
+        log.info("[NOTIFY] Sending request to DECRYPT_TOKEN");
+        String tokenDecrypt = aesUtil.decrypt(passphrase, ioTokens.getPrimaryTokenIO());
+
+        if (isNotSenderAllowed(fiscalCode, tokenDecrypt)) {
+            notificationKO(notification, startTime);
+            return;
+        }
+
+        String subject = notificationMarkdown.getSubject(notification);
+        String markdown = notificationMarkdown.getMarkdown(notification);
+
+        NotificationDTO notificationDTO =
+                notificationDTOMapper.map(fiscalCode, timeToLive, subject, markdown);
+
+        String notificationId = sendNotification(notificationDTO, tokenDecrypt);
+
+        if (notificationId == null) {
+            notificationKO(notification, startTime);
+            return;
+        }
+
+        logNotificationId(notificationId);
+
+        notificationSent(notification, notificationId);
+        performanceLog(startTime);
     }
 
-    log.info("[NOTIFY] Sending request to DECRYPT_TOKEN");
-    String tokenDecrypt = aesUtil.decrypt(passphrase, ioTokens.getPrimaryTokenIO());
+    @Override
+    public void recoverKoNotifications() {
+        List<Notification> kos = notificationRecoverRepository.findKoToRecover();
 
-    if (isNotSenderAllowed(fiscalCode, tokenDecrypt)) {
-      notificationKO(notification, startTime);
-      return;
+        if (!kos.isEmpty()) {
+            for (Notification n : kos) {
+                this.notify(n);
+            }
+        } else {
+            log.info("[NOTIFY] No KO notifications were found");
+        }
     }
 
-    String subject = notificationMarkdown.getSubject(evaluationDTO);
-    String markdown = notificationMarkdown.getMarkdown(evaluationDTO);
-
-    NotificationDTO notificationDTO =
-        notificationDTOMapper.map(fiscalCode, timeToLive, subject, markdown);
-
-    String notificationId = sendNotification(notificationDTO, tokenDecrypt);
-
-    if (notificationId == null) {
-      notificationKO(notification, startTime);
-      return;
+    @Override
+    public void addOutcome(EvaluationDTO evaluationDTO) {
+        outcomeProducer.sendOutcome(evaluationDTO);
     }
 
-    log.info("[NOTIFY] Notification ID: {}", notificationId);
+    @Override
+    public void sendNotificationFromOperationType(AnyOfNotificationQueueDTO anyOfNotificationQueueDTO) {
+        long startTime = System.currentTimeMillis();
 
-    notification.setNotificationId(notificationId);
-    notification.setNotificationStatus("OK");
-    notificationManagerRepository.save(notification);
-    performanceLog(startTime);
-  }
+        String fiscalCode = null;
+        Notification notification = null;
+        String subject = "";
+        String markdown = "";
+        InitiativeAdditionalInfoDTO ioTokens = null;
 
-  private void notificationKO(Notification notification, long startTime) {
-    notification.setNotificationStatus("KO");
-    notificationManagerRepository.save(notification);
-    performanceLog(startTime);
-  }
+        if (anyOfNotificationQueueDTO instanceof NotificationCitizenOnQueueDTO notificationCitizenOnQueueDTO) {
 
-  @Override
-  public void addOutcome(EvaluationDTO evaluationDTO) {
-    outcomeProducer.sendOutcome(evaluationDTO);
-  }
+            notification = notificationMapper.toEntity(notificationCitizenOnQueueDTO);
 
-  private String sendNotification(NotificationDTO notificationDTO, String primaryKey) {
-    try {
-      NotificationResource notificationResource =
-          ioBackEndRestConnector.notify(notificationDTO, primaryKey);
-      log.info("[NOTIFY] Notification sent");
-      return notificationResource.getId();
-    } catch (FeignException e) {
-      log.error("[NOTIFY] [{}] Cannot send notification: {}", e.status(), e.contentUTF8());
-      return null;
-    }
-  }
+            ioTokens = getIoTokens(notificationCitizenOnQueueDTO.getInitiativeId());
 
-  private String decryptUserToken(String token) {
-    log.info(NotificationConstants.REQUEST_PDV);
-    try {
-      return pdvDecryptRestConnector.getPii(token).getPii();
-    } catch (FeignException e) {
-      return null;
-    }
-  }
+            fiscalCode = decryptUserToken(notificationCitizenOnQueueDTO.getUserId());
 
-  private boolean isNotSenderAllowed(String fiscalCode, String primaryKey) {
-    try {
-      ProfileResource profileResource = ioBackEndRestConnector.getProfile(fiscalCode, primaryKey);
-      return !profileResource.isSenderAllowed();
-    } catch (FeignException e) {
-      log.error("[NOTIFY] The user is not enabled to receive notifications!");
-      return true;
-    }
-  }
+            subject = notificationMarkdown.getSubjectInitiativePublishing();
+            markdown = notificationMarkdown.getMarkdownInitiativePublishing();
+        }
+        if (anyOfNotificationQueueDTO instanceof NotificationIbanQueueDTO notificationIbanQueueDTO) {
 
-  private InitiativeAdditionalInfoDTO getIoTokens(String initiativeId){
-    log.debug(NotificationConstants.IO_TOKENS);
-    try {
-      return initiativeRestConnector.getIOTokens(initiativeId);
-    } catch (FeignException e) {
-      log.error(NotificationConstants.FEIGN_KO.formatted(e.status(), e.contentUTF8()));
-      return null;
-    }
-  }
+            notification = notificationMapper.toEntity(notificationIbanQueueDTO);
 
-  @Override
-  public void sendNotificationFromOperationType(AnyOfNotificationQueueDTO anyOfNotificationQueueDTO) {
-    long startTime = System.currentTimeMillis();
+            ioTokens = getIoTokens(notificationIbanQueueDTO.getInitiativeId());
 
-    String fiscalCode = null;
-    Notification notification = null;
-    String subject = "";
-    String markdown = "";
-    InitiativeAdditionalInfoDTO ioTokens = null;
+            fiscalCode = decryptUserToken(notificationIbanQueueDTO.getUserId());
 
-    if (anyOfNotificationQueueDTO instanceof NotificationCitizenOnQueueDTO notificationCitizenOnQueueDTO){
+            subject = notificationMarkdown.getSubjectCheckIbanKo();
+            markdown = notificationMarkdown.getMarkdownCheckIbanKo();
+        }
 
-      notification = notificationMapper.toEntity(notificationCitizenOnQueueDTO);
+        if (anyOfNotificationQueueDTO instanceof NotificationRefundQueueDTO notificationRefundOnQueueDTO) {
 
-      ioTokens = getIoTokens(notificationCitizenOnQueueDTO.getInitiativeId());
+            BigDecimal refund = BigDecimal.valueOf(notificationRefundOnQueueDTO.getRefundReward()).divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_DOWN);
 
-      fiscalCode = decryptUserToken(notificationCitizenOnQueueDTO.getUserId());
+            notification = notificationMapper.toEntity(notificationRefundOnQueueDTO);
 
-      subject = notificationMarkdown.getSubjectInitiativePublishing();
-      markdown = notificationMarkdown.getMarkdownInitiativePublishing();
-    }
-    if (anyOfNotificationQueueDTO instanceof NotificationIbanQueueDTO notificationIbanQueueDTO){
+            ioTokens = getIoTokens(notificationRefundOnQueueDTO.getInitiativeId());
 
-      notification = notificationMapper.toEntity(notificationIbanQueueDTO);
+            fiscalCode = decryptUserToken(notificationRefundOnQueueDTO.getUserId());
 
-      ioTokens = getIoTokens(notificationIbanQueueDTO.getInitiativeId());
+            subject = notificationMarkdown.getSubjectRefund(notificationRefundOnQueueDTO.getStatus());
+            markdown = notificationMarkdown.getMarkdownRefund(notificationRefundOnQueueDTO.getStatus(), refund);
+        }
 
-      fiscalCode = decryptUserToken(notificationIbanQueueDTO.getUserId());
+        if (ioTokens == null) {
+            if (notification != null) {
+                notificationKO(notification, startTime);
+            }
+            return;
+        }
 
-      subject = notificationMarkdown.getSubjectCheckIbanKo();
-      markdown = notificationMarkdown.getMarkdownCheckIbanKo();
+        if (fiscalCode == null) {
+            notificationKO(notification, startTime);
+            return;
+        }
+
+        String tokenDecrypt = aesUtil.decrypt(passphrase, ioTokens.getPrimaryTokenIO());
+
+        if (isNotSenderAllowed(fiscalCode, tokenDecrypt)) {
+            notificationKO(notification, startTime);
+            return;
+        }
+
+        NotificationDTO notificationDTO =
+                notificationDTOMapper.map(fiscalCode, timeToLive, subject, markdown);
+
+        String notificationId = sendNotification(notificationDTO, tokenDecrypt);
+
+        if (notificationId == null) {
+            notificationKO(notification, startTime);
+            return;
+        }
+
+        logNotificationId(notificationId);
+
+        notificationSent(notification, notificationId);
+
+        performanceLog(startTime);
     }
 
-    if (anyOfNotificationQueueDTO instanceof NotificationRefundQueueDTO notificationRefundOnQueueDTO){
-
-      BigDecimal refund = BigDecimal.valueOf(notificationRefundOnQueueDTO.getRefundReward()).divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_DOWN);
-
-      notification = notificationMapper.toEntity(notificationRefundOnQueueDTO);
-
-      ioTokens = getIoTokens(notificationRefundOnQueueDTO.getInitiativeId());
-
-      fiscalCode = decryptUserToken(notificationRefundOnQueueDTO.getUserId());
-
-      subject = notificationMarkdown.getSubjectRefund(notificationRefundOnQueueDTO.getStatus());
-      markdown = notificationMarkdown.getMarkdownRefund(notificationRefundOnQueueDTO.getStatus(), refund);
+    private String sendNotification(NotificationDTO notificationDTO, String primaryKey) {
+        try {
+            NotificationResource notificationResource =
+                    ioBackEndRestConnector.notify(notificationDTO, primaryKey);
+            log.info("[NOTIFY] Notification sent");
+            return notificationResource.getId();
+        } catch (FeignException e) {
+            log.error("[NOTIFY] [{}] Cannot send notification: {}", e.status(), e.contentUTF8());
+            return null;
+        }
     }
 
-    if (ioTokens == null) {
-      if (notification != null) {
-        notificationKO(notification, startTime);
-      }
-      return;
+    private String decryptUserToken(String token) {
+        log.info(NotificationConstants.REQUEST_PDV);
+        try {
+            return pdvDecryptRestConnector.getPii(token).getPii();
+        } catch (FeignException e) {
+            return null;
+        }
     }
 
-    if (fiscalCode == null) {
-      notificationKO(notification, startTime);
-      return;
+    private boolean isNotSenderAllowed(String fiscalCode, String primaryKey) {
+        try {
+            ProfileResource profileResource = ioBackEndRestConnector.getProfile(fiscalCode, primaryKey);
+            return !profileResource.isSenderAllowed();
+        } catch (FeignException e) {
+            log.error("[NOTIFY] The user is not enabled to receive notifications!");
+            return true;
+        }
     }
 
-    String tokenDecrypt = aesUtil.decrypt(passphrase, ioTokens.getPrimaryTokenIO());
-
-    if (isNotSenderAllowed(fiscalCode, tokenDecrypt)) {
-      notificationKO(notification, startTime);
-      return;
+    private InitiativeAdditionalInfoDTO getIoTokens(String initiativeId) {
+        log.debug(NotificationConstants.IO_TOKENS);
+        try {
+            return initiativeRestConnector.getIOTokens(initiativeId);
+        } catch (FeignException e) {
+            log.error(NotificationConstants.FEIGN_KO.formatted(e.status(), e.contentUTF8()));
+            return null;
+        }
     }
 
-    NotificationDTO notificationDTO =
-        notificationDTOMapper.map(fiscalCode, timeToLive, subject, markdown);
+    private void notificationKO(Notification notification, long startTime) {
+        notification.setNotificationStatus(NotificationConstants.NOTIFICATION_STATUS_KO);
+        notification.setStatusKoTimestamp(LocalDateTime.now());
+        notificationManagerRepository.save(notification);
 
-    String notificationId = sendNotification(notificationDTO, tokenDecrypt);
-
-    if (notificationId == null) {
-      notificationKO(notification, startTime);
-      return;
+        performanceLog(startTime);
     }
 
-    log.info("[NOTIFY] Notification ID: {}", notificationId);
+    private void notificationSent(Notification notification, String notificationId) {
+        notification.setNotificationId(notificationId);
+        notification.setNotificationStatus(NotificationConstants.NOTIFICATION_STATUS_OK);
+        notificationManagerRepository.save(notification);
+    }
 
-    notification.setNotificationId(notificationId);
-    notification.setNotificationStatus("OK");
-    notificationManagerRepository.save(notification);
+    private void performanceLog(long startTime) {
+        log.info(
+                "[PERFORMANCE_LOG] [NOTIFY] Time occurred to perform business logic: {} ms",
+                System.currentTimeMillis() - startTime);
+    }
 
-    performanceLog(startTime);
-  }
-
-  private void performanceLog(long startTime){
-    log.info(
-        "[PERFORMANCE_LOG] [NOTIFY] Time occurred to perform business logic: {} ms",
-        System.currentTimeMillis() - startTime);
-  }
+    private static void logNotificationId(String notificationId) {
+        log.info("[NOTIFY] Notification ID: {}", notificationId);
+    }
 }

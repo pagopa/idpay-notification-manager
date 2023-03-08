@@ -3,6 +3,7 @@ package it.gov.pagopa.notification.manager.model;
 import it.gov.pagopa.notification.manager.dto.OnboardingRejectionReason;
 import lombok.Builder;
 import lombok.Data;
+import lombok.experimental.FieldNameConstants;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
@@ -11,6 +12,7 @@ import java.util.List;
 
 @Data
 @Builder
+@FieldNameConstants
 @Document(collection = "notification")
 public class Notification {
 
@@ -22,6 +24,8 @@ public class Notification {
   private String notificationStatus;
 
   private LocalDateTime notificationDate;
+
+  private LocalDateTime statusKoTimestamp;
 
   private String operationType;
 
