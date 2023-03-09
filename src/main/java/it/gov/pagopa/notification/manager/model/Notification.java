@@ -41,4 +41,8 @@ public class Notification {
 
   private List<OnboardingRejectionReason> rejectReasons;
 
+  private LocalDateTime retryDate;
+
+  private Integer retries;
+
 }

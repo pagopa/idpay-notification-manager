@@ -27,40 +27,65 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.stream.IntStream;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.scheduling.concurrent.CustomizableThreadFactory;
 import org.springframework.stereotype.Service;
+
+import javax.annotation.PostConstruct;
+import javax.annotation.PreDestroy;
 
 @Service
 @Slf4j
 public class NotificationManagerServiceImpl implements NotificationManagerService {
     @Autowired
-    AESUtil aesUtil;
+    private AESUtil aesUtil;
     @Autowired
-    OutcomeProducer outcomeProducer;
+    private OutcomeProducer outcomeProducer;
     @Autowired
-    InitiativeRestConnector initiativeRestConnector;
+    private InitiativeRestConnector initiativeRestConnector;
     @Autowired
-    IOBackEndRestConnector ioBackEndRestConnector;
+    private IOBackEndRestConnector ioBackEndRestConnector;
     @Autowired
-    NotificationManagerRepository notificationManagerRepository;
+    private NotificationManagerRepository notificationManagerRepository;
     @Autowired
-    NotificationManagerRecoverRepository notificationRecoverRepository;
+    private NotificationManagerRecoverRepository notificationRecoverRepository;
     @Autowired
-    NotificationDTOMapper notificationDTOMapper;
+    private NotificationDTOMapper notificationDTOMapper;
     @Autowired
-    PdvDecryptRestConnector pdvDecryptRestConnector;
+    private PdvDecryptRestConnector pdvDecryptRestConnector;
     @Autowired
-    NotificationMapper notificationMapper;
+    private NotificationMapper notificationMapper;
     @Autowired
-    NotificationMarkdown notificationMarkdown;
+    private NotificationMarkdown notificationMarkdown;
+
     @Value("${util.crypto.aes.secret-type.pbe.passphrase}")
     private String passphrase;
     @Value("${rest-client.notification.backend-io.ttl}")
     private Long timeToLive;
+    @Value("${notification.manager.recover.parallelism}")
+    private int parallelism;
+
+    private ExecutorService executorService;
+
+    @PostConstruct
+    void init() {
+        CustomizableThreadFactory threadFactory = new CustomizableThreadFactory("recovery-thread");
+        executorService = Executors.newFixedThreadPool(parallelism, threadFactory);
+    }
+
+    @PreDestroy
+    void close() {
+        executorService.shutdown();
+    }
 
     @Scheduled(fixedRateString = "${notification.manager.recover.schedule}")
     void schedule() {
@@ -123,10 +148,11 @@ public class NotificationManagerServiceImpl implements NotificationManagerServic
     }
 
     @Override
-    public void notify(Notification notification) {
+    public boolean notify(Notification notification) {
         long startTime = System.currentTimeMillis();
 
         notification.setNotificationDate(LocalDateTime.now());
+
         InitiativeAdditionalInfoDTO ioTokens = null;
 
         try {
@@ -138,7 +164,7 @@ public class NotificationManagerServiceImpl implements NotificationManagerServic
 
         if (ioTokens == null) {
             notificationKO(notification, startTime);
-            return;
+            return false;
         }
 
         log.info(NotificationConstants.REQUEST_PDV);
@@ -146,7 +172,7 @@ public class NotificationManagerServiceImpl implements NotificationManagerServic
 
         if (fiscalCode == null) {
             notificationKO(notification, startTime);
-            return;
+            return false;
         }
 
         log.info("[NOTIFY] Sending request to DECRYPT_TOKEN");
@@ -154,7 +180,7 @@ public class NotificationManagerServiceImpl implements NotificationManagerServic
 
         if (isNotSenderAllowed(fiscalCode, tokenDecrypt)) {
             notificationKO(notification, startTime);
-            return;
+            return false;
         }
 
         String subject = notificationMarkdown.getSubject(notification);
@@ -167,26 +193,60 @@ public class NotificationManagerServiceImpl implements NotificationManagerServic
 
         if (notificationId == null) {
             notificationKO(notification, startTime);
-            return;
+            return false;
         }
 
         logNotificationId(notificationId);
 
         notificationSent(notification, notificationId);
         performanceLog(startTime);
+
+        return true;
     }
 
     @Override
     public void recoverKoNotifications() {
-        List<Notification> kos = notificationRecoverRepository.findKoToRecover();
+        log.debug("[NOTIFY][RECOVER] Searching for notifications to recover");
 
-        if (!kos.isEmpty()) {
-            for (Notification n : kos) {
-                this.notify(n);
+        List<Future<Long>> workers = IntStream.range(0, parallelism)
+                .mapToObj(i -> executorService.submit(this::recover))
+                .toList();
+
+        long recovered = workers.stream().mapToLong(f -> {
+            try {
+                return f.get();
+            } catch (InterruptedException | ExecutionException e) {
+                log.error("[NOTIFY][RECOVER] Something went wrong while recovering notifications", e);
+                return 0;
             }
+        }).sum();
+
+        if (recovered > 0) {
+            log.info("[NOTIFY][RECOVER] Notifications that have been recovered {}", recovered);
         } else {
-            log.info("[NOTIFY] No KO notifications were found");
+            log.debug("[NOTIFY][RECOVER] Notifications that have been recovered 0");
         }
+
+        // TODO max retries logic
+    }
+
+    private long recover() {
+        long count = 0;
+        Notification n;
+        while ((n = notificationRecoverRepository.findKoToRecover()) != null) {
+            log.info("[NOTIFY][RECOVER] Trying to recover notification with id {}", n.getId());
+
+            n.setRetries(n.getRetries() != null ? n.getRetries() + 1 : 1);
+
+            try {
+                boolean recovered = this.notify(n);
+                if (recovered) count++;
+            } catch (Exception e) {
+                log.error("[NOTIFY][RECOVER] Something went wrong while recovering notification having id {}", n.getId(), e);
+            }
+        }
+
+        return count;
     }
 
     @Override

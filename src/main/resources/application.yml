@@ -211,6 +211,9 @@ notification:
         publishing: ${SUBJECT_INITIATIVE_PUBLISHING:Ottieni il tuo bonus da 500€!}
     recover:
       schedule: ${SCHEDULE_RECOVER_KO_NOTIFICATION:1800000} # every 30 minutes
+      parallelism: ${RECOVER_PARALLELISM_THREADS:7}
+      minutes-before: ${STUCK_RECOVERS_MINUTES_BEFORE:1440}
+      max-retries: ${RECOVER_MAX_RETRIES:5}
     threads:
       schedule-max-number: ${THREADS_SCHEDULE_MAX_NUMBER:1}
 

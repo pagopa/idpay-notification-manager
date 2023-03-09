@@ -6,7 +6,7 @@ import it.gov.pagopa.notification.manager.model.Notification;
 
 public interface NotificationManagerService {
   void notify(EvaluationDTO evaluationDTO);
-  void notify(Notification notification);
+  boolean notify(Notification notification);
   void addOutcome(EvaluationDTO evaluationDTO);
   void sendNotificationFromOperationType(AnyOfNotificationQueueDTO notificationQueueDTO);
   void recoverKoNotifications();
