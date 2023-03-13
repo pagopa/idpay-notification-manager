@@ -160,7 +160,7 @@ class NotificationManagerServiceTest {
     }
 
     @Autowired
-    NotificationManagerService notificationManagerService;
+    NotificationManagerServiceImpl notificationManagerService;
 
     @MockBean
     AESUtil aesUtil;
@@ -743,7 +743,7 @@ class NotificationManagerServiceTest {
                 .thenReturn(NOTIFICATION_RESOURCE);
 
         try {
-            notificationManagerService.recoverKoNotifications();
+            notificationManagerService.schedule();
             checkKoNotifications();
         } catch (FeignException e) {
             Assertions.fail();
