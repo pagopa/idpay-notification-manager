@@ -39,12 +39,17 @@ public class NotificationManagerRecoverRepositoryImpl implements NotificationMan
     }
 
     private Notification findNewKo() {
+        Criteria criteria = Criteria.where(Notification.Fields.notificationStatus).is(NotificationConstants.NOTIFICATION_STATUS_KO)
+                .andOperator(
+                        Criteria.where(Notification.Fields.retry).not().gte(maxRetries),
+                        new Criteria().orOperator(
+                                Criteria.where(Notification.Fields.retryDate).isNull(),
+                                Criteria.where(Notification.Fields.retryDate).lt(LocalDateTime.now().minusMinutes(minutesBefore))
+                        )
+                );
 
         return mongoTemplate.findAndModify(
-                Query.query(
-                        Criteria.where(Notification.Fields.notificationStatus).is(NotificationConstants.NOTIFICATION_STATUS_KO)
-                                .and(Notification.Fields.retry).lt(3)
-                ),
+                Query.query(criteria),
                 new Update().set(Notification.Fields.notificationStatus, NotificationConstants.NOTIFICATION_STATUS_RECOVER).set(Notification.Fields.retryDate, LocalDateTime.now()),
                 FindAndModifyOptions.options().returnNew(true),
                 Notification.class
