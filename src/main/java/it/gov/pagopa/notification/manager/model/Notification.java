@@ -11,7 +11,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 @Data
-@Builder
+@Builder(toBuilder = true)
 @FieldNameConstants
 @Document(collection = "notification")
 public class Notification {
@@ -43,6 +43,6 @@ public class Notification {
 
   private LocalDateTime retryDate;
 
-  private Integer retries;
+  private Integer retry;
 
 }

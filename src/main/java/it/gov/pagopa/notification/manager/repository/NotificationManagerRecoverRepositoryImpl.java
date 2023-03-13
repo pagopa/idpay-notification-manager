@@ -17,6 +17,8 @@ import java.time.LocalDateTime;
 @Slf4j
 public class NotificationManagerRecoverRepositoryImpl implements NotificationManagerRecoverRepository {
 
+    @Value("${notification.manager.recover.max-retries}")
+    private long maxRetries;
     @Value("${notification.manager.recover.minutes-before}")
     private long minutesBefore;
 
@@ -41,6 +43,7 @@ public class NotificationManagerRecoverRepositoryImpl implements NotificationMan
         return mongoTemplate.findAndModify(
                 Query.query(
                         Criteria.where(Notification.Fields.notificationStatus).is(NotificationConstants.NOTIFICATION_STATUS_KO)
+                                .and(Notification.Fields.retry).lt(3)
                 ),
                 new Update().set(Notification.Fields.notificationStatus, NotificationConstants.NOTIFICATION_STATUS_RECOVER).set(Notification.Fields.retryDate, LocalDateTime.now()),
                 FindAndModifyOptions.options().returnNew(true),
@@ -49,13 +52,14 @@ public class NotificationManagerRecoverRepositoryImpl implements NotificationMan
     }
 
     private Notification findStuckRecover() {
+        Criteria criteria = Criteria.where(Notification.Fields.notificationStatus).is(NotificationConstants.NOTIFICATION_STATUS_RECOVER)
+                .andOperator(
+                        Criteria.where(Notification.Fields.retry).lt(maxRetries),
+                        Criteria.where(Notification.Fields.retryDate).lt(LocalDateTime.now().minusMinutes(minutesBefore))
+                );
 
         return mongoTemplate.findAndModify(
-                Query.query(
-                        Criteria.where(Notification.Fields.notificationStatus).is(NotificationConstants.NOTIFICATION_STATUS_RECOVER)
-                                .and(Notification.Fields.retryDate).lt(LocalDateTime.now().minusMinutes(minutesBefore))
-
-                ),
+                Query.query(criteria),
                 new Update().set(Notification.Fields.retryDate, LocalDateTime.now()),
                 FindAndModifyOptions.options().returnNew(true),
                 Notification.class

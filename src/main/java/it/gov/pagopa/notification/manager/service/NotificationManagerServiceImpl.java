@@ -19,10 +19,17 @@ import it.gov.pagopa.notification.manager.dto.mapper.NotificationMapper;
 import it.gov.pagopa.notification.manager.event.producer.OutcomeProducer;
 import it.gov.pagopa.notification.manager.model.Notification;
 import it.gov.pagopa.notification.manager.model.NotificationMarkdown;
-import it.gov.pagopa.notification.manager.repository.NotificationManagerRecoverRepository;
 import it.gov.pagopa.notification.manager.repository.NotificationManagerRepository;
 import it.gov.pagopa.notification.manager.utils.AESUtil;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.scheduling.concurrent.CustomizableThreadFactory;
+import org.springframework.stereotype.Service;
 
+import javax.annotation.PostConstruct;
+import javax.annotation.PreDestroy;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDateTime;
@@ -33,19 +40,10 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.stream.IntStream;
 
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.scheduling.annotation.Scheduled;
-import org.springframework.scheduling.concurrent.CustomizableThreadFactory;
-import org.springframework.stereotype.Service;
-
-import javax.annotation.PostConstruct;
-import javax.annotation.PreDestroy;
-
 @Service
 @Slf4j
 public class NotificationManagerServiceImpl implements NotificationManagerService {
+    public static final String GENERIC_ERROR_LOG = "[NOTIFY][RECOVER] Something went wrong while recovering notifications";
     @Autowired
     private AESUtil aesUtil;
     @Autowired
@@ -56,8 +54,6 @@ public class NotificationManagerServiceImpl implements NotificationManagerServic
     private IOBackEndRestConnector ioBackEndRestConnector;
     @Autowired
     private NotificationManagerRepository notificationManagerRepository;
-    @Autowired
-    private NotificationManagerRecoverRepository notificationRecoverRepository;
     @Autowired
     private NotificationDTOMapper notificationDTOMapper;
     @Autowired
@@ -87,7 +83,7 @@ public class NotificationManagerServiceImpl implements NotificationManagerServic
         executorService.shutdown();
     }
 
-    @Scheduled(fixedRateString = "${notification.manager.recover.schedule}")
+    @Scheduled(cron = "${notification.manager.recover.schedule}")
     void schedule() {
         log.debug("[NOTIFY] Starting schedule to recover KO notifications");
         this.recoverKoNotifications();
@@ -215,28 +211,30 @@ public class NotificationManagerServiceImpl implements NotificationManagerServic
         long recovered = workers.stream().mapToLong(f -> {
             try {
                 return f.get();
-            } catch (InterruptedException | ExecutionException e) {
-                log.error("[NOTIFY][RECOVER] Something went wrong while recovering notifications", e);
+            } catch (ExecutionException e) {
+                log.error(GENERIC_ERROR_LOG, e);
                 return 0;
+            } catch (InterruptedException e) {
+                log.error(GENERIC_ERROR_LOG, e);
+                Thread.currentThread().interrupt();
+                throw new IllegalStateException(GENERIC_ERROR_LOG, e);
             }
         }).sum();
 
         if (recovered > 0) {
             log.info("[NOTIFY][RECOVER] Notifications that have been recovered {}", recovered);
         } else {
-            log.debug("[NOTIFY][RECOVER] Notifications that have been recovered 0");
+            log.info("[NOTIFY][RECOVER] Notifications that have been recovered 0");
         }
-
-        // TODO max retries logic
     }
 
     private long recover() {
         long count = 0;
         Notification n;
-        while ((n = notificationRecoverRepository.findKoToRecover()) != null) {
+        while ((n = notificationManagerRepository.findKoToRecover()) != null) {
             log.info("[NOTIFY][RECOVER] Trying to recover notification with id {}", n.getId());
 
-            n.setRetries(n.getRetries() != null ? n.getRetries() + 1 : 1);
+            n.setRetry(n.getRetry() != null ? n.getRetry() + 1 : 1);
 
             try {
                 boolean recovered = this.notify(n);
