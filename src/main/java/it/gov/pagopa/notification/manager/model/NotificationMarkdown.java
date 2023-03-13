@@ -108,6 +108,13 @@ public class NotificationMarkdown {
             evaluationDTO.getInitiativeName(), evaluationDTO.getOnboardingRejectionReasons());
   }
 
+  public String getSubject(Notification notification) {
+    return notification.getOnboardingOutcome().equals(NotificationConstants.STATUS_ONBOARDING_OK)
+        ? this.subjectOk
+        : getSubjectKo(
+            notification.getInitiativeName(), notification.getRejectReasons());
+  }
+
   private String getSubjectKo(
       String initiativeName, List<OnboardingRejectionReason> onboardingRejectionReasons) {
     String reason = onboardingRejectionReasons.get(0).getType().name();
@@ -131,6 +138,21 @@ public class NotificationMarkdown {
                 evaluationDTO.getInitiativeName()))
         : getMarkdownKo(
             evaluationDTO.getInitiativeName(), evaluationDTO.getOnboardingRejectionReasons());
+  }
+
+  public String getMarkdown(Notification notification) {
+    return notification.getOnboardingOutcome().equals(NotificationConstants.STATUS_ONBOARDING_OK)
+        ? replaceMessageItem(
+        this.markdownOkCta,
+        NotificationConstants.INITIATIVE_ID_KEY,
+        notification.getInitiativeId())
+            .concat(this.markdownDoubleNewLine)
+            .concat(replaceMessageItem(
+                this.markdownOk,
+                NotificationConstants.INITIATIVE_NAME_KEY,
+                notification.getInitiativeName()))
+        : getMarkdownKo(
+            notification.getInitiativeName(), notification.getRejectReasons());
   }
 
   private String replaceMessageItem(String message, String key, String value) {

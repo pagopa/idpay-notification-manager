@@ -11,6 +11,9 @@ public class NotificationConstants {
   public static final String REQUEST_PDV = "[NOTIFY] Sending request to pdv";
   public static final String FEIGN_KO = "[NOTIFY] [%d] Cannot send request: %s";
   public static final String IO_TOKENS = "[NOTIFY] Getting IO Tokens";
+  public static final String NOTIFICATION_STATUS_OK = "OK";
+  public static final String NOTIFICATION_STATUS_KO = "KO";
+  public static final String NOTIFICATION_STATUS_RECOVER = "RECOVER";
 
   private NotificationConstants(){}
 
