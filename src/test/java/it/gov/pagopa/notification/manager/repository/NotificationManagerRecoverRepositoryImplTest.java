@@ -53,7 +53,13 @@ class NotificationManagerRecoverRepositoryImplTest {
 
     private static final Query NEW_KO_QUERY = Query.query(
             Criteria.where(Notification.Fields.notificationStatus).is(NotificationConstants.NOTIFICATION_STATUS_KO)
-                    .and(Notification.Fields.retry).lt(3)
+                    .andOperator(
+                            Criteria.where(Notification.Fields.retry).not().gte(maxRetries),
+                            new Criteria().orOperator(
+                                    Criteria.where(Notification.Fields.retryDate).isNull(),
+                                    Criteria.where(Notification.Fields.retryDate).lt(NOW)
+                            )
+                    )
     );
     private static final Notification KO_NOTIFICATION = Notification.builder()
             .notificationDate(NOW)
@@ -83,7 +89,7 @@ class NotificationManagerRecoverRepositoryImplTest {
                         Mockito.eq(Notification.class)))
                 .thenReturn(RECOVER_NOTIFICATION);
 
-        Notification result = repository.findKoToRecover();
+        Notification result = repository.findKoToRecover(NOW);
 
         Assertions.assertEquals(RECOVER_NOTIFICATION, result);
     }
@@ -105,7 +111,7 @@ class NotificationManagerRecoverRepositoryImplTest {
                         Mockito.eq(Notification.class)))
                 .thenReturn(expectedNotification);
 
-        Notification result = repository.findKoToRecover();
+        Notification result = repository.findKoToRecover(NOW);
 
         Assertions.assertEquals(expectedNotification, result);
     }
