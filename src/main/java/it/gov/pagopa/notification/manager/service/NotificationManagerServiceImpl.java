@@ -204,8 +204,9 @@ public class NotificationManagerServiceImpl implements NotificationManagerServic
     public void recoverKoNotifications() {
         log.debug("[NOTIFY][RECOVER] Searching for notifications to recover");
 
+        final LocalDateTime startTime = LocalDateTime.now();
         List<Future<Long>> workers = IntStream.range(0, parallelism)
-                .mapToObj(i -> executorService.submit(this::recover))
+                .mapToObj(i -> executorService.submit(() -> recover(startTime)))
                 .toList();
 
         long recovered = workers.stream().mapToLong(f -> {
@@ -228,8 +229,7 @@ public class NotificationManagerServiceImpl implements NotificationManagerServic
         }
     }
 
-    private long recover() {
-        final LocalDateTime startTime = LocalDateTime.now();
+    private long recover(LocalDateTime startTime) {
 
         long count = 0;
         Notification n;
