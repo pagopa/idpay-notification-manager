@@ -715,7 +715,7 @@ class NotificationManagerServiceTest {
     @Test
     void recoverKoNotifications() {
 
-        Mockito.when(notificationManagerRepository.findKoToRecover()).thenReturn(KO_NOTIFICATION_FIRST_RETRY, KO_NOTIFICATION_N_RETRY, null);
+        Mockito.when(notificationManagerRepository.findKoToRecover(Mockito.any(LocalDateTime.class))).thenReturn(KO_NOTIFICATION_FIRST_RETRY, KO_NOTIFICATION_N_RETRY, null);
 
         Mockito.when(initiativeRestConnector.getIOTokens(EVALUATION_DTO.getInitiativeId()))
                 .thenReturn(INITIATIVE_ADDITIONAL_INFO_DTO);

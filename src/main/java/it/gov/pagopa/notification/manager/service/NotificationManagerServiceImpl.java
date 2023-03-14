@@ -229,9 +229,11 @@ public class NotificationManagerServiceImpl implements NotificationManagerServic
     }
 
     private long recover() {
+        final LocalDateTime startTime = LocalDateTime.now();
+
         long count = 0;
         Notification n;
-        while ((n = notificationManagerRepository.findKoToRecover()) != null) {
+        while ((n = notificationManagerRepository.findKoToRecover(startTime)) != null) {
             log.info("[NOTIFY][RECOVER] Trying to recover notification with id {}", n.getId());
 
             n.setRetry(n.getRetry() != null ? n.getRetry() + 1 : 1);

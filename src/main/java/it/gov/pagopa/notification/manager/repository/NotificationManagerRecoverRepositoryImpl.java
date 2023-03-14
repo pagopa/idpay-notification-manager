@@ -29,22 +29,22 @@ public class NotificationManagerRecoverRepositoryImpl implements NotificationMan
     }
 
     @Override
-    public Notification findKoToRecover() {
+    public Notification findKoToRecover(LocalDateTime startTime) {
         Notification stuck;
         if ((stuck = findStuckRecover()) != null) {
             return stuck;
         } else {
-            return findNewKo();
+            return findNewKo(startTime);
         }
     }
 
-    private Notification findNewKo() {
+    private Notification findNewKo(LocalDateTime startTime) {
         Criteria criteria = Criteria.where(Notification.Fields.notificationStatus).is(NotificationConstants.NOTIFICATION_STATUS_KO)
                 .andOperator(
                         Criteria.where(Notification.Fields.retry).not().gte(maxRetries),
                         new Criteria().orOperator(
                                 Criteria.where(Notification.Fields.retryDate).isNull(),
-                                Criteria.where(Notification.Fields.retryDate).lt(LocalDateTime.now().minusMinutes(minutesBefore))
+                                Criteria.where(Notification.Fields.retryDate).lt(startTime)
                         )
                 );
 
