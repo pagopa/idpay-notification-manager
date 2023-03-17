@@ -64,4 +64,13 @@ class NotificationManagerControllerTest {
         .andExpect(MockMvcResultMatchers.status().isOk())
         .andReturn();
   }
+
+  @Test
+  void forceScheduling_ok() throws Exception {
+    Mockito.doNothing().when(notificationManagerServiceMock).recoverKoNotifications();
+
+    mvc.perform(MockMvcRequestBuilders.get(BASE_URL+"/recover/start"))
+            .andExpect(MockMvcResultMatchers.status().isOk())
+            .andReturn();
+  }
 }

@@ -209,6 +209,13 @@ notification:
       ko.nodeValue: ${SUBJECT_KO:Non è stato possibile attivare %initiativeName%}
       initiative:
         publishing: ${SUBJECT_INITIATIVE_PUBLISHING:Ottieni il tuo bonus da 500€!}
+    recover:
+      schedule: ${SCHEDULE_RECOVER_KO_NOTIFICATION:0 0 * ? * *} # every hour
+      parallelism: ${RECOVER_PARALLELISM_THREADS:7}
+      minutes-before: ${STUCK_RECOVERS_MINUTES_BEFORE:1440}
+      max-retries: ${RECOVER_MAX_RETRIES:3}
+    threads:
+      schedule-max-number: ${THREADS_SCHEDULE_MAX_NUMBER:1}
 
 logging:
   level:
