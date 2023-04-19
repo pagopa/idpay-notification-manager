@@ -31,13 +31,17 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
       "notification.manager.markdown.ok.cta=---\\nit:\\n    cta_1: \\n        text: \"Vai all'iniziativa\"\\n        action: \"ioit://idpay/initiative/%initiativeId%\"\\nen:\\n    cta_1: \\n        text: \"Go to the bonus page\"\\n        action: \"ioit://idpay/initiative/%initiativeId%\"\\n---",
       "notification.manager.subject.ko=Non è stato possibile attivare %initiativeName%",
       "notification.manager.subject.ko.tech=Abbiamo riscontrato dei problemi",
+      "notification.manager.subject.suspension=Sospensione temporanea da iniziativa %initiativeName%!",
       "notification.manager.markdown.ok=Buone notizie! Hai ottenuto %initiativeName%. Da questo momento puoi visualizzare il bonus nella sezione Portafoglio dell'app IO.\\n\\nTi ricordiamo che per iniziare ad usufruire del bonus devi configurare almeno un metodo di pagamento.\\n\\nPuoi trovare maggiori informazioni sul [sito](http://example.com/).",
       "notification.manager.markdown.ok.refund=Hai ottenuto un rimborso di %effectiveReward% euro!",
       "notification.manager.markdown.ko.pdnd=Purtroppo non hai i requisiti necessari per aderire a %initiativeName% per i seguenti motivi:",
       "notification.manager.markdown.ko.ranking=Purtroppo non è stato possibile attivare %initiativeName% in quanto i tuoi requisiti non rientrano nella graduatoria.",
       "notification.manager.markdown.ko.mistake=Se ritieni che ci sia stato un errore puoi segnalarlo direttamente all'Ente erogatore dell'iniziativa.",
       "notification.manager.markdown.ko.tech=Si è verificato un errore nel processare la tua richiesta di %initiativeName%.\\nTi chiediamo di riprovare.",
-      "notification.manager.markdown.ko.apology=Ci scusiamo per il disagio."
+      "notification.manager.markdown.ko.apology=Ci scusiamo per il disagio.",
+      "notification.manager.markdown.suspension=In seguito ad alcune verifiche, il tuo profilo è stato sospeso dall'iniziativa.\\n" +
+              "                  Gli importi ancora da erogare saranno sospesi e le transazioni a partire da questo momento non saranno riconosciute come valide ai fini dell'iniziativa.\\n" +
+              "                  Contatta l'assistenza al numero XXXXX per capire come risolvere entro 60 giorni a partire da oggi e comunica il codice protocollo XXXX."
     })
 class NotificationMarkdownTest {
 
@@ -190,6 +194,16 @@ class NotificationMarkdownTest {
   @Test
   void getMarkdownRefund_ko(){
     String actual = notificationMarkdown.getMarkdownRefund("REJECTED", new BigDecimal("500.00"));
+    log.info(actual);
+  }
+  @Test
+  void getMarkdownSuspension_ok(){
+    String actual = notificationMarkdown.getMarkdownSuspension();
+    log.info(actual);
+  }
+  @Test
+  void getSubjectSuspension_ok(){
+    String actual = notificationMarkdown.getSubjectSuspension(INITIATIVE_NAME);
     log.info(actual);
   }
 }

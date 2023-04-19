@@ -189,7 +189,9 @@ notification:
                 text: "Go to the bonus page"
                 action: "ioit://idpay/initiative/%initiativeId%"
         ---}
-
+      suspension: ${MARKDOWN_SUSPENSION:In seguito ad alcune verifiche, il tuo profilo è stato sospeso dall'iniziativa.
+                  Gli importi ancora da erogare saranno sospesi e le transazioni a partire da questo momento non saranno riconosciute come valide ai fini dell'iniziativa.
+                  Contatta l'assistenza al numero XXXXX per capire come risolvere entro 60 giorni a partire da oggi e comunica il codice protocollo XXXX.}
       initiative:
         publishing: |-
           ${MARKDOWN_INITIATIVE_PUBLISHING:**Fino al 31 agosto 2022** puoi ottenere il tuo Bonus Cultura di 500 euro per acquistare:
@@ -209,6 +211,7 @@ notification:
       ko.nodeValue: ${SUBJECT_KO:Non è stato possibile attivare %initiativeName%}
       initiative:
         publishing: ${SUBJECT_INITIATIVE_PUBLISHING:Ottieni il tuo bonus da 500€!}
+      suspension: ${SUBJECT_SUSPENSION:Sospensione temporanea da iniziativa %initiativeName%!}
     recover:
       schedule: ${SCHEDULE_RECOVER_KO_NOTIFICATION:0 0 * ? * *} # every hour
       parallelism: ${RECOVER_PARALLELISM_THREADS:7}

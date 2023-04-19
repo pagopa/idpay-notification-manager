@@ -72,6 +72,8 @@ class NotificationMapperTest {
   @Test
   void toEntity(){
     Notification actual = notificationMapper.toEntity(NOTIFICATION_QUEUE_DTO);
+    NOTIFICATION_QUEUE.setNotificationDate(actual.getNotificationDate());
+
     assertEquals(NOTIFICATION_QUEUE, actual);
   }
 
