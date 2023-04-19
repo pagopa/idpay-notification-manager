@@ -24,6 +24,7 @@ public class NotificationConstants {
       public static final String ALLOWED_CITIZEN_PUBLISH = "ALLOWED_CITIZEN_PUBLISH";
       public static final String CHECKIBAN_KO = "CHECKIBAN_KO";
       public static final String REFUND = "REFUND";
+      public static final String SUSPENSION = "SUSPENSION";
     }
   }
 }

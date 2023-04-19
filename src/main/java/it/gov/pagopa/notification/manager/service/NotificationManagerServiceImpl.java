@@ -9,10 +9,7 @@ import it.gov.pagopa.notification.manager.dto.EvaluationDTO;
 import it.gov.pagopa.notification.manager.dto.NotificationDTO;
 import it.gov.pagopa.notification.manager.dto.NotificationResource;
 import it.gov.pagopa.notification.manager.dto.ProfileResource;
-import it.gov.pagopa.notification.manager.dto.event.AnyOfNotificationQueueDTO;
-import it.gov.pagopa.notification.manager.dto.event.NotificationCitizenOnQueueDTO;
-import it.gov.pagopa.notification.manager.dto.event.NotificationIbanQueueDTO;
-import it.gov.pagopa.notification.manager.dto.event.NotificationRefundQueueDTO;
+import it.gov.pagopa.notification.manager.dto.event.*;
 import it.gov.pagopa.notification.manager.dto.initiative.InitiativeAdditionalInfoDTO;
 import it.gov.pagopa.notification.manager.dto.mapper.NotificationDTOMapper;
 import it.gov.pagopa.notification.manager.dto.mapper.NotificationMapper;
@@ -301,6 +298,18 @@ public class NotificationManagerServiceImpl implements NotificationManagerServic
             markdown = notificationMarkdown.getMarkdownRefund(notificationRefundOnQueueDTO.getStatus(), refund);
         }
 
+        if (anyOfNotificationQueueDTO instanceof NotificationSuspensionQueueDTO notificationSuspensionQueueDTO) {
+
+            notification = notificationMapper.toEntity(notificationSuspensionQueueDTO);
+
+            ioTokens = getIoTokens(notificationSuspensionQueueDTO.getInitiativeId());
+
+            fiscalCode = decryptUserToken(notificationSuspensionQueueDTO.getUserId());
+
+            subject = notificationMarkdown.getSubjectSuspension(notificationSuspensionQueueDTO.getInitiativeName());
+            markdown = notificationMarkdown.getMarkdownSuspension();
+        }
+
         if (ioTokens == null) {
             if (notification != null) {
                 notificationKO(notification, startTime);
@@ -363,7 +372,7 @@ public class NotificationManagerServiceImpl implements NotificationManagerServic
             ProfileResource profileResource = ioBackEndRestConnector.getProfile(fiscalCode, primaryKey);
             return !profileResource.isSenderAllowed();
         } catch (FeignException e) {
-            log.error("[NOTIFY] The user is not enabled to receive notifications!");
+            log.error("[NOTIFY] The user is not enabled to receive notifications: {}", e.contentUTF8());
             return true;
         }
     }

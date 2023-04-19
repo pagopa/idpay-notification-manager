@@ -11,6 +11,7 @@ import it.gov.pagopa.notification.manager.dto.*;
 import it.gov.pagopa.notification.manager.dto.event.NotificationCitizenOnQueueDTO;
 import it.gov.pagopa.notification.manager.dto.event.NotificationIbanQueueDTO;
 import it.gov.pagopa.notification.manager.dto.event.NotificationRefundQueueDTO;
+import it.gov.pagopa.notification.manager.dto.event.NotificationSuspensionQueueDTO;
 import it.gov.pagopa.notification.manager.dto.initiative.InitiativeAdditionalInfoDTO;
 import it.gov.pagopa.notification.manager.dto.mapper.NotificationDTOMapper;
 import it.gov.pagopa.notification.manager.dto.mapper.NotificationMapper;
@@ -142,6 +143,20 @@ class NotificationManagerServiceTest {
             .notificationStatus(NotificationConstants.NOTIFICATION_STATUS_RECOVER)
             .retry(2)
             .retryDate(LocalDateTime.now())
+            .build();
+    private static final NotificationSuspensionQueueDTO NOTIFICATION_SUSPENSION_QUEUE_DTO = NotificationSuspensionQueueDTO.builder()
+            .initiativeName(INITIATIVE_NAME)
+            .initiativeId(INITIATIVE_ID)
+            .operationType(OPERATION_TYPE)
+            .userId(TEST_TOKEN)
+            .build();
+    private static final Notification NOTIFICATION_SUSPENSION = Notification.builder()
+            .notificationDate(LocalDateTime.now())
+            .notificationStatus(NotificationConstants.NOTIFICATION_STATUS_OK)
+            .initiativeName(INITIATIVE_NAME)
+            .initiativeId(INITIATIVE_ID)
+            .operationType(OPERATION_TYPE)
+            .userId(TEST_TOKEN)
             .build();
 
     static {
@@ -866,5 +881,30 @@ class NotificationManagerServiceTest {
         Assertions.assertTrue(KO_NOTIFICATION_N_RETRY.getNotificationDate().isAfter(TEST_DATE));
     }
     //endregion
+    @Test
+    void sendNotificationFromOperationType_suspension_ok() {
+        Mockito.when(notificationMapper.toEntity(NOTIFICATION_SUSPENSION_QUEUE_DTO)).thenReturn(NOTIFICATION_SUSPENSION);
+        Mockito.when(initiativeRestConnector.getIOTokens(INITIATIVE_ID)).thenReturn(INITIATIVE_ADDITIONAL_INFO_DTO);
+        Mockito.when(pdvDecryptRestConnector.getPii(TEST_TOKEN)).thenReturn(FISCAL_CODE_RESOURCE);
+        Mockito.when(notificationMarkdown.getMarkdownSuspension()).thenReturn(MARKDOWN);
+        Mockito.when(notificationMarkdown.getSubjectSuspension(INITIATIVE_NAME)).thenReturn(SUBJECT);
+        Mockito.when(aesUtil.decrypt(PASSPHRASE, PRIMARY_KEY)).thenReturn(TOKEN);
+        Mockito.when(ioBackEndRestConnector.getProfile(FISCAL_CODE, TOKEN)).thenReturn(PROFILE_RESOURCE);
+        Mockito.when(
+                        notificationDTOMapper.map(
+                                Mockito.eq(FISCAL_CODE),
+                                Mockito.any(Long.class),
+                                Mockito.anyString(),
+                                Mockito.anyString()))
+                .thenReturn(NOTIFICATION_DTO);
+        Mockito.when(ioBackEndRestConnector.notify(NOTIFICATION_DTO, TOKEN)).thenReturn(NOTIFICATION_RESOURCE);
 
+        try {
+            notificationManagerService.sendNotificationFromOperationType(NOTIFICATION_SUSPENSION_QUEUE_DTO);
+        } catch (FeignException e) {
+            Assertions.fail();
+        }
+
+        Mockito.verify(notificationManagerRepository, Mockito.times(1)).save(NOTIFICATION_SUSPENSION);
+    }
 }

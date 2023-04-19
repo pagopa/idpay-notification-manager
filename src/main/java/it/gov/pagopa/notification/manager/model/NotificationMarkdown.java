@@ -77,6 +77,10 @@ public class NotificationMarkdown {
 
   @Value("${notification.manager.markdown.ko.refund}")
   private String markdownRefundKo;
+  @Value("${notification.manager.subject.suspension}")
+  private String subjectSuspension;
+  @Value("${notification.manager.markdown.suspension}")
+  private String markdownSuspension;
 
   public String getSubjectCheckIbanKo() {
     return this.subjectCheckIbanKo;
@@ -212,8 +216,16 @@ public class NotificationMarkdown {
   }
 
   private String getMarkdownKoTech(String initiativeName) {
-    return replaceMessageItem(this.markdownKoTech, "initiativeName", initiativeName)
+    return replaceMessageItem(this.markdownKoTech, NotificationConstants.INITIATIVE_NAME_KEY, initiativeName)
         .concat(this.markdownDoubleNewLine)
         .concat(this.markdownKoApology);
+  }
+
+  public String getSubjectSuspension(String initiativeName) {
+    return replaceMessageItem(this.subjectSuspension, NotificationConstants.INITIATIVE_NAME_KEY, initiativeName);
+  }
+
+  public String getMarkdownSuspension() {
+    return this.markdownSuspension;
   }
 }
