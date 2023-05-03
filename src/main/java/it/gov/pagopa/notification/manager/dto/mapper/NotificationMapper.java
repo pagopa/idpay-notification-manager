@@ -1,7 +1,9 @@
 package it.gov.pagopa.notification.manager.dto.mapper;
 
+import it.gov.pagopa.notification.manager.constants.NotificationConstants;
 import it.gov.pagopa.notification.manager.dto.EvaluationDTO;
 import it.gov.pagopa.notification.manager.dto.event.AnyOfNotificationQueueDTO;
+import it.gov.pagopa.notification.manager.dto.event.NotificationRefundQueueDTO;
 import it.gov.pagopa.notification.manager.model.Notification;
 import java.time.LocalDateTime;
 import org.springframework.beans.BeanUtils;
@@ -16,7 +18,7 @@ public class NotificationMapper {
         .initiativeName(evaluationDTO.getInitiativeName())
         .userId(evaluationDTO.getUserId())
         .onboardingOutcome(evaluationDTO.getStatus())
-        .operationType("ONBOARDING")
+        .operationType(NotificationConstants.AnyNotificationConsumer.SubTypes.ONBOARDING)
         .rejectReasons(evaluationDTO.getOnboardingRejectionReasons())
         .build();
   }
@@ -25,6 +27,9 @@ public class NotificationMapper {
     Notification notification = Notification.builder().build();
     BeanUtils.copyProperties(anyOfNotificationQueueDTO, notification);
     notification.setNotificationDate(LocalDateTime.now());
+    if(anyOfNotificationQueueDTO instanceof NotificationRefundQueueDTO notificationRefundOnQueueDTO){
+      notification.setRefundStatus(notificationRefundOnQueueDTO.getStatus());
+    }
     return notification;
   }
 

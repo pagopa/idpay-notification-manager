@@ -14,7 +14,6 @@ public class NotificationConstants {
   public static final String NOTIFICATION_STATUS_OK = "OK";
   public static final String NOTIFICATION_STATUS_KO = "KO";
   public static final String NOTIFICATION_STATUS_RECOVER = "RECOVER";
-
   private NotificationConstants(){}
 
   public static final class AnyNotificationConsumer{
@@ -25,6 +24,8 @@ public class NotificationConstants {
       public static final String CHECKIBAN_KO = "CHECKIBAN_KO";
       public static final String REFUND = "REFUND";
       public static final String SUSPENSION = "SUSPENSION";
+      public static final String ONBOARDING = "ONBOARDING";
+
     }
   }
 }

@@ -37,6 +37,8 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.stream.IntStream;
 
+import static it.gov.pagopa.notification.manager.constants.NotificationConstants.AnyNotificationConsumer.SubTypes.*;
+
 @Service
 @Slf4j
 public class NotificationManagerServiceImpl implements NotificationManagerService {
@@ -176,8 +178,31 @@ public class NotificationManagerServiceImpl implements NotificationManagerServic
             return false;
         }
 
-        String subject = notificationMarkdown.getSubject(notification);
-        String markdown = notificationMarkdown.getMarkdown(notification);
+        String subject;
+        String markdown;
+        switch (notification.getOperationType()){
+            case ONBOARDING -> {
+                subject = notificationMarkdown.getSubject(notification);
+                markdown = notificationMarkdown.getMarkdown(notification);
+            }
+            case ALLOWED_CITIZEN_PUBLISH -> {
+                subject = notificationMarkdown.getSubjectInitiativePublishing();
+                markdown = notificationMarkdown.getMarkdownInitiativePublishing();
+            }
+            case CHECKIBAN_KO -> {
+                subject = notificationMarkdown.getSubjectCheckIbanKo();
+                markdown = notificationMarkdown.getMarkdownCheckIbanKo();
+            }
+            case REFUND -> {
+                subject = notificationMarkdown.getSubjectRefund(notification.getRefundStatus());
+                markdown = notificationMarkdown.getMarkdownRefund(notification.getRefundStatus(), notification.getRefundReward());
+            }
+            case SUSPENSION -> {
+                subject = notificationMarkdown.getSubjectSuspension(notification.getInitiativeName());
+                markdown = notificationMarkdown.getMarkdownSuspension();
+            }
+            default -> {return false;}
+        }
 
         NotificationDTO notificationDTO =
                 notificationDTOMapper.map(fiscalCode, timeToLive, subject, markdown);

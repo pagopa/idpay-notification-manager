@@ -7,6 +7,7 @@ import lombok.experimental.FieldNameConstants;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -44,5 +45,7 @@ public class Notification {
   private LocalDateTime retryDate;
 
   private Integer retry;
+  private BigDecimal refundReward;
+  private String refundStatus;
 
 }

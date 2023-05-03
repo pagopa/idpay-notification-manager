@@ -39,6 +39,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
+import static it.gov.pagopa.notification.manager.constants.NotificationConstants.AnyNotificationConsumer.SubTypes.ONBOARDING;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @ExtendWith({SpringExtension.class, MockitoExtension.class})
@@ -132,6 +133,7 @@ class NotificationManagerServiceTest {
             .rejectReasons(EVALUATION_DTO.getOnboardingRejectionReasons())
             .notificationStatus(NotificationConstants.NOTIFICATION_STATUS_RECOVER)
             .retryDate(LocalDateTime.now())
+            .operationType(ONBOARDING)
             .build();
 
     private static final Notification KO_NOTIFICATION_N_RETRY = Notification.builder()
@@ -143,6 +145,7 @@ class NotificationManagerServiceTest {
             .notificationStatus(NotificationConstants.NOTIFICATION_STATUS_RECOVER)
             .retry(2)
             .retryDate(LocalDateTime.now())
+            .operationType(ONBOARDING)
             .build();
     private static final NotificationSuspensionQueueDTO NOTIFICATION_SUSPENSION_QUEUE_DTO = NotificationSuspensionQueueDTO.builder()
             .initiativeName(INITIATIVE_NAME)
