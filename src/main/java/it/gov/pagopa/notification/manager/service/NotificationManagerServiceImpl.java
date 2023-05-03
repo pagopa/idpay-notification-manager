@@ -310,6 +310,18 @@ public class NotificationManagerServiceImpl implements NotificationManagerServic
             markdown = notificationMarkdown.getMarkdownSuspension();
         }
 
+        if (anyOfNotificationQueueDTO instanceof NotificationAuthPaymentDTO notificationAuthPaymentDTO) {
+
+            notification = notificationMapper.toEntity(notificationAuthPaymentDTO);
+
+            ioTokens = getIoTokens(notificationAuthPaymentDTO.getInitiativeId());
+
+            fiscalCode = decryptUserToken(notificationAuthPaymentDTO.getUserId());
+
+            subject = "notificationAuthPaymentDTO subject - " + notificationAuthPaymentDTO.getIdPayment();
+            markdown = "notificationAuthPaymentDTO markdown";
+        }
+
         if (ioTokens == null) {
             if (notification != null) {
                 notificationKO(notification, startTime);
