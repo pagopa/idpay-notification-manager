@@ -31,7 +31,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
       "notification.manager.markdown.ok.cta=---\\nit:\\n    cta_1: \\n        text: \"Vai all'iniziativa\"\\n        action: \"ioit://idpay/initiative/%initiativeId%\"\\nen:\\n    cta_1: \\n        text: \"Go to the bonus page\"\\n        action: \"ioit://idpay/initiative/%initiativeId%\"\\n---",
       "notification.manager.subject.ko=Non è stato possibile attivare %initiativeName%",
       "notification.manager.subject.ko.tech=Abbiamo riscontrato dei problemi",
-      "notification.manager.subject.suspension=Sospensione temporanea da iniziativa %initiativeName%!",
+      "notification.manager.subject.suspension=Sospensione temporanea da iniziativa %initiativeName%",
+      "notification.manager.subject.readmission=Riammissione a iniziativa %initiativeName%",
       "notification.manager.markdown.ok=Buone notizie! Hai ottenuto %initiativeName%. Da questo momento puoi visualizzare il bonus nella sezione Portafoglio dell'app IO.\\n\\nTi ricordiamo che per iniziare ad usufruire del bonus devi configurare almeno un metodo di pagamento.\\n\\nPuoi trovare maggiori informazioni sul [sito](http://example.com/).",
       "notification.manager.markdown.ok.refund=Hai ottenuto un rimborso di %effectiveReward% euro!",
       "notification.manager.markdown.ko.pdnd=Purtroppo non hai i requisiti necessari per aderire a %initiativeName% per i seguenti motivi:",
@@ -41,7 +42,9 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
       "notification.manager.markdown.ko.apology=Ci scusiamo per il disagio.",
       "notification.manager.markdown.suspension=In seguito ad alcune verifiche, il tuo profilo è stato sospeso dall'iniziativa.\\n" +
               "                  Gli importi ancora da erogare saranno sospesi e le transazioni a partire da questo momento non saranno riconosciute come valide ai fini dell'iniziativa.\\n" +
-              "                  Contatta l'assistenza al numero XXXXX per capire come risolvere entro 60 giorni a partire da oggi e comunica il codice protocollo XXXX."
+              "                  Contatta l'assistenza al numero XXXXX per capire come risolvere entro 60 giorni a partire da oggi e comunica il codice protocollo XXXX.",
+      "notification.manager.markdown.readmission=In seguito ad alcune verifiche, il tuo profilo è stato riammesso all'iniziativa.\\n" +
+              "                   Gli importi precedentemente sospesi saranno riammessi e rimborsati nel prossimo ordine di rimborso a tuo favore."
     })
 class NotificationMarkdownTest {
 
@@ -204,6 +207,16 @@ class NotificationMarkdownTest {
   @Test
   void getSubjectSuspension_ok(){
     String actual = notificationMarkdown.getSubjectSuspension(INITIATIVE_NAME);
+    log.info(actual);
+  }
+  @Test
+  void getMarkdownReadmission_ok(){
+    String actual = notificationMarkdown.getMarkdownReadmission();
+    log.info(actual);
+  }
+  @Test
+  void getSubjectReadmission_ok(){
+    String actual = notificationMarkdown.getSubjectReadmission(INITIATIVE_NAME);
     log.info(actual);
   }
 }

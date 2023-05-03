@@ -81,6 +81,10 @@ public class NotificationMarkdown {
   private String subjectSuspension;
   @Value("${notification.manager.markdown.suspension}")
   private String markdownSuspension;
+  @Value("${notification.manager.subject.readmission}")
+  private String subjectReadmission;
+  @Value("${notification.manager.markdown.readmission}")
+  private String markdownReadmission;
 
   public String getSubjectCheckIbanKo() {
     return this.subjectCheckIbanKo;
@@ -227,5 +231,12 @@ public class NotificationMarkdown {
 
   public String getMarkdownSuspension() {
     return this.markdownSuspension;
+  }
+  public String getSubjectReadmission(String initiativeName) {
+    return replaceMessageItem(this.subjectReadmission, NotificationConstants.INITIATIVE_NAME_KEY, initiativeName);
+  }
+
+  public String getMarkdownReadmission() {
+    return this.markdownReadmission;
   }
 }
