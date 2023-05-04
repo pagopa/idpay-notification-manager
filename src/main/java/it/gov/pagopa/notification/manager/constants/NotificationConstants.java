@@ -3,6 +3,7 @@ package it.gov.pagopa.notification.manager.constants;
 public class NotificationConstants {
 
   public static final String STATUS_ONBOARDING_OK = "ONBOARDING_OK";
+  public static final String STATUS_ONBOARDING_JOINED = "ONBOARDING_JOINED";
   public static final String INITIATIVE_NAME_KEY = "initiativeName";
   public static final String INITIATIVE_ID_KEY = "initiativeId";
   public static final String MARKDOWN_TAG = "%";
