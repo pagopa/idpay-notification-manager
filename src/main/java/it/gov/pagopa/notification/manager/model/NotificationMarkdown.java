@@ -106,14 +106,16 @@ public class NotificationMarkdown {
   }
 
   public String getSubject(EvaluationDTO evaluationDTO) {
-    return evaluationDTO.getStatus().equals(NotificationConstants.STATUS_ONBOARDING_OK)
+    return evaluationDTO.getStatus().equals(NotificationConstants.STATUS_ONBOARDING_OK)||
+            evaluationDTO.getStatus().equals(NotificationConstants.STATUS_ONBOARDING_JOINED)
         ? this.subjectOk
         : getSubjectKo(
             evaluationDTO.getInitiativeName(), evaluationDTO.getOnboardingRejectionReasons());
   }
 
   public String getSubject(Notification notification) {
-    return notification.getOnboardingOutcome().equals(NotificationConstants.STATUS_ONBOARDING_OK)
+    return notification.getOnboardingOutcome().equals(NotificationConstants.STATUS_ONBOARDING_OK)||
+            notification.getOnboardingOutcome().equals(NotificationConstants.STATUS_ONBOARDING_JOINED)
         ? this.subjectOk
         : getSubjectKo(
             notification.getInitiativeName(), notification.getRejectReasons());
@@ -130,7 +132,8 @@ public class NotificationMarkdown {
   }
 
   public String getMarkdown(EvaluationDTO evaluationDTO) {
-    return evaluationDTO.getStatus().equals(NotificationConstants.STATUS_ONBOARDING_OK)
+    return evaluationDTO.getStatus().equals(NotificationConstants.STATUS_ONBOARDING_OK) ||
+            evaluationDTO.getStatus().equals(NotificationConstants.STATUS_ONBOARDING_JOINED)
         ? replaceMessageItem(
         this.markdownOkCta,
         NotificationConstants.INITIATIVE_ID_KEY,
@@ -145,7 +148,8 @@ public class NotificationMarkdown {
   }
 
   public String getMarkdown(Notification notification) {
-    return notification.getOnboardingOutcome().equals(NotificationConstants.STATUS_ONBOARDING_OK)
+    return notification.getOnboardingOutcome().equals(NotificationConstants.STATUS_ONBOARDING_OK) ||
+            notification.getOnboardingOutcome().equals(NotificationConstants.STATUS_ONBOARDING_JOINED)
         ? replaceMessageItem(
         this.markdownOkCta,
         NotificationConstants.INITIATIVE_ID_KEY,
