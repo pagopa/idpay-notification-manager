@@ -201,6 +201,7 @@ notification:
           
           **Spendere il bonus è semplicissimo**: al momento dell’acquisto, online e presso gli esercenti fisici, **paga con la tua carta d’identità elettronica** o la tua tessera sanitaria. In alternativa, puoi sempre anticipare la spesa con uno dei tuoi metodi di pagamento...
           }
+      authPayment: ${MARKDOWN_AUTH_PAYMENT:Hai autorizzato il pagamento con il seguente importo %amountEuro%}
     subject:
       ok: ${SUBJECT_OK:Il tuo Bonus è attivo}
       ok.refund: ${SUBJECT_OK_REFUND:Ti è stato accreditato un rimborso!}
@@ -212,6 +213,7 @@ notification:
       initiative:
         publishing: ${SUBJECT_INITIATIVE_PUBLISHING:Ottieni il tuo bonus da 500€!}
       suspension: ${SUBJECT_SUSPENSION:Sospensione temporanea da iniziativa %initiativeName%!}
+      authPayment: ${SUBJECT_AUTH_PAYMENT:Autorizzazione pagamento}
     recover:
       schedule: ${SCHEDULE_RECOVER_KO_NOTIFICATION:0 0 * ? * *} # every hour
       parallelism: ${RECOVER_PARALLELISM_THREADS:7}

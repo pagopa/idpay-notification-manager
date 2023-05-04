@@ -318,8 +318,8 @@ public class NotificationManagerServiceImpl implements NotificationManagerServic
 
             fiscalCode = decryptUserToken(notificationAuthPaymentDTO.getUserId());
 
-            subject = "notificationAuthPaymentDTO subject - " + notificationAuthPaymentDTO.getIdPayment();
-            markdown = "notificationAuthPaymentDTO markdown";
+            subject = notificationMarkdown.getSubjectAuthPayment();
+            markdown = notificationMarkdown.getMarkdownAuthPayment(notificationAuthPaymentDTO.getAmountCents());
         }
 
         if (ioTokens == null) {

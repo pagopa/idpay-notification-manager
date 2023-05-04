@@ -12,5 +12,5 @@ import lombok.experimental.SuperBuilder;
 @NoArgsConstructor
 @AllArgsConstructor
 public class NotificationAuthPaymentDTO extends NotificationQueueDTO{
-    private String idPayment; //TODO aggiungere campi
+    private Long amountCents;
 }

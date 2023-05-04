@@ -13,7 +13,9 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
+import java.text.NumberFormat;
 import java.util.List;
+import java.util.Locale;
 
 @Component
 @Slf4j
@@ -81,6 +83,10 @@ public class NotificationMarkdown {
   private String subjectSuspension;
   @Value("${notification.manager.markdown.suspension}")
   private String markdownSuspension;
+  @Value("${notification.manager.subject.authPayment}")
+  private String subjectAuthPayment;
+  @Value("${notification.manager.markdown.authPayment}")
+  private String markdownAuthPayment;
 
   public String getSubjectCheckIbanKo() {
     return this.subjectCheckIbanKo;
@@ -227,5 +233,15 @@ public class NotificationMarkdown {
 
   public String getMarkdownSuspension() {
     return this.markdownSuspension;
+  }
+
+  public String getSubjectAuthPayment() {
+    return subjectAuthPayment;
+  }
+
+  public String getMarkdownAuthPayment(Long amountCents) {
+    String amountEuro = NumberFormat.getCurrencyInstance(Locale.ITALY).format(amountCents/100.0);
+
+    return replaceMessageItem(markdownAuthPayment, NotificationConstants.AMOUNT_EURO_KEY, amountEuro);
   }
 }
