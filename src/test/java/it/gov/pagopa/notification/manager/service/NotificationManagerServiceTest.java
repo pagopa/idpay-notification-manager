@@ -8,10 +8,7 @@ import it.gov.pagopa.notification.manager.connector.PdvDecryptRestConnector;
 import it.gov.pagopa.notification.manager.connector.initiative.InitiativeRestConnector;
 import it.gov.pagopa.notification.manager.constants.NotificationConstants;
 import it.gov.pagopa.notification.manager.dto.*;
-import it.gov.pagopa.notification.manager.dto.event.NotificationCitizenOnQueueDTO;
-import it.gov.pagopa.notification.manager.dto.event.NotificationIbanQueueDTO;
-import it.gov.pagopa.notification.manager.dto.event.NotificationRefundQueueDTO;
-import it.gov.pagopa.notification.manager.dto.event.NotificationSuspensionQueueDTO;
+import it.gov.pagopa.notification.manager.dto.event.*;
 import it.gov.pagopa.notification.manager.dto.initiative.InitiativeAdditionalInfoDTO;
 import it.gov.pagopa.notification.manager.dto.mapper.NotificationDTOMapper;
 import it.gov.pagopa.notification.manager.dto.mapper.NotificationMapper;
@@ -151,6 +148,22 @@ class NotificationManagerServiceTest {
             .userId(TEST_TOKEN)
             .build();
     private static final Notification NOTIFICATION_SUSPENSION = Notification.builder()
+            .notificationDate(LocalDateTime.now())
+            .notificationStatus(NotificationConstants.NOTIFICATION_STATUS_OK)
+            .initiativeName(INITIATIVE_NAME)
+            .initiativeId(INITIATIVE_ID)
+            .operationType(OPERATION_TYPE)
+            .userId(TEST_TOKEN)
+            .build();
+
+    private static final NotificationAuthPaymentDTO NOTIFICATION_AUTH_PAYMENT_DTO = NotificationAuthPaymentDTO.builder()
+            .operationType(OPERATION_TYPE)
+            .userId(TEST_TOKEN)
+            .initiativeId(INITIATIVE_ID)
+            .amountCents(100L)
+            .build();
+
+    private static final Notification NOTIFICATION_AUTH_PAYMENT = Notification.builder()
             .notificationDate(LocalDateTime.now())
             .notificationStatus(NotificationConstants.NOTIFICATION_STATUS_OK)
             .initiativeName(INITIATIVE_NAME)
@@ -906,5 +919,32 @@ class NotificationManagerServiceTest {
         }
 
         Mockito.verify(notificationManagerRepository, Mockito.times(1)).save(NOTIFICATION_SUSPENSION);
+    }
+
+    @Test
+    void sendNotificationFromOperationType_authPayment_ok() {
+        Mockito.when(notificationMapper.toEntity(NOTIFICATION_AUTH_PAYMENT_DTO)).thenReturn(NOTIFICATION_AUTH_PAYMENT);
+        Mockito.when(initiativeRestConnector.getIOTokens(INITIATIVE_ID)).thenReturn(INITIATIVE_ADDITIONAL_INFO_DTO);
+        Mockito.when(pdvDecryptRestConnector.getPii(TEST_TOKEN)).thenReturn(FISCAL_CODE_RESOURCE);
+        Mockito.when(notificationMarkdown.getMarkdownAuthPayment(Mockito.anyLong())).thenReturn(MARKDOWN);
+        Mockito.when(notificationMarkdown.getSubjectAuthPayment()).thenReturn(SUBJECT);
+        Mockito.when(aesUtil.decrypt(PASSPHRASE, PRIMARY_KEY)).thenReturn(TOKEN);
+        Mockito.when(ioBackEndRestConnector.getProfile(FISCAL_CODE, TOKEN)).thenReturn(PROFILE_RESOURCE);
+        Mockito.when(
+                        notificationDTOMapper.map(
+                                Mockito.eq(FISCAL_CODE),
+                                Mockito.any(Long.class),
+                                Mockito.anyString(),
+                                Mockito.anyString()))
+                .thenReturn(NOTIFICATION_DTO);
+        Mockito.when(ioBackEndRestConnector.notify(NOTIFICATION_DTO, TOKEN)).thenReturn(NOTIFICATION_RESOURCE);
+
+        try {
+            notificationManagerService.sendNotificationFromOperationType(NOTIFICATION_AUTH_PAYMENT_DTO);
+        } catch (FeignException e) {
+            Assertions.fail();
+        }
+
+        Mockito.verify(notificationManagerRepository, Mockito.times(1)).save(NOTIFICATION_AUTH_PAYMENT);
     }
 }
