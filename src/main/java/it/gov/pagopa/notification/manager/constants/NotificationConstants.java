@@ -26,6 +26,7 @@ public class NotificationConstants {
       public static final String CHECKIBAN_KO = "CHECKIBAN_KO";
       public static final String REFUND = "REFUND";
       public static final String SUSPENSION = "SUSPENSION";
+      public static final String READMISSION = "READMISSION";
     }
   }
 }
