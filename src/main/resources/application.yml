@@ -192,7 +192,7 @@ notification:
       suspension: ${MARKDOWN_SUSPENSION:In seguito ad alcune verifiche, il tuo profilo è stato sospeso dall'iniziativa.
                   Gli importi ancora da erogare saranno sospesi e le transazioni a partire da questo momento non saranno riconosciute come valide ai fini dell'iniziativa.
                   Contatta l'assistenza al numero XXXXX per capire come risolvere entro 60 giorni a partire da oggi e comunica il codice protocollo XXXX.}
-      readmission: ${MARKDOWN_SUSPENSION:In seguito ad alcune verifiche, il tuo profilo è stato riammesso all'iniziativa.
+      readmission: ${MARKDOWN_READMISSION:In seguito ad alcune verifiche, il tuo profilo è stato riammesso all'iniziativa.
                    Gli importi precedentemente sospesi saranno riammessi e rimborsati nel prossimo ordine di rimborso a tuo favore.}
       initiative:
         publishing: |-
