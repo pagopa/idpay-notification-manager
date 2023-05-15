@@ -83,6 +83,10 @@ public class NotificationMarkdown {
   private String subjectSuspension;
   @Value("${notification.manager.markdown.suspension}")
   private String markdownSuspension;
+  @Value("${notification.manager.subject.readmission}")
+  private String subjectReadmission;
+  @Value("${notification.manager.markdown.readmission}")
+  private String markdownReadmission;
   @Value("${notification.manager.subject.authPayment}")
   private String subjectAuthPayment;
   @Value("${notification.manager.markdown.authPayment}")
@@ -112,14 +116,16 @@ public class NotificationMarkdown {
   }
 
   public String getSubject(EvaluationDTO evaluationDTO) {
-    return evaluationDTO.getStatus().equals(NotificationConstants.STATUS_ONBOARDING_OK)
+    return evaluationDTO.getStatus().equals(NotificationConstants.STATUS_ONBOARDING_OK)||
+            evaluationDTO.getStatus().equals(NotificationConstants.STATUS_ONBOARDING_JOINED)
         ? this.subjectOk
         : getSubjectKo(
             evaluationDTO.getInitiativeName(), evaluationDTO.getOnboardingRejectionReasons());
   }
 
   public String getSubject(Notification notification) {
-    return notification.getOnboardingOutcome().equals(NotificationConstants.STATUS_ONBOARDING_OK)
+    return notification.getOnboardingOutcome().equals(NotificationConstants.STATUS_ONBOARDING_OK)||
+            notification.getOnboardingOutcome().equals(NotificationConstants.STATUS_ONBOARDING_JOINED)
         ? this.subjectOk
         : getSubjectKo(
             notification.getInitiativeName(), notification.getRejectReasons());
@@ -136,7 +142,8 @@ public class NotificationMarkdown {
   }
 
   public String getMarkdown(EvaluationDTO evaluationDTO) {
-    return evaluationDTO.getStatus().equals(NotificationConstants.STATUS_ONBOARDING_OK)
+    return evaluationDTO.getStatus().equals(NotificationConstants.STATUS_ONBOARDING_OK) ||
+            evaluationDTO.getStatus().equals(NotificationConstants.STATUS_ONBOARDING_JOINED)
         ? replaceMessageItem(
         this.markdownOkCta,
         NotificationConstants.INITIATIVE_ID_KEY,
@@ -151,7 +158,8 @@ public class NotificationMarkdown {
   }
 
   public String getMarkdown(Notification notification) {
-    return notification.getOnboardingOutcome().equals(NotificationConstants.STATUS_ONBOARDING_OK)
+    return notification.getOnboardingOutcome().equals(NotificationConstants.STATUS_ONBOARDING_OK) ||
+            notification.getOnboardingOutcome().equals(NotificationConstants.STATUS_ONBOARDING_JOINED)
         ? replaceMessageItem(
         this.markdownOkCta,
         NotificationConstants.INITIATIVE_ID_KEY,
@@ -233,6 +241,13 @@ public class NotificationMarkdown {
 
   public String getMarkdownSuspension() {
     return this.markdownSuspension;
+  }
+  public String getSubjectReadmission(String initiativeName) {
+    return replaceMessageItem(this.subjectReadmission, NotificationConstants.INITIATIVE_NAME_KEY, initiativeName);
+  }
+
+  public String getMarkdownReadmission() {
+    return this.markdownReadmission;
   }
 
   //todo update subject and add test

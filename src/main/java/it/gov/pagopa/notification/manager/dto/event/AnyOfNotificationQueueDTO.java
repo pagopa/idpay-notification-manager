@@ -15,6 +15,7 @@ import static it.gov.pagopa.notification.manager.constants.NotificationConstants
         @JsonSubTypes.Type(value = NotificationRefundQueueDTO.class, name = REFUND),
         @JsonSubTypes.Type(value = NotificationIbanQueueDTO.class, name = CHECKIBAN_KO),
         @JsonSubTypes.Type(value = NotificationSuspensionQueueDTO.class, name = SUSPENSION),
+        @JsonSubTypes.Type(value = NotificationReadmissionQueueDTO.class, name = READMISSION),
         @JsonSubTypes.Type(value = NotificationAuthPaymentDTO.class, name = AUTH_PAYMENT)
 })
 public interface AnyOfNotificationQueueDTO {
