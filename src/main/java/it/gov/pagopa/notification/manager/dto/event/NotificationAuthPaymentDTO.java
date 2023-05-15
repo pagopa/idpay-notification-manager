@@ -6,6 +6,7 @@ import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 
+import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.util.List;
 
@@ -23,4 +24,5 @@ public class NotificationAuthPaymentDTO extends NotificationQueueDTO{
     private Long reward;
     private Long amountCents;
     private List<String> rejectionReasons;
+    private LocalDateTime authorizationDateTime;
 }

@@ -235,10 +235,12 @@ public class NotificationMarkdown {
     return this.markdownSuspension;
   }
 
+  //todo update subject and add test
   public String getSubjectAuthPayment() {
     return subjectAuthPayment;
   }
 
+  //todo update markdown and add test
   public String getMarkdownAuthPayment(Long amountCents) {
     String amountEuro = NumberFormat.getCurrencyInstance(Locale.ITALY).format(amountCents/100.0);
 
