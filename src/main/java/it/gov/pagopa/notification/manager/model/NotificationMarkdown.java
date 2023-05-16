@@ -4,7 +4,11 @@ import it.gov.pagopa.notification.manager.constants.NotificationConstants;
 import it.gov.pagopa.notification.manager.dto.EvaluationDTO;
 import it.gov.pagopa.notification.manager.dto.OnboardingRejectionReason;
 import it.gov.pagopa.notification.manager.dto.OnboardingRejectionReason.OnboardingRejectionReasonType;
+import java.math.BigDecimal;
+import java.text.DecimalFormat;
+import java.text.DecimalFormatSymbols;
 import lombok.Getter;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
@@ -12,6 +16,7 @@ import org.springframework.util.StringUtils;
 import java.util.List;
 
 @Component
+@Slf4j
 public class NotificationMarkdown {
 
   @Value("${notification.manager.markdown.double.new.line}")
@@ -28,6 +33,9 @@ public class NotificationMarkdown {
 
   @Value("${notification.manager.markdown.ok}")
   private String markdownOk;
+
+  @Value("${notification.manager.markdown.ok.cta}")
+  private String markdownOkCta;
 
   @Value("${notification.manager.markdown.ko.pdnd}")
   private String markdownKoPdnd;
@@ -69,6 +77,14 @@ public class NotificationMarkdown {
 
   @Value("${notification.manager.markdown.ko.refund}")
   private String markdownRefundKo;
+  @Value("${notification.manager.subject.suspension}")
+  private String subjectSuspension;
+  @Value("${notification.manager.markdown.suspension}")
+  private String markdownSuspension;
+  @Value("${notification.manager.subject.readmission}")
+  private String subjectReadmission;
+  @Value("${notification.manager.markdown.readmission}")
+  private String markdownReadmission;
 
   public String getSubjectCheckIbanKo() {
     return this.subjectCheckIbanKo;
@@ -82,17 +98,31 @@ public class NotificationMarkdown {
     return ("ACCEPTED".equals(status)) ? subjectRefundOk : subjectRefundKo;
   }
 
-  public String getMarkdownRefund(String status, String effectiveReward) {
+  public String getMarkdownRefund(String status, BigDecimal effectiveReward) {
+    DecimalFormatSymbols symbols = new DecimalFormatSymbols();
+    symbols.setDecimalSeparator(',');
+
+    DecimalFormat df = new DecimalFormat("###.00", symbols);
+    df.setGroupingUsed(false);
     return ("ACCEPTED".equals(status))
-        ? replaceMessageItem(markdownRefundOk, "effectiveReward", effectiveReward)
+        ? replaceMessageItem(markdownRefundOk, "effectiveReward", df.format(effectiveReward))
         : markdownRefundKo;
   }
 
   public String getSubject(EvaluationDTO evaluationDTO) {
-    return evaluationDTO.getStatus().equals(NotificationConstants.STATUS_ONBOARDING_OK)
+    return evaluationDTO.getStatus().equals(NotificationConstants.STATUS_ONBOARDING_OK)||
+            evaluationDTO.getStatus().equals(NotificationConstants.STATUS_ONBOARDING_JOINED)
         ? this.subjectOk
         : getSubjectKo(
             evaluationDTO.getInitiativeName(), evaluationDTO.getOnboardingRejectionReasons());
+  }
+
+  public String getSubject(Notification notification) {
+    return notification.getOnboardingOutcome().equals(NotificationConstants.STATUS_ONBOARDING_OK)||
+            notification.getOnboardingOutcome().equals(NotificationConstants.STATUS_ONBOARDING_JOINED)
+        ? this.subjectOk
+        : getSubjectKo(
+            notification.getInitiativeName(), notification.getRejectReasons());
   }
 
   private String getSubjectKo(
@@ -106,13 +136,35 @@ public class NotificationMarkdown {
   }
 
   public String getMarkdown(EvaluationDTO evaluationDTO) {
-    return evaluationDTO.getStatus().equals(NotificationConstants.STATUS_ONBOARDING_OK)
+    return evaluationDTO.getStatus().equals(NotificationConstants.STATUS_ONBOARDING_OK) ||
+            evaluationDTO.getStatus().equals(NotificationConstants.STATUS_ONBOARDING_JOINED)
         ? replaceMessageItem(
-            this.markdownOk,
-            NotificationConstants.INITIATIVE_NAME_KEY,
-            evaluationDTO.getInitiativeName())
+        this.markdownOkCta,
+        NotificationConstants.INITIATIVE_ID_KEY,
+        evaluationDTO.getInitiativeId())
+            .concat(this.markdownDoubleNewLine)
+            .concat(replaceMessageItem(
+                this.markdownOk,
+                NotificationConstants.INITIATIVE_NAME_KEY,
+                evaluationDTO.getInitiativeName()))
         : getMarkdownKo(
             evaluationDTO.getInitiativeName(), evaluationDTO.getOnboardingRejectionReasons());
+  }
+
+  public String getMarkdown(Notification notification) {
+    return notification.getOnboardingOutcome().equals(NotificationConstants.STATUS_ONBOARDING_OK) ||
+            notification.getOnboardingOutcome().equals(NotificationConstants.STATUS_ONBOARDING_JOINED)
+        ? replaceMessageItem(
+        this.markdownOkCta,
+        NotificationConstants.INITIATIVE_ID_KEY,
+        notification.getInitiativeId())
+            .concat(this.markdownDoubleNewLine)
+            .concat(replaceMessageItem(
+                this.markdownOk,
+                NotificationConstants.INITIATIVE_NAME_KEY,
+                notification.getInitiativeName()))
+        : getMarkdownKo(
+            notification.getInitiativeName(), notification.getRejectReasons());
   }
 
   private String replaceMessageItem(String message, String key, String value) {
@@ -172,8 +224,23 @@ public class NotificationMarkdown {
   }
 
   private String getMarkdownKoTech(String initiativeName) {
-    return replaceMessageItem(this.markdownKoTech, "initiativeName", initiativeName)
+    return replaceMessageItem(this.markdownKoTech, NotificationConstants.INITIATIVE_NAME_KEY, initiativeName)
         .concat(this.markdownDoubleNewLine)
         .concat(this.markdownKoApology);
+  }
+
+  public String getSubjectSuspension(String initiativeName) {
+    return replaceMessageItem(this.subjectSuspension, NotificationConstants.INITIATIVE_NAME_KEY, initiativeName);
+  }
+
+  public String getMarkdownSuspension() {
+    return this.markdownSuspension;
+  }
+  public String getSubjectReadmission(String initiativeName) {
+    return replaceMessageItem(this.subjectReadmission, NotificationConstants.INITIATIVE_NAME_KEY, initiativeName);
+  }
+
+  public String getMarkdownReadmission() {
+    return this.markdownReadmission;
   }
 }

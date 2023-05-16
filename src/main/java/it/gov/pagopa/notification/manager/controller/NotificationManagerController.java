@@ -2,21 +2,20 @@ package it.gov.pagopa.notification.manager.controller;
 
 import it.gov.pagopa.notification.manager.dto.EvaluationDTO;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/idpay/notifications")
 public interface NotificationManagerController {
 
+  /**
+   * Force the recover process to be executed
+   */
+  @GetMapping("/recover/start")
+  void forceRecoverScheduling();
 
   /**
    * Add a new operation to the Outcomes Queue
-   *
-   * @param body
-   * @return
    */
   @PutMapping("/")
   ResponseEntity<Void> addNotification(@RequestBody EvaluationDTO body);

@@ -8,7 +8,7 @@ microservice-chart:
       path: /actuator/health
       port: 8080
     initialDelaySeconds: 120
-    failureThreshold: 6
+    failureThreshold: 15
     periodSeconds: 10
 
   readinessProbe:
@@ -16,8 +16,8 @@ microservice-chart:
       path: /actuator/health
       port: 8080
     initialDelaySeconds: 120
-    failureThreshold: 10
-    periodSeconds: 30
+    failureThreshold: 15
+    periodSeconds: 10
 
   deployment:
     create: true
@@ -58,6 +58,7 @@ microservice-chart:
     APPLICATIONINSIGHTS_ROLE_NAME: "idpaynotificationmanager"
     APPLICATIONINSIGHTS_INSTRUMENTATION_LOGGING_LEVEL: "OFF"
     APPLICATIONINSIGHTS_INSTRUMENTATION_MICROMETER_ENABLED: "false"
+    APPLICATIONINSIGHTS_PREVIEW_PROFILER_ENABLED: "false"
 
   envConfigMapExternals:
     idpay-common:
@@ -87,7 +88,7 @@ microservice-chart:
     UTIL_CRYPTO_AES_SECRET_TYPE_PBE_SALT: notification-token-salt
     UTIL_CRYPTO_AES_SECRET_TYPE_PBE_PASSPHRASE: notification-token-passphrase
     UTIL_CRYPTO_AES_MODE_GCM_IV: notification-token-iv
-#    APPLICATIONINSIGHTS_CONNECTION_STRING: appinsights-instrumentation-key
+    REDIS_CONNECTION_URL: idpay-redis-00-primary-connection-url
 
   # nodeSelector: {}
 

@@ -24,6 +24,7 @@ public class NotificationMapper {
   public Notification toEntity(AnyOfNotificationQueueDTO anyOfNotificationQueueDTO){
     Notification notification = Notification.builder().build();
     BeanUtils.copyProperties(anyOfNotificationQueueDTO, notification);
+    notification.setNotificationDate(LocalDateTime.now());
     return notification;
   }
 
