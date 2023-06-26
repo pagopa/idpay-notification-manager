@@ -15,9 +15,11 @@ rest-client:
     service:
       name: ms-initiative
       base-url: ${INITIATIVE_MS_BASE_URL:}/idpay/initiative
+
 management.endpoints:
   web:
     exposure.include: info, health
+
 spring:
   application:
     name: "@project.artifactId@"
@@ -130,9 +132,9 @@ spring:
       on-profile: default
   data:
     mongodb:
-      database: ${MONGODB_DBNAME}
-      uri: ${MONGODB_URI}
-        # custom configured properties
+      uri: ${MONGODB_URI:mongodb://localhost:27017}
+      database: ${MONGODB_DBNAME:idpay}
+      # custom configured properties
       config:
         connectionPool:
           maxSize: ${MONGODB_CONNECTIONPOOL_MAX_SIZE:100}

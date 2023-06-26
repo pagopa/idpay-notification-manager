@@ -17,9 +17,9 @@ import java.time.LocalDateTime;
 @Slf4j
 public class NotificationManagerRecoverRepositoryImpl implements NotificationManagerRecoverRepository {
 
-    @Value("${notification.manager.recover.max-retries}")
+    @Value("${notification.manager.recover.max-retries:3}")
     private long maxRetries;
-    @Value("${notification.manager.recover.minutes-before}")
+    @Value("${notification.manager.recover.minutes-before:1440}")
     private long minutesBefore;
 
     private final MongoTemplate mongoTemplate;
