@@ -34,3 +34,6 @@ build/
 
 ### Spring application local ###
 /src/main/resources/application-default.yml
+
+/helm/charts/*
+/src/test/resources/secrets/*
