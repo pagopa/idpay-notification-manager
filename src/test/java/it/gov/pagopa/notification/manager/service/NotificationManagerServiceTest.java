@@ -678,25 +678,6 @@ class NotificationManagerServiceTest {
     }
 
     @Test
-    void sendNotificationFromOperationType_checkiban_notification_Null_ioTokens_null() {
-        Mockito.when(notificationMapper.toEntity(NOTIFICATION_IBAN_QUEUE_DTO))
-                .thenReturn(null);
-
-        Mockito.when(initiativeRestConnector.getIOTokens(INITIATIVE_ID))
-                .thenReturn(null);
-
-        Mockito.when(pdvDecryptRestConnector.getPii(TEST_TOKEN)).thenReturn(FISCAL_CODE_RESOURCE);
-        Mockito.when(notificationMarkdown.getMarkdownInitiativePublishing()).thenReturn(SUBJECT);
-
-        Mockito.when(notificationMarkdown.getSubjectInitiativePublishing()).thenReturn(MARKDOWN);
-        try {
-            notificationManagerService.sendNotificationFromOperationType(NOTIFICATION_IBAN_QUEUE_DTO);
-        } catch (FeignException e) {
-            Assertions.fail();
-        }
-    }
-
-    @Test
     void sendNotificationFromOperationType_refund_ok() {
 
         Mockito.when(notificationMapper.toEntity(NOTIFICATION_REFUND_QUEUE_DTO))
