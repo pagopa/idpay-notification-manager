@@ -323,9 +323,7 @@ public class NotificationManagerServiceImpl implements NotificationManagerServic
         }
 
         if (ioTokens == null) {
-            if (notification != null) {
-                notificationKO(notification, startTime);
-            }
+            notificationKO(notification, startTime);
             return;
         }
 
