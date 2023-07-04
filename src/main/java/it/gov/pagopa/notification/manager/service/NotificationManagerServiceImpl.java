@@ -398,6 +398,9 @@ public class NotificationManagerServiceImpl implements NotificationManagerServic
     }
 
     private void notificationKO(Notification notification, long startTime) {
+        if(notification == null){
+            return;
+        }
         notification.setNotificationStatus(NotificationConstants.NOTIFICATION_STATUS_KO);
         notification.setStatusKoTimestamp(LocalDateTime.now());
         notificationManagerRepository.save(notification);
