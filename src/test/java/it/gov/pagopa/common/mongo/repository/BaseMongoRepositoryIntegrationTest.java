@@ -39,7 +39,7 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 @TestPropertySource(
         properties = {
-                "spring.mongodb.embedded.version=4.0.21",
+                "de.flapdoodle.mongodb.embedded.version=4.0.21",
 
                 "spring.data.mongodb.database=idpay",
                 "spring.data.mongodb.config.connectionPool.maxSize: 100",
