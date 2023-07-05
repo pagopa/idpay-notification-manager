@@ -27,12 +27,10 @@ spring:
   jmx.enabled: true
   cache:
     type: redis
-  redis:
-    url: ${REDIS_CONNECTION_URL:redis://@localhost:6379}
   cloud:
+    function:
+      definition: notificationQueue;anyNotificationConsumer;onboardingConsumer
     stream:
-      function:
-        definition: notificationQueue;anyNotificationConsumer;onboardingConsumer
       binders:
         kafka-notification:
           type: kafka
@@ -131,6 +129,8 @@ spring:
     activate:
       on-profile: default
   data:
+    redis:
+      url: ${REDIS_CONNECTION_URL:redis://@localhost:6379}
     mongodb:
       uri: ${MONGODB_URI:mongodb://localhost:27017}
       database: ${MONGODB_DBNAME:idpay}
