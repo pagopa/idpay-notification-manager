@@ -3,7 +3,7 @@ package it.gov.pagopa.notification.manager.connector;
 import it.gov.pagopa.notification.manager.dto.NotificationDTO;
 import it.gov.pagopa.notification.manager.dto.NotificationResource;
 import it.gov.pagopa.notification.manager.dto.ProfileResource;
-import javax.validation.Valid;
+import jakarta.validation.Valid;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.GetMapping;

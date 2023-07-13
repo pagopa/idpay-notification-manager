@@ -12,14 +12,15 @@ import org.springframework.data.redis.serializer.RedisSerializationContext.Seria
 
 @Configuration
 public class RedisConfig {
+
   @Bean
   public RedisCacheManagerBuilderCustomizer redisCacheManagerBuilderCustomizer() {
 
     ObjectMapper mapper = new ObjectMapper();
     mapper.findAndRegisterModules();
 
-    Jackson2JsonRedisSerializer<InitiativeAdditionalInfoDTO> serializer = new Jackson2JsonRedisSerializer<>(InitiativeAdditionalInfoDTO.class);
-    serializer.setObjectMapper(mapper);
+    Jackson2JsonRedisSerializer<InitiativeAdditionalInfoDTO> serializer = new Jackson2JsonRedisSerializer<>(
+        mapper, InitiativeAdditionalInfoDTO.class);
 
     return builder -> builder
         .withCacheConfiguration("initiativeToken",

@@ -25,8 +25,8 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.scheduling.concurrent.CustomizableThreadFactory;
 import org.springframework.stereotype.Service;
 
-import javax.annotation.PostConstruct;
-import javax.annotation.PreDestroy;
+import jakarta.annotation.PostConstruct;
+import jakarta.annotation.PreDestroy;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDateTime;
@@ -323,9 +323,7 @@ public class NotificationManagerServiceImpl implements NotificationManagerServic
         }
 
         if (ioTokens == null) {
-            if (notification != null) {
-                notificationKO(notification, startTime);
-            }
+            notificationKO(notification, startTime);
             return;
         }
 
@@ -400,6 +398,9 @@ public class NotificationManagerServiceImpl implements NotificationManagerServic
     }
 
     private void notificationKO(Notification notification, long startTime) {
+        if(notification == null){
+            return;
+        }
         notification.setNotificationStatus(NotificationConstants.NOTIFICATION_STATUS_KO);
         notification.setStatusKoTimestamp(LocalDateTime.now());
         notificationManagerRepository.save(notification);
