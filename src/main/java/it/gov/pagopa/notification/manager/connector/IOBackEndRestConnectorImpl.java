@@ -3,11 +3,8 @@ package it.gov.pagopa.notification.manager.connector;
 import it.gov.pagopa.notification.manager.dto.NotificationDTO;
 import it.gov.pagopa.notification.manager.dto.NotificationResource;
 import it.gov.pagopa.notification.manager.dto.ProfileResource;
-import it.gov.pagopa.notification.manager.dto.ServiceResource;
-import org.springframework.beans.factory.annotation.Value;
+import jakarta.validation.Valid;
 import org.springframework.stereotype.Service;
-
-import javax.validation.Valid;
 
 @Service
 public class IOBackEndRestConnectorImpl implements IOBackEndRestConnector {
