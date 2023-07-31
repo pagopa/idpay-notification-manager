@@ -17,6 +17,7 @@ import it.gov.pagopa.notification.manager.model.Notification;
 import it.gov.pagopa.notification.manager.model.NotificationMarkdown;
 import it.gov.pagopa.notification.manager.repository.NotificationManagerRepository;
 import it.gov.pagopa.notification.manager.utils.AESUtil;
+import it.gov.pagopa.notification.manager.utils.AuditUtilities;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -206,6 +207,8 @@ class NotificationManagerServiceTest {
     NotificationMapper notificationMapper;
     @MockBean
     NotificationMarkdown notificationMarkdown;
+    @MockBean
+    AuditUtilities auditUtilities;
 
     @Test
     void sendToQueue() {
@@ -944,5 +947,40 @@ class NotificationManagerServiceTest {
         }
 
         Mockito.verify(notificationManagerRepository, Mockito.times(1)).save(NOTIFICATION_READMISSION);
+    }
+
+    @Test
+    void processNotificationDelete(){
+        QueueCommandOperationDTO queueCommandOperationDTO = QueueCommandOperationDTO.builder()
+                .operationType(NotificationConstants.OPERATION_TYPE_DELETE_INITIATIVE)
+                .operationId(INITIATIVE_ID)
+                .operationTime(LocalDateTime.now())
+                .build();
+
+        Notification notification1 = Notification.builder()
+                .initiativeId(INITIATIVE_ID)
+                .userId("USER1").build();
+        Mockito.when(notificationManagerRepository.deleteByInitiativeId(INITIATIVE_ID))
+                        .thenReturn(List.of(notification1));
+
+
+        notificationManagerService.processNotification(queueCommandOperationDTO);
+
+        Mockito.verify(notificationManagerRepository, Mockito.times(1)).deleteByInitiativeId(Mockito.anyString());
+    }
+
+
+    @Test
+    void processNotificationInvalidType(){
+        QueueCommandOperationDTO queueCommandOperationDTO = QueueCommandOperationDTO.builder()
+                .operationType("IVALID_OPERATUION_TYPE")
+                .operationId(INITIATIVE_ID)
+                .operationTime(LocalDateTime.now())
+                .build();
+
+
+        notificationManagerService.processNotification(queueCommandOperationDTO);
+
+        Mockito.verify(notificationManagerRepository, Mockito.never()).deleteByInitiativeId(Mockito.anyString());
     }
 }
