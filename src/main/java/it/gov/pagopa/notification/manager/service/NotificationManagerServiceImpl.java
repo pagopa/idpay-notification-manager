@@ -230,16 +230,16 @@ public class NotificationManagerServiceImpl implements NotificationManagerServic
     }
 
     @Override
-    public void processNotification(QueueCommandOperationDTO queueCommandOperationDTO) {
+    public void processNotification(CommandOperationQueueDTO commandOperationQueueDTO) {
         long startTime = System.currentTimeMillis();
 
-        if (NotificationConstants.OPERATION_TYPE_DELETE_INITIATIVE.equals(queueCommandOperationDTO.getOperationType())) {
+        if (NotificationConstants.OPERATION_TYPE_DELETE_INITIATIVE.equals(commandOperationQueueDTO.getOperationType())) {
 
-            List<Notification> deletedNotification = notificationManagerRepository.deleteByInitiativeId(queueCommandOperationDTO.getOperationId());
-            log.info("[DELETE_NOTIFICATION] Deleted {} notifications for initiativeId {}", deletedNotification.size(), queueCommandOperationDTO.getOperationId());
+            List<Notification> deletedNotification = notificationManagerRepository.deleteByInitiativeId(commandOperationQueueDTO.getOperationId());
+            log.info("[DELETE_NOTIFICATION] Deleted {} notifications for initiativeId {}", deletedNotification.size(), commandOperationQueueDTO.getOperationId());
 
-            deletedNotification
-                    .forEach(notification -> auditUtilities.logDeletedNotification(notification.getUserId(), queueCommandOperationDTO.getOperationId()));
+            deletedNotification.stream().distinct()
+                    .forEach(notification -> auditUtilities.logDeletedNotification(notification.getUserId(), commandOperationQueueDTO.getOperationId()));
         }
         performanceLog(startTime, "DELETE_NOTIFICATION");
     }

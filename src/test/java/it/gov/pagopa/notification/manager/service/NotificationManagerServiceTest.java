@@ -951,7 +951,7 @@ class NotificationManagerServiceTest {
 
     @Test
     void processNotificationDelete(){
-        QueueCommandOperationDTO queueCommandOperationDTO = QueueCommandOperationDTO.builder()
+        CommandOperationQueueDTO commandOperationQueueDTO = CommandOperationQueueDTO.builder()
                 .operationType(NotificationConstants.OPERATION_TYPE_DELETE_INITIATIVE)
                 .operationId(INITIATIVE_ID)
                 .operationTime(LocalDateTime.now())
@@ -964,7 +964,7 @@ class NotificationManagerServiceTest {
                         .thenReturn(List.of(notification1));
 
 
-        notificationManagerService.processNotification(queueCommandOperationDTO);
+        notificationManagerService.processNotification(commandOperationQueueDTO);
 
         Mockito.verify(notificationManagerRepository, Mockito.times(1)).deleteByInitiativeId(Mockito.anyString());
     }
@@ -972,14 +972,14 @@ class NotificationManagerServiceTest {
 
     @Test
     void processNotificationInvalidType(){
-        QueueCommandOperationDTO queueCommandOperationDTO = QueueCommandOperationDTO.builder()
+        CommandOperationQueueDTO commandOperationQueueDTO = CommandOperationQueueDTO.builder()
                 .operationType("IVALID_OPERATUION_TYPE")
                 .operationId(INITIATIVE_ID)
                 .operationTime(LocalDateTime.now())
                 .build();
 
 
-        notificationManagerService.processNotification(queueCommandOperationDTO);
+        notificationManagerService.processNotification(commandOperationQueueDTO);
 
         Mockito.verify(notificationManagerRepository, Mockito.never()).deleteByInitiativeId(Mockito.anyString());
     }
