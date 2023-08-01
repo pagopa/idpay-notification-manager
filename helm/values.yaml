@@ -82,7 +82,7 @@ microservice-chart:
       KAFKA_TOPIC_NOTIFICATION: idpay_notification_request_topic
       KAFKA_NOTIFICATION_GROUP_IN: idpay-notification-request-consumer-group
     idpay-eventhub-01:
-      KAFKA_BINDER_BROKER_NS1_ENDPOINT_LIST: kafka_broker
+      KAFKA_BINDER_BROKER_NS_ONE_ENDPOINT_LIST: kafka_broker
       
   envSecret:
     MONGODB_URI: mongodb-connection-string
