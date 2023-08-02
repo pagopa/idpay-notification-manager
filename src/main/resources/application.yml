@@ -59,7 +59,7 @@ spring:
             spring.cloud.stream.kafka.binder:
               brokers: ${KAFKA_BINDER_BROKER_NS_ONE_ENDPOINT_LIST:${KAFKA_BROKER:}}
               configuration:
-                sasl.jaas.config: ${KAFKA_OUTCOME_OUT_SASL_JAAS_CONFIG:}
+                sasl.jaas.config: ${KAFKA_COMMANDS_SASL_JAAS_CONFIG:}
       bindings:
         notificationQueue-out-0:
           binder: kafka-outcome-out
