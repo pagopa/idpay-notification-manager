@@ -10,7 +10,7 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @Builder
 public class CommandOperationQueueDTO {
-    private String operationType;
+    private String entityId;
     private String operationId;
     private LocalDateTime operationTime;
 }
