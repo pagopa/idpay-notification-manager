@@ -8,7 +8,7 @@ import org.springframework.context.annotation.Configuration;
 import java.util.function.Consumer;
 
 @Configuration
-public class CommandsConsumer {
+public class CommandsConsumerConfig {
 
   @Bean
   public Consumer<CommandOperationQueueDTO> commandsConsumer(
