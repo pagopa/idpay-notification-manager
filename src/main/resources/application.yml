@@ -28,38 +28,62 @@ spring:
   cache:
     type: redis
   cloud:
+    function:
+      definition: notificationQueue;anyNotificationConsumer;onboardingConsumer;commandsConsumer
     stream:
-      function:
-        definition: notificationQueue;anyNotificationConsumer;onboardingConsumer;commandsConsumer
       binders:
         kafka-notification:
           type: kafka
           environment:
-            spring.cloud.stream.kafka.binder:
-              brokers: ${KAFKA_BINDER_BROKER_ENDPOINT_LIST:}
-              configuration:
-                sasl.jaas.config: ${KAFKA_NOTIFICATION_SASL_JAAS_CONFIG:}
+            spring:
+              cloud:
+                stream:
+                  kafka:
+                    binder:
+                      brokers: ${KAFKA_BINDER_BROKER_ENDPOINT_LIST:}
+                      configuration:
+                        sasl:
+                          jaas:
+                            config: ${KAFKA_NOTIFICATION_SASL_JAAS_CONFIG:}
         kafka-outcome:
           type: kafka
           environment:
-            spring.cloud.stream.kafka.binder:
-              brokers: ${KAFKA_BINDER_BROKER_ENDPOINT_LIST:}
-              configuration:
-                sasl.jaas.config: ${KAFKA_OUTCOME_SASL_JAAS_CONFIG:}
-        kafka-outcome-out:
-          type: kafka
-          environment:
-            spring.cloud.stream.kafka.binder:
-              brokers: ${KAFKA_BINDER_BROKER_ENDPOINT_LIST:}
-              configuration:
-                sasl.jaas.config: ${KAFKA_OUTCOME_OUT_SASL_JAAS_CONFIG:}
+            spring:
+              cloud:
+                stream:
+                  kafka:
+                    binder:
+                      brokers: ${KAFKA_BINDER_BROKER_ENDPOINT_LIST:}
+                      configuration:
+                        sasl:
+                          jaas:
+                            config: ${KAFKA_OUTCOME_SASL_JAAS_CONFIG:}
         kafka-command:
           type: kafka
           environment:
-            spring.cloud.stream.kafka.binder:
-              brokers: ${KAFKA_BINDER_BROKER_COMMANDS_ENDPOINT_LIST:${KAFKA_BROKER:}}
-              configuration:
-                sasl.jaas.config: ${KAFKA_COMMANDS_SASL_JAAS_CONFIG:}
+            spring:
+              cloud:
+                stream:
+                  kafka:
+                    binder:
+                      brokers: ${KAFKA_COMMANDS_BINDER_BROKER_ENDPOINT_LIST:${KAFKA_BROKER:}}
+                      configuration:
+                        sasl:
+                          jaas:
+                            config: ${KAFKA_COMMANDS_SASL_JAAS_CONFIG:}
+        kafka-outcome-out:
+          type: kafka
+          environment:
+            spring:
+              cloud:
+                stream:
+                  kafka:
+                    binder:
+                      brokers: ${KAFKA_BINDER_BROKER_ENDPOINT_LIST:}
+                      configuration:
+                        sasl:
+                          jaas:
+                            config: ${KAFKA_OUTCOME_OUT_SASL_JAAS_CONFIG:}
       bindings:
         notificationQueue-out-0:
           binder: kafka-outcome-out
@@ -81,12 +105,11 @@ spring:
         commandsConsumer-in-0:
           binder: kafka-command
           content-type: ${KAFKA_CONTENT_TYPE:application/json}
-          destination: ${KAFKA_TOPIC_COMMANDS:idpay-commands}
+          destination: ${KAFKA_COMMANDS_TOPIC:idpay-commands}
           group: ${KAFKA_COMMANDS_GROUP_IN:idpay-commands-notification-manager-consumer-group}
       kafka:
         binder:
           auto-create-topics: false
-          brokers: ${KAFKA_BINDER_BROKER_ENDPOINT_LIST:}
           configuration:
             heartbeat.interval.ms: ${KAFKA_CONFIG_HEARTBEAT_INTERVAL_MS:3000}
             session.timeout.ms: ${KAFKA_CONFIG_SESSION_TIMEOUT_MS:30000}
