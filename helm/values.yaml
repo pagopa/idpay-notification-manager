@@ -54,7 +54,7 @@ microservice-chart:
       cpu: "40m"
     limits:
       memory: "4Gi"
-      cpu: "200m"
+      cpu: "300m"
 
   envConfig:
     MONGODB_DBNAME: idpay
