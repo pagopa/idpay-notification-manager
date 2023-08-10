@@ -233,10 +233,10 @@ public class NotificationManagerServiceImpl implements NotificationManagerServic
     public void processNotification(CommandOperationQueueDTO commandOperationQueueDTO) {
         long startTime = System.currentTimeMillis();
 
-        if (NotificationConstants.OPERATION_TYPE_DELETE_INITIATIVE.equals(commandOperationQueueDTO.getEntityId())) {
+        if (NotificationConstants.OPERATION_TYPE_DELETE_INITIATIVE.equals(commandOperationQueueDTO.getOperationId())) {
 
-            List<Notification> deletedNotification = notificationManagerRepository.deleteByInitiativeId(commandOperationQueueDTO.getOperationId());
-            log.info("[DELETE_NOTIFICATION] Deleted {} notifications for initiativeId {}", deletedNotification.size(), commandOperationQueueDTO.getOperationId());
+            List<Notification> deletedNotification = notificationManagerRepository.deleteByInitiativeId(commandOperationQueueDTO.getEntityId());
+            log.info("[DELETE_NOTIFICATION] Deleted {} notifications for initiativeId {}", deletedNotification.size(), commandOperationQueueDTO.getEntityId());
 
             deletedNotification.stream().distinct()
                     .forEach(notification -> auditUtilities.logDeletedNotification(notification.getUserId(), commandOperationQueueDTO.getOperationId()));
