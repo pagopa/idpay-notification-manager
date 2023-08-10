@@ -62,7 +62,6 @@ microservice-chart:
     APPLICATIONINSIGHTS_INSTRUMENTATION_LOGGING_LEVEL: "OFF"
     APPLICATIONINSIGHTS_INSTRUMENTATION_MICROMETER_ENABLED: "false"
     APPLICATIONINSIGHTS_PREVIEW_PROFILER_ENABLED: "false"
-    KAFKA_COMMANDS_GROUP_IN: "idpay-commands-notification-consumer-group"
 
   envConfigMapExternals:
     idpay-common:
