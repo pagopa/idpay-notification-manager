@@ -952,8 +952,8 @@ class NotificationManagerServiceTest {
     @Test
     void processNotificationDelete(){
         CommandOperationQueueDTO commandOperationQueueDTO = CommandOperationQueueDTO.builder()
-                .entityId(NotificationConstants.OPERATION_TYPE_DELETE_INITIATIVE)
-                .operationId(INITIATIVE_ID)
+                .entityId(INITIATIVE_ID)
+                .operationId(NotificationConstants.OPERATION_TYPE_DELETE_INITIATIVE)
                 .operationTime(LocalDateTime.now())
                 .build();
 
