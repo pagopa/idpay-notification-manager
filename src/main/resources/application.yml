@@ -29,7 +29,7 @@ spring:
     type: redis
   cloud:
     function:
-      definition: notificationQueue;anyNotificationConsumer;onboardingConsumer;commandsConsumer
+      definition: anyNotificationConsumer;onboardingConsumer;commandsConsumer
     stream:
       binders:
         kafka-notification:
