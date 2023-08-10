@@ -973,8 +973,8 @@ class NotificationManagerServiceTest {
     @Test
     void processNotificationInvalidType(){
         CommandOperationQueueDTO commandOperationQueueDTO = CommandOperationQueueDTO.builder()
-                .entityId("IVALID_OPERATUION_TYPE")
-                .operationId(INITIATIVE_ID)
+                .operationId("INVALID_OPERATUION_TYPE")
+                .entityId(INITIATIVE_ID)
                 .operationTime(LocalDateTime.now())
                 .build();
 

@@ -238,10 +238,12 @@ public class NotificationManagerServiceImpl implements NotificationManagerServic
             List<Notification> deletedNotification = notificationManagerRepository.deleteByInitiativeId(commandOperationQueueDTO.getEntityId());
             log.info("[DELETE_NOTIFICATION] Deleted {} notifications for initiativeId {}", deletedNotification.size(), commandOperationQueueDTO.getEntityId());
 
-            deletedNotification.stream().distinct()
-                    .forEach(notification -> auditUtilities.logDeletedNotification(notification.getUserId(), commandOperationQueueDTO.getOperationId()));
+            deletedNotification.stream()
+                    .map(Notification::getUserId)
+                    .distinct()
+                    .forEach(userId -> auditUtilities.logDeletedNotification(userId, commandOperationQueueDTO.getEntityId()));
         }
-        performanceLog(startTime, "DELETE_NOTIFICATION");
+        performanceLog(startTime, "DELETE_INITIATIVE");
     }
 
     private long recover(LocalDateTime startTime) {
