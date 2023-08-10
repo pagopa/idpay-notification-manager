@@ -953,7 +953,7 @@ class NotificationManagerServiceTest {
     void processNotificationDelete(){
         CommandOperationQueueDTO commandOperationQueueDTO = CommandOperationQueueDTO.builder()
                 .entityId(INITIATIVE_ID)
-                .operationId(NotificationConstants.OPERATION_TYPE_DELETE_INITIATIVE)
+                .operationType(NotificationConstants.OPERATION_TYPE_DELETE_INITIATIVE)
                 .operationTime(LocalDateTime.now())
                 .build();
 
@@ -973,7 +973,7 @@ class NotificationManagerServiceTest {
     @Test
     void processNotificationInvalidType(){
         CommandOperationQueueDTO commandOperationQueueDTO = CommandOperationQueueDTO.builder()
-                .operationId("INVALID_OPERATUION_TYPE")
+                .operationType("INVALID_OPERATUION_TYPE")
                 .entityId(INITIATIVE_ID)
                 .operationTime(LocalDateTime.now())
                 .build();

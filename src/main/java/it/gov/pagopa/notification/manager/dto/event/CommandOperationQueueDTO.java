@@ -12,5 +12,5 @@ import java.time.LocalDateTime;
 public class CommandOperationQueueDTO {
     private String entityId;
     private String operationType;
-    private LocalDateTime operationDate;
+    private LocalDateTime operationTime;
 }
