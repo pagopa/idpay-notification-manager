@@ -18,6 +18,9 @@ import it.gov.pagopa.notification.manager.model.Notification;
 import it.gov.pagopa.notification.manager.model.NotificationMarkdown;
 import it.gov.pagopa.notification.manager.repository.NotificationManagerRepository;
 import it.gov.pagopa.notification.manager.utils.AESUtil;
+import it.gov.pagopa.notification.manager.utils.AuditUtilities;
+import jakarta.annotation.PostConstruct;
+import jakarta.annotation.PreDestroy;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -25,8 +28,6 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.scheduling.concurrent.CustomizableThreadFactory;
 import org.springframework.stereotype.Service;
 
-import jakarta.annotation.PostConstruct;
-import jakarta.annotation.PreDestroy;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDateTime;
@@ -59,6 +60,8 @@ public class NotificationManagerServiceImpl implements NotificationManagerServic
     private NotificationMapper notificationMapper;
     @Autowired
     private NotificationMarkdown notificationMarkdown;
+    @Autowired
+    AuditUtilities auditUtilities;
 
     @Value("${util.crypto.aes.secret-type.pbe.passphrase}")
     private String passphrase;
@@ -224,6 +227,24 @@ public class NotificationManagerServiceImpl implements NotificationManagerServic
         } else {
             log.info("[NOTIFY][RECOVER] Notifications that have been recovered 0");
         }
+    }
+
+    @Override
+    public void processNotification(CommandOperationQueueDTO commandOperationQueueDTO) {
+        long startTime = System.currentTimeMillis();
+
+        log.info("[COMMAND_OPERATION] Starting evaluate payload: {}", commandOperationQueueDTO);
+        if (NotificationConstants.OPERATION_TYPE_DELETE_INITIATIVE.equals(commandOperationQueueDTO.getOperationType())) {
+
+            List<Notification> deletedNotification = notificationManagerRepository.deleteByInitiativeId(commandOperationQueueDTO.getEntityId());
+            log.info("[DELETE_NOTIFICATION] Deleted {} notifications for initiativeId {}", deletedNotification.size(), commandOperationQueueDTO.getEntityId());
+
+            deletedNotification.stream()
+                    .map(Notification::getUserId)
+                    .distinct()
+                    .forEach(userId -> auditUtilities.logDeletedNotification(userId, commandOperationQueueDTO.getEntityId()));
+        }
+        performanceLog(startTime, "DELETE_INITIATIVE");
     }
 
     private long recover(LocalDateTime startTime) {
@@ -415,8 +436,13 @@ public class NotificationManagerServiceImpl implements NotificationManagerServic
     }
 
     private void performanceLog(long startTime) {
+        performanceLog(startTime, "NOTIFY");
+    }
+
+    private void performanceLog(long startTime, String flowName) {
         log.info(
-                "[PERFORMANCE_LOG] [NOTIFY] Time occurred to perform business logic: {} ms",
+                "[PERFORMANCE_LOG] [{}] Time occurred to perform business logic: {} ms",
+                flowName,
                 System.currentTimeMillis() - startTime);
     }
 
