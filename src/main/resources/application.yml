@@ -29,7 +29,7 @@ spring:
     type: redis
   cloud:
     function:
-      definition: notificationQueue;anyNotificationConsumer;onboardingConsumer
+      definition: anyNotificationConsumer;onboardingConsumer;commandsConsumer
     stream:
       binders:
         kafka-notification:
@@ -40,6 +40,7 @@ spring:
                 stream:
                   kafka:
                     binder:
+                      brokers: ${KAFKA_BINDER_BROKER_ENDPOINT_LIST:}
                       configuration:
                         sasl:
                           jaas:
@@ -52,10 +53,24 @@ spring:
                 stream:
                   kafka:
                     binder:
+                      brokers: ${KAFKA_BINDER_BROKER_ENDPOINT_LIST:}
                       configuration:
                         sasl:
                           jaas:
                             config: ${KAFKA_OUTCOME_SASL_JAAS_CONFIG:}
+        kafka-command:
+          type: kafka
+          environment:
+            spring:
+              cloud:
+                stream:
+                  kafka:
+                    binder:
+                      brokers: ${KAFKA_COMMANDS_BINDER_BROKER_ENDPOINT_LIST:${KAFKA_BROKER:}}
+                      configuration:
+                        sasl:
+                          jaas:
+                            config: ${KAFKA_COMMANDS_SASL_JAAS_CONFIG:}
         kafka-outcome-out:
           type: kafka
           environment:
@@ -64,6 +79,7 @@ spring:
                 stream:
                   kafka:
                     binder:
+                      brokers: ${KAFKA_BINDER_BROKER_ENDPOINT_LIST:}
                       configuration:
                         sasl:
                           jaas:
@@ -86,10 +102,14 @@ spring:
           consumer:
 #can be used with a consumer group (non-exclusive queue) to process events in multiple threads
             concurrency: ${KAFKA_NOTIFICATION_CONSUMER_CONCURRENCY:3} #translated as num.stream.threads by the binder, same as spring.cloud.stream.kafka.streams.binder.configuration.num.stream.threads
+        commandsConsumer-in-0:
+          binder: kafka-command
+          content-type: ${KAFKA_CONTENT_TYPE:application/json}
+          destination: ${KAFKA_COMMANDS_TOPIC:idpay-commands}
+          group: ${KAFKA_COMMANDS_GROUP_IN:idpay-commands-notification-consumer-group}
       kafka:
         binder:
           auto-create-topics: false
-          brokers: ${KAFKA_BINDER_BROKER_ENDPOINT_LIST:}
           configuration:
             heartbeat.interval.ms: ${KAFKA_CONFIG_HEARTBEAT_INTERVAL_MS:3000}
             session.timeout.ms: ${KAFKA_CONFIG_SESSION_TIMEOUT_MS:30000}
@@ -125,6 +145,20 @@ spring:
                   ms: ${KAFKA_NOTIFICATION_REQUEST_CONNECTION_TIMEOUT_MS:${KAFKA_CONSUMER_CONFIG_CONNECTION_TIMEOUT_MS:100000}}
               standardHeaders: ${KAFKA_NOTIFICATION_STANDARD_HEADERS:${KAFKA_CONSUMER_CONFIG_STANDARD_HEADERS:both}}
               startOffset: ${KAFKA_NOTIFICATION_REQUEST_START_OFFSET:${KAFKA_CONSUMER_CONFIG_START_OFFSET:earliest}}
+          commandsConsumer-in-0:
+            consumer:
+              autoCommitOffset: ${KAFKA_COMMANDS_AUTO_COMMIT:${KAFKA_CONSUMER_CONFIG_AUTO_COMMIT:true}}
+              configuration:
+                connections.max.idle.ms: ${KAFKA_COMMANDS_REQUEST_CONNECTIONS_MAX_IDLE_MS:${KAFKA_CONSUMER_CONFIG_CONNECTIONS_MAX_IDLE_MS:180000}}
+                max.poll:
+                  interval.ms: ${KAFKA_COMMANDS_INTERVAL_TIMEOUT_MS:${KAFKA_CONFIG_MAX_POLL_INTERVAL_TIMEOUT_MS:300000}}
+                  records: ${KAFKA_COMMANDS_MAX_POLL_SIZE:${KAFKA_CONSUMER_CONFIG_MAX_POLL_SIZE:500}}
+                socket.connection.setup.timeout:
+                  max.ms: ${KAFKA_COMMANDS_REQUEST_CONNECTION_TIMEOUT_MAX_MS:${KAFKA_CONSUMER_CONFIG_CONNECTION_TIMEOUT_MAX_MS:200000}}
+                  ms: ${KAFKA_COMMANDS_REQUEST_CONNECTION_TIMEOUT_MS:${KAFKA_CONSUMER_CONFIG_CONNECTION_TIMEOUT_MS:100000}}
+              standardHeaders: ${KAFKA_COMMANDS_STANDARD_HEADERS:${KAFKA_CONSUMER_CONFIG_STANDARD_HEADERS:both}}
+              startOffset: ${KAFKA_COMMANDS_REQUEST_START_OFFSET:${KAFKA_CONSUMER_CONFIG_START_OFFSET:earliest}}
+
   config:
     activate:
       on-profile: default
