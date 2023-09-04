@@ -15,6 +15,7 @@ public class NotificationConstants {
   public static final String NOTIFICATION_STATUS_OK = "OK";
   public static final String NOTIFICATION_STATUS_KO = "KO";
   public static final String NOTIFICATION_STATUS_RECOVER = "RECOVER";
+  public static final String OPERATION_TYPE_DELETE_INITIATIVE = "DELETE_INITIATIVE";
 
   private NotificationConstants(){}
 
