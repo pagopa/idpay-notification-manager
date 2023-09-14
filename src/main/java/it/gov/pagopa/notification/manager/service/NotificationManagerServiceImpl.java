@@ -93,6 +93,7 @@ public class NotificationManagerServiceImpl implements NotificationManagerServic
         if(evaluationDTO.getOnboardingRejectionReasons() != null){
             if(evaluationDTO.getOnboardingRejectionReasons().stream()
                     .anyMatch(r -> r.getType() == OnboardingRejectionReason.OnboardingRejectionReasonType.FAMILY_CRITERIA_KO)){
+                log.info("[NOTIFY] Skipping sending message for citizen {} with FAMILY_CRITERIA_KO rejection reason", evaluationDTO.getUserId());
                 return;
             }
         }
