@@ -5,10 +5,7 @@ import it.gov.pagopa.notification.manager.connector.IOBackEndRestConnector;
 import it.gov.pagopa.notification.manager.connector.PdvDecryptRestConnector;
 import it.gov.pagopa.notification.manager.connector.initiative.InitiativeRestConnector;
 import it.gov.pagopa.notification.manager.constants.NotificationConstants;
-import it.gov.pagopa.notification.manager.dto.EvaluationDTO;
-import it.gov.pagopa.notification.manager.dto.NotificationDTO;
-import it.gov.pagopa.notification.manager.dto.NotificationResource;
-import it.gov.pagopa.notification.manager.dto.ProfileResource;
+import it.gov.pagopa.notification.manager.dto.*;
 import it.gov.pagopa.notification.manager.dto.event.*;
 import it.gov.pagopa.notification.manager.dto.initiative.InitiativeAdditionalInfoDTO;
 import it.gov.pagopa.notification.manager.dto.mapper.NotificationDTOMapper;
@@ -92,6 +89,13 @@ public class NotificationManagerServiceImpl implements NotificationManagerServic
     @Override
     public void notify(EvaluationDTO evaluationDTO) {
         long startTime = System.currentTimeMillis();
+
+        if(evaluationDTO.getOnboardingRejectionReasons() != null){
+            if(evaluationDTO.getOnboardingRejectionReasons().stream()
+                    .anyMatch(r -> r.getType() == OnboardingRejectionReason.OnboardingRejectionReasonType.FAMILY_CRITERIA_KO)){
+                return;
+            }
+        }
 
         Notification notification = notificationMapper.evaluationToNotification(evaluationDTO);
         InitiativeAdditionalInfoDTO ioTokens = null;
