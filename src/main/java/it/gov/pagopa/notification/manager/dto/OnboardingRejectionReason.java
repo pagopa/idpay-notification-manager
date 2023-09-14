@@ -23,8 +23,11 @@ public class OnboardingRejectionReason {
     INVALID_REQUEST,
     BUDGET_EXHAUSTED,
     AUTOMATED_CRITERIA_FAIL,
+    ISEE_TYPE_KO,
+    FAMILY_KO,
+    BIRTHDATE_KO,
     OUT_OF_RANKING,
-    ISEE_TYPE_KO
+    FAMILY_CRITERIA_KO
   }
 
   public enum OnboardingRejectionReasonCode {
@@ -33,7 +36,8 @@ public class OnboardingRejectionReason {
     AUTOMATED_CRITERIA_RESIDENCE_FAIL("Residenza"),
     CITIZEN_OUT_OF_RANKING("Graduatoria"),
     INITIATIVE_BUDGET_EXHAUSTED("Budget iniziativa"),
-    ISEE_TYPE_FAIL("Tipo ISEE");
+    ISEE_TYPE_FAIL("Tipo ISEE"),
+    FAMILY_CRITERIA_FAIL("Criteri di famiglia");
 
     private final String detail;
 
