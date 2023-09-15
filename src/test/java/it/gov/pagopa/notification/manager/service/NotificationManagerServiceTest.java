@@ -220,6 +220,36 @@ class NotificationManagerServiceTest {
     }
 
     @Test
+    void not_to_notify(){
+        EvaluationDTO evaluationDTO =
+        new EvaluationDTO(
+                TEST_TOKEN,
+                INITIATIVE_ID,
+                INITIATIVE_ID,
+                TEST_DATE_ONLY_DATE,
+                INITIATIVE_ID,
+                NotificationConstants.STATUS_ONBOARDING_OK,
+                TEST_DATE,
+                TEST_DATE,
+                List.of(new OnboardingRejectionReason(OnboardingRejectionReason.OnboardingRejectionReasonType.FAMILY_CRITERIA_KO,
+                        OnboardingRejectionReason.OnboardingRejectionReasonCode.FAMILY_CRITERIA_FAIL, null, null, null),
+                        new OnboardingRejectionReason(OnboardingRejectionReason.OnboardingRejectionReasonType.ISEE_TYPE_KO,
+                                OnboardingRejectionReason.OnboardingRejectionReasonCode.ISEE_TYPE_FAIL, null, null, null)),
+                new BigDecimal(500), 1L);
+
+        try {
+            notificationManagerService.notify(evaluationDTO);
+        } catch (FeignException e) {
+            Assertions.fail();
+        }
+        Mockito.verify(notificationMapper, Mockito.times(0))
+                .evaluationToNotification(evaluationDTO);
+        Mockito.verify(initiativeRestConnector, Mockito.times(0))
+                .getIOTokens(evaluationDTO.getInitiativeId());
+        Mockito.verify(notificationManagerRepository, Mockito.times(0))
+                .save(NOTIFICATION);
+    }
+    @Test
     void notify_ok() {
         Mockito.when(notificationMapper.evaluationToNotification(EVALUATION_DTO))
                 .thenReturn(NOTIFICATION);
