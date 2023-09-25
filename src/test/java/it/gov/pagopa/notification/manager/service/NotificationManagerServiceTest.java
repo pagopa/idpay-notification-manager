@@ -16,11 +16,15 @@ import it.gov.pagopa.notification.manager.event.producer.OutcomeProducer;
 import it.gov.pagopa.notification.manager.model.Notification;
 import it.gov.pagopa.notification.manager.model.NotificationMarkdown;
 import it.gov.pagopa.notification.manager.repository.NotificationManagerRepository;
+import it.gov.pagopa.notification.manager.repository.NotificationManagerRepositoryExtended;
 import it.gov.pagopa.notification.manager.utils.AESUtil;
 import it.gov.pagopa.notification.manager.utils.AuditUtilities;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -36,8 +40,11 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.Mockito.when;
 
 @ExtendWith({SpringExtension.class, MockitoExtension.class})
 @ContextConfiguration(classes = NotificationManagerServiceImpl.class)
@@ -70,6 +77,7 @@ class NotificationManagerServiceTest {
     private static final String SERVICE_ID = "SERVICE_ID";
     private static final String IBAN = "IBAN";
     private static final String INITIATIVE_NAME = "INITIATIVE_NAME";
+    private static final String OPERATION_TYPE_DELETE_INITIATIVE = "DELETE_INITIATIVE";
     private static final EvaluationDTO EVALUATION_DTO =
             new EvaluationDTO(
                     TEST_TOKEN,
@@ -199,6 +207,8 @@ class NotificationManagerServiceTest {
     IOBackEndRestConnector ioBackEndRestConnector;
     @MockBean
     NotificationManagerRepository notificationManagerRepository;
+    @MockBean
+    NotificationManagerRepositoryExtended notificationManagerRepositoryExtended;
     @MockBean
     NotificationDTOMapper notificationDTOMapper;
     @MockBean
@@ -979,38 +989,64 @@ class NotificationManagerServiceTest {
         Mockito.verify(notificationManagerRepository, Mockito.times(1)).save(NOTIFICATION_READMISSION);
     }
 
-    @Test
-    void processNotificationDelete(){
-        CommandOperationQueueDTO commandOperationQueueDTO = CommandOperationQueueDTO.builder()
+    @ParameterizedTest
+    @MethodSource("operationTypeAndInvocationTimes")
+    void processCommand(String operationType, int times) {
+        Map<String, String> additionalParams = new HashMap<>();
+        additionalParams.put("pagination", "2");
+        additionalParams.put("delay", "1");
+
+        CommandOperationQueueDTO queueCommandOperationDTO = CommandOperationQueueDTO.builder()
                 .entityId(INITIATIVE_ID)
-                .operationType(NotificationConstants.OPERATION_TYPE_DELETE_INITIATIVE)
+                .operationType(operationType)
                 .operationTime(LocalDateTime.now())
+                .additionalParams(additionalParams)
                 .build();
 
-        Notification notification1 = Notification.builder()
+        Notification notification = Notification.builder()
+                .id("ID_NOTIFICATION")
                 .initiativeId(INITIATIVE_ID)
-                .userId("USER1").build();
-        Mockito.when(notificationManagerRepository.deleteByInitiativeId(INITIATIVE_ID))
-                        .thenReturn(List.of(notification1));
+                .build();
+        List<Notification> deletedPage = List.of(notification);
+
+        if (times == 2) {
+            List<Notification> walletPage = createNotificationPage(Integer.parseInt("2"));
+            when(notificationManagerRepositoryExtended.deletePaged(queueCommandOperationDTO.getEntityId(), Integer.parseInt(queueCommandOperationDTO.getAdditionalParams().get("pagination"))))
+                    .thenReturn(walletPage)
+                    .thenReturn(deletedPage);
+
+            Thread.currentThread().interrupt();
+
+        } else {
+            when(notificationManagerRepositoryExtended.deletePaged(queueCommandOperationDTO.getEntityId(), Integer.parseInt(queueCommandOperationDTO.getAdditionalParams().get("pagination"))))
+                    .thenReturn(deletedPage);
+        }
+
+        notificationManagerService.processNotification(queueCommandOperationDTO);
 
 
-        notificationManagerService.processNotification(commandOperationQueueDTO);
-
-        Mockito.verify(notificationManagerRepository, Mockito.times(1)).deleteByInitiativeId(Mockito.anyString());
+        // Then
+        Mockito.verify(notificationManagerRepositoryExtended, Mockito.times(times)).deletePaged(queueCommandOperationDTO.getEntityId(), Integer.parseInt(queueCommandOperationDTO.getAdditionalParams().get("pagination")));
     }
 
+    private static Stream<Arguments> operationTypeAndInvocationTimes() {
+        return Stream.of(
+                Arguments.of(OPERATION_TYPE_DELETE_INITIATIVE, 1),
+                Arguments.of(OPERATION_TYPE_DELETE_INITIATIVE, 2),
+                Arguments.of("OPERATION_TYPE_TEST", 0)
+        );
+    }
 
-    @Test
-    void processNotificationInvalidType(){
-        CommandOperationQueueDTO commandOperationQueueDTO = CommandOperationQueueDTO.builder()
-                .operationType("INVALID_OPERATUION_TYPE")
-                .entityId(INITIATIVE_ID)
-                .operationTime(LocalDateTime.now())
-                .build();
+    private List<Notification> createNotificationPage(int pageSize) {
+        List<Notification> notificationPage = new ArrayList<>();
 
+        for (int i = 0; i < pageSize; i++) {
+            notificationPage.add(Notification.builder()
+                    .id("ID_NOTIFICATION" + i)
+                    .initiativeId(INITIATIVE_ID)
+                    .build());
+        }
 
-        notificationManagerService.processNotification(commandOperationQueueDTO);
-
-        Mockito.verify(notificationManagerRepository, Mockito.never()).deleteByInitiativeId(Mockito.anyString());
+        return notificationPage;
     }
 }
