@@ -298,3 +298,7 @@ util:
         gcm:
           iv: ${UTIL_CRYPTO_AES_MODE_GCM_IV:}
           tLen: ${UTIL_CRYPTO_AES_MODE_GCM_TAG_LEN:16}
+app:
+  delete:
+    paginationSize: ${DELETE_PAGINATION_SIZE}
+    delayTime: ${DELETE_DELAY_TIME}
