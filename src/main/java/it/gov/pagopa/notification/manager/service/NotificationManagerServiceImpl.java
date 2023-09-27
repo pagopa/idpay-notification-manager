@@ -41,8 +41,6 @@ import java.util.stream.IntStream;
 @Slf4j
 public class NotificationManagerServiceImpl implements NotificationManagerService {
     public static final String GENERIC_ERROR_LOG = "[NOTIFY][RECOVER] Something went wrong while recovering notifications";
-    public static final String PAGINATION_KEY = "pagination";
-    public static final String DELAY_KEY = "delay";
     @Autowired
     private AESUtil aesUtil;
     @Autowired
@@ -72,6 +70,10 @@ public class NotificationManagerServiceImpl implements NotificationManagerServic
     private Long timeToLive;
     @Value("${notification.manager.recover.parallelism}")
     private int parallelism;
+    @Value("${app.delete.paginationSize}")
+    private String pagination;
+    @Value("${app.delete.delayTime}")
+    private String delayTime;
 
     private ExecutorService executorService;
 
@@ -243,6 +245,9 @@ public class NotificationManagerServiceImpl implements NotificationManagerServic
     @SuppressWarnings("BusyWait")
     @Override
     public void processNotification(CommandOperationQueueDTO commandOperationQueueDTO) {
+        int pageSize = Integer.parseInt(pagination);
+        long delay = Long.parseLong(delayTime);
+
         log.info("[COMMAND_OPERATION] Starting evaluate payload: {}", commandOperationQueueDTO);
         if (NotificationConstants.OPERATION_TYPE_DELETE_INITIATIVE.equals(commandOperationQueueDTO.getOperationType())) {
             long startTime = System.currentTimeMillis();
@@ -251,18 +256,17 @@ public class NotificationManagerServiceImpl implements NotificationManagerServic
             List<Notification> fetchedNotifications;
 
             do {
-                fetchedNotifications = notificationManagerRepositoryExtended.deletePaged(commandOperationQueueDTO.getEntityId(),
-                        Integer.parseInt(commandOperationQueueDTO.getAdditionalParams().get(PAGINATION_KEY)));
+                fetchedNotifications = notificationManagerRepositoryExtended.deletePaged(commandOperationQueueDTO.getEntityId(), pageSize);
 
                 deletedOperation.addAll(fetchedNotifications);
 
                 try {
-                    Thread.sleep(Long.parseLong(commandOperationQueueDTO.getAdditionalParams().get(DELAY_KEY)));
+                    Thread.sleep(delay);
                 } catch (InterruptedException e) {
                     Thread.currentThread().interrupt();
                     log.error("An error has occurred while waiting {}", e.getMessage());
                 }
-            } while (fetchedNotifications.size() == (Integer.parseInt(commandOperationQueueDTO.getAdditionalParams().get(PAGINATION_KEY))));
+            } while (fetchedNotifications.size() == pageSize);
 
             log.info("[DELETE_INITIATIVE] Deleted initiative {} from collection : notification", commandOperationQueueDTO.getEntityId());
 
