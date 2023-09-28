@@ -20,7 +20,6 @@ import it.gov.pagopa.notification.manager.repository.NotificationManagerReposito
 import it.gov.pagopa.notification.manager.utils.AESUtil;
 import it.gov.pagopa.notification.manager.utils.AuditUtilities;
 import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -77,7 +76,7 @@ class NotificationManagerServiceTest {
     private static final String IBAN = "IBAN";
     private static final String INITIATIVE_NAME = "INITIATIVE_NAME";
     private static final String OPERATION_TYPE_DELETE_INITIATIVE = "DELETE_INITIATIVE";
-    private final static int PAGE_SIZE = 100;
+    private static final int PAGE_SIZE = 100;
     private static final EvaluationDTO EVALUATION_DTO =
             new EvaluationDTO(
                     TEST_TOKEN,
@@ -194,9 +193,8 @@ class NotificationManagerServiceTest {
         SERVICE_RESOURCE.setPrimaryKey(PRIMARY_KEY);
     }
 
-
-    private NotificationManagerService notificationManagerService;
-
+    @Autowired
+    NotificationManagerServiceImpl notificationManagerService;
     @MockBean
     AESUtil aesUtil;
     @MockBean
@@ -219,12 +217,7 @@ class NotificationManagerServiceTest {
     NotificationMarkdown notificationMarkdown;
     @MockBean
     AuditUtilities auditUtilities;
-    @BeforeEach
-    void setUp() {
-        notificationManagerService = new NotificationManagerServiceImpl(
-                PAGE_SIZE,1000L
-        );
-    }
+
     @Test
     void sendToQueue() {
         Mockito.doNothing().when(outcomeProducer).sendOutcome(EVALUATION_DTO);

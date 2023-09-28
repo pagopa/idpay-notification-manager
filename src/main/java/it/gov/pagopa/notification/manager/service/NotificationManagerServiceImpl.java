@@ -75,8 +75,8 @@ public class NotificationManagerServiceImpl implements NotificationManagerServic
 
     private ExecutorService executorService;
 
-    public NotificationManagerServiceImpl(@Value("${app.delete.paginationSize}") int pageSize,
-                                          @Value("${app.delete.delayTime}") long delay) {
+    public NotificationManagerServiceImpl(@Value("${app.delete.paginationSize:100}") int pageSize,
+                                          @Value("${app.delete.delayTime:1000}") long delay) {
         this.pageSize = pageSize;
         this.delay = delay;
     }
