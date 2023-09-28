@@ -20,6 +20,7 @@ import it.gov.pagopa.notification.manager.repository.NotificationManagerReposito
 import it.gov.pagopa.notification.manager.utils.AESUtil;
 import it.gov.pagopa.notification.manager.utils.AuditUtilities;
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -28,7 +29,6 @@ import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.HttpStatus;
 import org.springframework.test.context.ContextConfiguration;
@@ -51,16 +51,9 @@ import static org.mockito.Mockito.when;
 @TestPropertySource(properties = {
         "rest-client.notification.backend-io.ttl=3600",
         "util.crypto.aes.secret-type.pbe.passphrase=12345",
-        "notification.manager.recover.parallelism=7",
-        "app.delete.paginationSize=100",
-        "app.delete.delayTime=1000"
+        "notification.manager.recover.parallelism=7"
 })
 class NotificationManagerServiceTest {
-    @Value("${app.delete.paginationSize}")
-    private String pagination;
-    @Value("${app.delete.delayTime}")
-    private String delayTime;
-
     private static final String TEST_TOKEN = "TEST_TOKEN";
     private static final String INITIATIVE_ID = "INITIATIVE_ID";
     private static final LocalDateTime TEST_DATE = LocalDateTime.now();
@@ -84,6 +77,7 @@ class NotificationManagerServiceTest {
     private static final String IBAN = "IBAN";
     private static final String INITIATIVE_NAME = "INITIATIVE_NAME";
     private static final String OPERATION_TYPE_DELETE_INITIATIVE = "DELETE_INITIATIVE";
+    private final static int PAGE_SIZE = 100;
     private static final EvaluationDTO EVALUATION_DTO =
             new EvaluationDTO(
                     TEST_TOKEN,
@@ -200,8 +194,8 @@ class NotificationManagerServiceTest {
         SERVICE_RESOURCE.setPrimaryKey(PRIMARY_KEY);
     }
 
-    @Autowired
-    NotificationManagerServiceImpl notificationManagerService;
+
+    private NotificationManagerService notificationManagerService;
 
     @MockBean
     AESUtil aesUtil;
@@ -225,7 +219,12 @@ class NotificationManagerServiceTest {
     NotificationMarkdown notificationMarkdown;
     @MockBean
     AuditUtilities auditUtilities;
-
+    @BeforeEach
+    void setUp() {
+        notificationManagerService = new NotificationManagerServiceImpl(
+                PAGE_SIZE,1000L
+        );
+    }
     @Test
     void sendToQueue() {
         Mockito.doNothing().when(outcomeProducer).sendOutcome(EVALUATION_DTO);
@@ -999,8 +998,6 @@ class NotificationManagerServiceTest {
     @MethodSource("operationTypeAndInvocationTimes")
     void processCommand(String operationType, int times) {
 
-        int pageSize = Integer.parseInt(pagination);
-
         CommandOperationQueueDTO queueCommandOperationDTO = CommandOperationQueueDTO.builder()
                 .entityId(INITIATIVE_ID)
                 .operationType(operationType)
@@ -1014,15 +1011,15 @@ class NotificationManagerServiceTest {
         List<Notification> deletedPage = List.of(notification);
 
         if (times == 2) {
-            List<Notification> walletPage = createNotificationPage(pageSize);
-            when(notificationManagerRepositoryExtended.deletePaged(queueCommandOperationDTO.getEntityId(), pageSize))
+            List<Notification> walletPage = createNotificationPage();
+            when(notificationManagerRepositoryExtended.deletePaged(queueCommandOperationDTO.getEntityId(), PAGE_SIZE))
                     .thenReturn(walletPage)
                     .thenReturn(deletedPage);
 
             Thread.currentThread().interrupt();
 
         } else {
-            when(notificationManagerRepositoryExtended.deletePaged(queueCommandOperationDTO.getEntityId(), pageSize))
+            when(notificationManagerRepositoryExtended.deletePaged(queueCommandOperationDTO.getEntityId(), PAGE_SIZE))
                     .thenReturn(deletedPage);
         }
 
@@ -1030,7 +1027,7 @@ class NotificationManagerServiceTest {
 
 
         // Then
-        Mockito.verify(notificationManagerRepositoryExtended, Mockito.times(times)).deletePaged(queueCommandOperationDTO.getEntityId(), pageSize);
+        Mockito.verify(notificationManagerRepositoryExtended, Mockito.times(times)).deletePaged(queueCommandOperationDTO.getEntityId(), PAGE_SIZE);
     }
 
     private static Stream<Arguments> operationTypeAndInvocationTimes() {
@@ -1041,10 +1038,10 @@ class NotificationManagerServiceTest {
         );
     }
 
-    private List<Notification> createNotificationPage(int pageSize) {
+    private List<Notification> createNotificationPage() {
         List<Notification> notificationPage = new ArrayList<>();
 
-        for (int i = 0; i < pageSize; i++) {
+        for (int i = 0; i < NotificationManagerServiceTest.PAGE_SIZE; i++) {
             notificationPage.add(Notification.builder()
                     .id("ID_NOTIFICATION" + i)
                     .initiativeId(INITIATIVE_ID)
