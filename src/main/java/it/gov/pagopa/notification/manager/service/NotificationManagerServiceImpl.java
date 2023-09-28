@@ -14,6 +14,7 @@ import it.gov.pagopa.notification.manager.event.producer.OutcomeProducer;
 import it.gov.pagopa.notification.manager.model.Notification;
 import it.gov.pagopa.notification.manager.model.NotificationMarkdown;
 import it.gov.pagopa.notification.manager.repository.NotificationManagerRepository;
+import it.gov.pagopa.notification.manager.repository.NotificationManagerRepositoryExtended;
 import it.gov.pagopa.notification.manager.utils.AESUtil;
 import it.gov.pagopa.notification.manager.utils.AuditUtilities;
 import jakarta.annotation.PostConstruct;
@@ -28,6 +29,7 @@ import org.springframework.stereotype.Service;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -39,6 +41,8 @@ import java.util.stream.IntStream;
 @Slf4j
 public class NotificationManagerServiceImpl implements NotificationManagerService {
     public static final String GENERIC_ERROR_LOG = "[NOTIFY][RECOVER] Something went wrong while recovering notifications";
+    private final int pageSize;
+    private final long delay;
     @Autowired
     private AESUtil aesUtil;
     @Autowired
@@ -49,6 +53,8 @@ public class NotificationManagerServiceImpl implements NotificationManagerServic
     private IOBackEndRestConnector ioBackEndRestConnector;
     @Autowired
     private NotificationManagerRepository notificationManagerRepository;
+    @Autowired
+    private NotificationManagerRepositoryExtended notificationManagerRepositoryExtended;
     @Autowired
     private NotificationDTOMapper notificationDTOMapper;
     @Autowired
@@ -68,6 +74,12 @@ public class NotificationManagerServiceImpl implements NotificationManagerServic
     private int parallelism;
 
     private ExecutorService executorService;
+
+    public NotificationManagerServiceImpl(@Value("${app.delete.paginationSize:100}") int pageSize,
+                                          @Value("${app.delete.delayTime:1000}") long delay) {
+        this.pageSize = pageSize;
+        this.delay = delay;
+    }
 
     @PostConstruct
     void init() {
@@ -234,16 +246,33 @@ public class NotificationManagerServiceImpl implements NotificationManagerServic
         }
     }
 
+    @SuppressWarnings("BusyWait")
     @Override
     public void processNotification(CommandOperationQueueDTO commandOperationQueueDTO) {
+
         log.info("[COMMAND_OPERATION] Starting evaluate payload: {}", commandOperationQueueDTO);
         if (NotificationConstants.OPERATION_TYPE_DELETE_INITIATIVE.equals(commandOperationQueueDTO.getOperationType())) {
             long startTime = System.currentTimeMillis();
 
-            List<Notification> deletedNotification = notificationManagerRepository.deleteByInitiativeId(commandOperationQueueDTO.getEntityId());
+            List<Notification> deletedOperation = new ArrayList<>();
+            List<Notification> fetchedNotifications;
+
+            do {
+                fetchedNotifications = notificationManagerRepositoryExtended.deletePaged(commandOperationQueueDTO.getEntityId(), pageSize);
+
+                deletedOperation.addAll(fetchedNotifications);
+
+                try {
+                    Thread.sleep(delay);
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    log.error("An error has occurred while waiting {}", e.getMessage());
+                }
+            } while (fetchedNotifications.size() == pageSize);
+
             log.info("[DELETE_INITIATIVE] Deleted initiative {} from collection : notification", commandOperationQueueDTO.getEntityId());
 
-            deletedNotification.stream()
+            deletedOperation.stream()
                     .map(Notification::getUserId)
                     .distinct()
                     .forEach(userId -> auditUtilities.logDeletedNotification(userId, commandOperationQueueDTO.getEntityId()));
