@@ -41,6 +41,8 @@ import java.util.stream.IntStream;
 @Slf4j
 public class NotificationManagerServiceImpl implements NotificationManagerService {
     public static final String GENERIC_ERROR_LOG = "[NOTIFY][RECOVER] Something went wrong while recovering notifications";
+    private final int pageSize;
+    private final long delay;
     @Autowired
     private AESUtil aesUtil;
     @Autowired
@@ -70,12 +72,14 @@ public class NotificationManagerServiceImpl implements NotificationManagerServic
     private Long timeToLive;
     @Value("${notification.manager.recover.parallelism}")
     private int parallelism;
-    @Value("${app.delete.paginationSize}")
-    private String pagination;
-    @Value("${app.delete.delayTime}")
-    private String delayTime;
 
     private ExecutorService executorService;
+
+    public NotificationManagerServiceImpl(@Value("${app.delete.paginationSize:100}") int pageSize,
+                                          @Value("${app.delete.delayTime:1000}") long delay) {
+        this.pageSize = pageSize;
+        this.delay = delay;
+    }
 
     @PostConstruct
     void init() {
@@ -245,8 +249,6 @@ public class NotificationManagerServiceImpl implements NotificationManagerServic
     @SuppressWarnings("BusyWait")
     @Override
     public void processNotification(CommandOperationQueueDTO commandOperationQueueDTO) {
-        int pageSize = Integer.parseInt(pagination);
-        long delay = Long.parseLong(delayTime);
 
         log.info("[COMMAND_OPERATION] Starting evaluate payload: {}", commandOperationQueueDTO);
         if (NotificationConstants.OPERATION_TYPE_DELETE_INITIATIVE.equals(commandOperationQueueDTO.getOperationType())) {
