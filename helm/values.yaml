@@ -74,7 +74,7 @@ microservice-chart:
     idpay-common:
       TZ: TZ
     rest-client:
-      IO_BACKEND_BASE_URL: io_backend_base_url
+      IO_BACKEND_BASE_URL: io_manage_backend_base_url
       IO_BACKEND_NOTIFY_URL: io_backend_message_url
       IO_BACKEND_PROFILE_URL: io_backend_profile_url
       IO_BACKEND_SERVICE_URL: io_backend_service_url

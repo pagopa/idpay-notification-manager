@@ -15,7 +15,6 @@ import it.gov.pagopa.notification.manager.model.Notification;
 import it.gov.pagopa.notification.manager.model.NotificationMarkdown;
 import it.gov.pagopa.notification.manager.repository.NotificationManagerRepository;
 import it.gov.pagopa.notification.manager.repository.NotificationManagerRepositoryExtended;
-import it.gov.pagopa.notification.manager.utils.AESUtil;
 import it.gov.pagopa.notification.manager.utils.AuditUtilities;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
@@ -44,8 +43,6 @@ public class NotificationManagerServiceImpl implements NotificationManagerServic
     private final int pageSize;
     private final long delay;
     @Autowired
-    private AESUtil aesUtil;
-    @Autowired
     private OutcomeProducer outcomeProducer;
     @Autowired
     private InitiativeRestConnector initiativeRestConnector;
@@ -65,9 +62,6 @@ public class NotificationManagerServiceImpl implements NotificationManagerServic
     private NotificationMarkdown notificationMarkdown;
     @Autowired
     AuditUtilities auditUtilities;
-
-    @Value("${util.crypto.aes.secret-type.pbe.passphrase}")
-    private String passphrase;
     @Value("${rest-client.notification.backend-io.ttl}")
     private Long timeToLive;
     @Value("${notification.manager.recover.parallelism}")
@@ -133,8 +127,7 @@ public class NotificationManagerServiceImpl implements NotificationManagerServic
             return;
         }
 
-        log.info("[NOTIFY] Sending request to DECRYPT_TOKEN");
-        String tokenDecrypt = aesUtil.decrypt(passphrase, ioTokens.getPrimaryTokenIO());
+        String tokenDecrypt = ioTokens.getPrimaryTokenIO();
 
         if (isNotSenderAllowed(fiscalCode, tokenDecrypt)) {
             notificationKO(notification, startTime);
@@ -189,7 +182,7 @@ public class NotificationManagerServiceImpl implements NotificationManagerServic
         }
 
         log.info("[NOTIFY] Sending request to DECRYPT_TOKEN");
-        String tokenDecrypt = aesUtil.decrypt(passphrase, ioTokens.getPrimaryTokenIO());
+        String tokenDecrypt = ioTokens.getPrimaryTokenIO();
 
         if (isNotSenderAllowed(fiscalCode, tokenDecrypt)) {
             notificationKO(notification, startTime);
@@ -386,7 +379,7 @@ public class NotificationManagerServiceImpl implements NotificationManagerServic
             return;
         }
 
-        String tokenDecrypt = aesUtil.decrypt(passphrase, ioTokens.getPrimaryTokenIO());
+        String tokenDecrypt = ioTokens.getPrimaryTokenIO();
 
         if (isNotSenderAllowed(fiscalCode, tokenDecrypt)) {
             notificationKO(notification, startTime);
