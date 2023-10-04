@@ -181,7 +181,6 @@ public class NotificationManagerServiceImpl implements NotificationManagerServic
             return false;
         }
 
-        log.info("[NOTIFY] Sending request to DECRYPT_TOKEN");
         String tokenDecrypt = ioTokens.getPrimaryTokenIO();
 
         if (isNotSenderAllowed(fiscalCode, tokenDecrypt)) {

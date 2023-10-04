@@ -48,7 +48,6 @@ import static org.mockito.Mockito.when;
 @ContextConfiguration(classes = NotificationManagerServiceImpl.class)
 @TestPropertySource(properties = {
         "rest-client.notification.backend-io.ttl=3600",
-        "util.crypto.aes.secret-type.pbe.passphrase=12345",
         "notification.manager.recover.parallelism=7"
 })
 class NotificationManagerServiceTest {
@@ -67,7 +66,6 @@ class NotificationManagerServiceTest {
     private static final String TEST_NOTIFICATION_ID = "NOTIFICATION_ID";
     private static final Long TTL = 3600L;
     private static final String SUBJECT = "SUBJECT";
-    private static final String PASSPHRASE = "12345";
     private static final String TOKEN = "TOKEN";
     private static final String MARKDOWN = "MARKDOWN";
     private static final String OPERATION_TYPE = "OPERATION_TYPE";
