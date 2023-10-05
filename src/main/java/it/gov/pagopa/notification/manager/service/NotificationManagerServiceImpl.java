@@ -297,11 +297,11 @@ public class NotificationManagerServiceImpl implements NotificationManagerServic
     public void sendNotificationFromOperationType(AnyOfNotificationQueueDTO anyOfNotificationQueueDTO) {
         long startTime = System.currentTimeMillis();
 
-        String fiscalCode = null;
-        Notification notification = null;
-        String subject = "";
-        String markdown = "";
-        InitiativeAdditionalInfoDTO ioTokens = null;
+        String fiscalCode;
+        Notification notification;
+        String subject;
+        String markdown;
+        InitiativeAdditionalInfoDTO ioTokens;
 
         if (anyOfNotificationQueueDTO instanceof NotificationCitizenOnQueueDTO notificationCitizenOnQueueDTO) {
 
@@ -313,8 +313,8 @@ public class NotificationManagerServiceImpl implements NotificationManagerServic
 
             subject = notificationMarkdown.getSubjectInitiativePublishing();
             markdown = notificationMarkdown.getMarkdownInitiativePublishing();
-        }
-        if (anyOfNotificationQueueDTO instanceof NotificationIbanQueueDTO notificationIbanQueueDTO) {
+
+        } else if (anyOfNotificationQueueDTO instanceof NotificationIbanQueueDTO notificationIbanQueueDTO) {
 
             notification = notificationMapper.toEntity(notificationIbanQueueDTO);
 
@@ -324,9 +324,8 @@ public class NotificationManagerServiceImpl implements NotificationManagerServic
 
             subject = notificationMarkdown.getSubjectCheckIbanKo();
             markdown = notificationMarkdown.getMarkdownCheckIbanKo();
-        }
-
-        if (anyOfNotificationQueueDTO instanceof NotificationRefundQueueDTO notificationRefundOnQueueDTO) {
+            
+        } else if (anyOfNotificationQueueDTO instanceof NotificationRefundQueueDTO notificationRefundOnQueueDTO) {
 
             BigDecimal refund = BigDecimal.valueOf(notificationRefundOnQueueDTO.getRefundReward()).divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_DOWN);
 
@@ -338,9 +337,8 @@ public class NotificationManagerServiceImpl implements NotificationManagerServic
 
             subject = notificationMarkdown.getSubjectRefund(notificationRefundOnQueueDTO.getStatus());
             markdown = notificationMarkdown.getMarkdownRefund(notificationRefundOnQueueDTO.getStatus(), refund);
-        }
 
-        if (anyOfNotificationQueueDTO instanceof NotificationSuspensionQueueDTO notificationSuspensionQueueDTO) {
+        } else if (anyOfNotificationQueueDTO instanceof NotificationSuspensionQueueDTO notificationSuspensionQueueDTO) {
 
             notification = notificationMapper.toEntity(notificationSuspensionQueueDTO);
 
@@ -350,9 +348,8 @@ public class NotificationManagerServiceImpl implements NotificationManagerServic
 
             subject = notificationMarkdown.getSubjectSuspension(notificationSuspensionQueueDTO.getInitiativeName());
             markdown = notificationMarkdown.getMarkdownSuspension();
-        }
 
-        if (anyOfNotificationQueueDTO instanceof NotificationReadmissionQueueDTO notificationReadmissionQueueDTO) {
+        } else if (anyOfNotificationQueueDTO instanceof NotificationReadmissionQueueDTO notificationReadmissionQueueDTO) {
 
             notification = notificationMapper.toEntity(notificationReadmissionQueueDTO);
 
@@ -362,14 +359,12 @@ public class NotificationManagerServiceImpl implements NotificationManagerServic
 
             subject = notificationMarkdown.getSubjectReadmission(notificationReadmissionQueueDTO.getInitiativeName());
             markdown = notificationMarkdown.getMarkdownReadmission();
-        }
 
-        if (ioTokens == null) {
-            notificationKO(notification, startTime);
+        } else {
             return;
         }
 
-        if (fiscalCode == null) {
+        if (ioTokens == null || fiscalCode == null) {
             notificationKO(notification, startTime);
             return;
         }

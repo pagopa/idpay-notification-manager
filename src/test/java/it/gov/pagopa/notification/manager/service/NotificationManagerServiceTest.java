@@ -42,6 +42,7 @@ import java.util.List;
 import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
 @ExtendWith({SpringExtension.class, MockitoExtension.class})
@@ -347,18 +348,33 @@ class NotificationManagerServiceTest {
 
     @Test
     void notify_ko_get_io_tokens() {
+        EvaluationDTO evaluationDTO =
+                new EvaluationDTO(
+                        TEST_TOKEN,
+                        INITIATIVE_ID,
+                        INITIATIVE_ID,
+                        TEST_DATE_ONLY_DATE,
+                        INITIATIVE_ID,
+                        NotificationConstants.STATUS_ONBOARDING_OK,
+                        TEST_DATE,
+                        TEST_DATE,
+                        List.of(new OnboardingRejectionReason(OnboardingRejectionReason.OnboardingRejectionReasonType.AUTOMATED_CRITERIA_FAIL,
+                                        OnboardingRejectionReason.OnboardingRejectionReasonCode.AUTOMATED_CRITERIA_ISEE_FAIL, null, null, null),
+                                new OnboardingRejectionReason(OnboardingRejectionReason.OnboardingRejectionReasonType.ISEE_TYPE_KO,
+                                        OnboardingRejectionReason.OnboardingRejectionReasonCode.ISEE_TYPE_FAIL, null, null, null)),
+                        new BigDecimal(500), 1L);
 
         Request request =
                 Request.create(Request.HttpMethod.GET, "url", new HashMap<>(), null, new RequestTemplate());
 
         Mockito.doThrow(new FeignException.NotFound("", request, new byte[0], null))
                 .when(initiativeRestConnector)
-                .getIOTokens(EVALUATION_DTO.getInitiativeId());
+                .getIOTokens(evaluationDTO.getInitiativeId());
 
-        Mockito.when(notificationMapper.evaluationToNotification(EVALUATION_DTO))
+        Mockito.when(notificationMapper.evaluationToNotification(evaluationDTO))
                 .thenReturn(NOTIFICATION);
 
-        notificationManagerService.notify(EVALUATION_DTO);
+        notificationManagerService.notify(evaluationDTO);
         Mockito.verify(notificationManagerRepository, Mockito.times(1))
                 .save(Mockito.any(Notification.class));
     }
@@ -456,6 +472,22 @@ class NotificationManagerServiceTest {
 
         Mockito.verify(notificationManagerRepository, Mockito.times(1))
                 .save(NOTIFICATION);
+    }
+
+    @Test
+    void sendNotificationFromOperationType_not_expected() {
+
+        NotificationQueueDTO notificationQueue =
+                new NotificationQueueDTO("","","","");
+
+        try {
+            notificationManagerService.sendNotificationFromOperationType(notificationQueue);
+
+        } catch (FeignException e) {
+            Assertions.fail();
+        }
+        Mockito.verify(notificationManagerRepository, Mockito.times(0))
+                .save(any());
     }
 
     @Test
