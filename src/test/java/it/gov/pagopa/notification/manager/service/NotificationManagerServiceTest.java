@@ -291,14 +291,26 @@ class NotificationManagerServiceTest {
 
     @Test
     void notify_ko() {
+        EvaluationDTO evaluationDTO =
+                new EvaluationDTO(
+                        TEST_TOKEN,
+                        INITIATIVE_ID,
+                        INITIATIVE_ID,
+                        TEST_DATE_ONLY_DATE,
+                        INITIATIVE_ID,
+                        NotificationConstants.STATUS_ONBOARDING_OK,
+                        TEST_DATE,
+                        TEST_DATE,
+                        null,
+                        new BigDecimal(500), 1L);
         Mockito.when(pdvDecryptRestConnector.getPii(TEST_TOKEN)).thenReturn(FISCAL_CODE_RESOURCE);
         Mockito.when(ioBackEndRestConnector.getProfile(FISCAL_CODE, TOKEN))
                 .thenReturn(PROFILE_RESOURCE);
 
-        Mockito.when(initiativeRestConnector.getIOTokens(EVALUATION_DTO.getInitiativeId()))
+        Mockito.when(initiativeRestConnector.getIOTokens(evaluationDTO.getInitiativeId()))
                 .thenReturn(INITIATIVE_ADDITIONAL_INFO_DTO);
-        Mockito.when(notificationMarkdown.getSubject(EVALUATION_DTO)).thenReturn(SUBJECT);
-        Mockito.when(notificationMarkdown.getMarkdown(EVALUATION_DTO)).thenReturn(MARKDOWN);
+        Mockito.when(notificationMarkdown.getSubject(evaluationDTO)).thenReturn(SUBJECT);
+        Mockito.when(notificationMarkdown.getMarkdown(evaluationDTO)).thenReturn(MARKDOWN);
         Mockito.when(
                         notificationDTOMapper.map(
                                 Mockito.eq(FISCAL_CODE),
@@ -306,8 +318,16 @@ class NotificationManagerServiceTest {
                                 Mockito.anyString(),
                                 Mockito.anyString()))
                 .thenReturn(NOTIFICATION_DTO);
-        Mockito.when(notificationMapper.evaluationToNotification(EVALUATION_DTO))
-                .thenReturn(NOTIFICATION);
+        Notification notification =
+                Notification.builder()
+                        .notificationDate(LocalDateTime.now())
+                        .initiativeId(evaluationDTO.getInitiativeId())
+                        .userId(evaluationDTO.getUserId())
+                        .onboardingOutcome(evaluationDTO.getStatus())
+                        .rejectReasons(evaluationDTO.getOnboardingRejectionReasons())
+                        .build();
+        Mockito.when(notificationMapper.evaluationToNotification(evaluationDTO))
+                .thenReturn(notification);
         Request request =
                 Request.create(
                         Request.HttpMethod.POST, "url", new HashMap<>(), null, new RequestTemplate());
@@ -316,7 +336,7 @@ class NotificationManagerServiceTest {
                 .notify(NOTIFICATION_DTO, TOKEN);
 
         try {
-            notificationManagerService.notify(EVALUATION_DTO);
+            notificationManagerService.notify(evaluationDTO);
         } catch (FeignException e) {
             assertEquals(HttpStatus.BAD_REQUEST.value(), e.status());
         }
