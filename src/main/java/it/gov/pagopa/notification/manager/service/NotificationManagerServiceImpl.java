@@ -117,7 +117,6 @@ public class NotificationManagerServiceImpl implements NotificationManagerServic
             return;
         }
 
-        log.info(NotificationConstants.REQUEST_PDV);
         String fiscalCode = decryptUserToken(evaluationDTO.getUserId());
 
         if (fiscalCode == null) {
@@ -171,7 +170,6 @@ public class NotificationManagerServiceImpl implements NotificationManagerServic
             return false;
         }
 
-        log.info(NotificationConstants.REQUEST_PDV);
         String fiscalCode = decryptUserToken(notification.getUserId());
 
         if (fiscalCode == null) {
