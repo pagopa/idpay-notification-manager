@@ -416,7 +416,8 @@ public class NotificationManagerServiceImpl implements NotificationManagerServic
 
     private boolean isNotSenderAllowed(String fiscalCode, String primaryKey) {
         try {
-            ProfileResource profileResource = ioBackEndRestConnector.getProfile(fiscalCode, primaryKey);
+            FiscalCodeDTO fiscalCodeDTO = new FiscalCodeDTO(fiscalCode);
+            ProfileResource profileResource = ioBackEndRestConnector.getProfile(fiscalCodeDTO, primaryKey);
             return !profileResource.isSenderAllowed();
         } catch (FeignException e) {
             log.error("[NOTIFY] The user is not enabled to receive notifications: {}", e.contentUTF8());
