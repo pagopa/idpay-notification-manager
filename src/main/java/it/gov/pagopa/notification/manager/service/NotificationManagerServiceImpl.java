@@ -420,7 +420,7 @@ public class NotificationManagerServiceImpl implements NotificationManagerServic
             ProfileResource profileResource = ioBackEndRestConnector.getProfile(fiscalCodeDTO, primaryKey);
             return !profileResource.isSenderAllowed();
         } catch (FeignException e) {
-            log.error("[NOTIFY] The user is not enabled to receive notifications: {}", e.contentUTF8());
+            log.error("[NOTIFY] The user is not enabled to receive notifications: {}", e);
             return true;
         }
     }
