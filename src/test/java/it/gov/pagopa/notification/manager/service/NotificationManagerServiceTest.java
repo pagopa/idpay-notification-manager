@@ -101,8 +101,8 @@ class NotificationManagerServiceTest {
                     .build();
     private static final ServiceResource SERVICE_RESOURCE = new ServiceResource();
     private static final InitiativeAdditionalInfoDTO INITIATIVE_ADDITIONAL_INFO_DTO = InitiativeAdditionalInfoDTO.builder()
-            .primaryTokenIO(TOKEN)
-            .secondaryTokenIO(SECONDARY_KEY)
+            .primaryKey(TOKEN)
+            .secondaryKey(SECONDARY_KEY)
             .build();
 
     private static final NotificationIbanQueueDTO NOTIFICATION_IBAN_QUEUE_DTO = NotificationIbanQueueDTO.builder()

@@ -124,7 +124,7 @@ public class NotificationManagerServiceImpl implements NotificationManagerServic
             return;
         }
 
-        String tokenDecrypt = ioTokens.getPrimaryTokenIO();
+        String tokenDecrypt = ioTokens.getPrimaryKey();
 
         if (isNotSenderAllowed(fiscalCode, tokenDecrypt)) {
             notificationKO(notification, startTime);
@@ -177,7 +177,7 @@ public class NotificationManagerServiceImpl implements NotificationManagerServic
             return false;
         }
 
-        String tokenDecrypt = ioTokens.getPrimaryTokenIO();
+        String tokenDecrypt = ioTokens.getPrimaryKey();
 
         if (isNotSenderAllowed(fiscalCode, tokenDecrypt)) {
             notificationKO(notification, startTime);
@@ -369,7 +369,7 @@ public class NotificationManagerServiceImpl implements NotificationManagerServic
             return;
         }
 
-        String tokenDecrypt = ioTokens.getPrimaryTokenIO();
+        String tokenDecrypt = ioTokens.getPrimaryKey();
 
         if (isNotSenderAllowed(fiscalCode, tokenDecrypt)) {
             notificationKO(notification, startTime);
