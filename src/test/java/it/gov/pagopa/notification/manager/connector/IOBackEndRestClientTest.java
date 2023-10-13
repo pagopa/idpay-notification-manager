@@ -71,7 +71,8 @@ class IOBackEndRestClientTest {
   @Test
   void getProfile_test() {
 
-    final ProfileResource actualResponse = restConnector.getProfile(FISCAL_CODE, PRIMARY_KEY);
+    FiscalCodeDTO fiscalCodeDTO = new FiscalCodeDTO(FISCAL_CODE);
+    final ProfileResource actualResponse = restConnector.getProfile(fiscalCodeDTO, PRIMARY_KEY);
 
     assertNotNull(actualResponse);
     assertTrue(actualResponse.isSenderAllowed());
