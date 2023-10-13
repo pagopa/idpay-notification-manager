@@ -1,5 +1,6 @@
 package it.gov.pagopa.notification.manager.connector;
 
+import it.gov.pagopa.notification.manager.dto.FiscalCodeDTO;
 import it.gov.pagopa.notification.manager.dto.NotificationDTO;
 import it.gov.pagopa.notification.manager.dto.NotificationResource;
 import it.gov.pagopa.notification.manager.dto.ProfileResource;
@@ -21,7 +22,7 @@ public class IOBackEndRestConnectorImpl implements IOBackEndRestConnector {
   }
 
   @Override
-  public ProfileResource getProfile(String fiscalCode, String primaryKey) {
+  public ProfileResource getProfile(FiscalCodeDTO fiscalCode, String primaryKey) {
     return ioBackEndRestClient.getProfile(fiscalCode, primaryKey);
   }
 }

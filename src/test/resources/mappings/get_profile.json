@@ -1,7 +1,14 @@
 {
   "request": {
-    "method": "GET",
-    "urlPathPattern": "/api/v1/profiles/.*"
+    "method": "POST",
+    "urlPathPattern": "/api/v1/profiles",
+    "bodyPatterns": [
+      {
+        "equalToJson": {
+          "fiscal_code": "AAAAAA00A00A000A"
+        }
+      }
+    ]
   },
   "response": {
     "status": "200",

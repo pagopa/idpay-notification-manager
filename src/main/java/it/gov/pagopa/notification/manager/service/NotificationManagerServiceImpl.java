@@ -15,7 +15,6 @@ import it.gov.pagopa.notification.manager.model.Notification;
 import it.gov.pagopa.notification.manager.model.NotificationMarkdown;
 import it.gov.pagopa.notification.manager.repository.NotificationManagerRepository;
 import it.gov.pagopa.notification.manager.repository.NotificationManagerRepositoryExtended;
-import it.gov.pagopa.notification.manager.utils.AESUtil;
 import it.gov.pagopa.notification.manager.utils.AuditUtilities;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
@@ -44,8 +43,6 @@ public class NotificationManagerServiceImpl implements NotificationManagerServic
     private final int pageSize;
     private final long delay;
     @Autowired
-    private AESUtil aesUtil;
-    @Autowired
     private OutcomeProducer outcomeProducer;
     @Autowired
     private InitiativeRestConnector initiativeRestConnector;
@@ -65,9 +62,6 @@ public class NotificationManagerServiceImpl implements NotificationManagerServic
     private NotificationMarkdown notificationMarkdown;
     @Autowired
     AuditUtilities auditUtilities;
-
-    @Value("${util.crypto.aes.secret-type.pbe.passphrase}")
-    private String passphrase;
     @Value("${rest-client.notification.backend-io.ttl}")
     private Long timeToLive;
     @Value("${notification.manager.recover.parallelism}")
@@ -102,12 +96,10 @@ public class NotificationManagerServiceImpl implements NotificationManagerServic
     public void notify(EvaluationDTO evaluationDTO) {
         long startTime = System.currentTimeMillis();
 
-        if(evaluationDTO.getOnboardingRejectionReasons() != null){
-            if(evaluationDTO.getOnboardingRejectionReasons().stream()
-                    .anyMatch(r -> r.getType() == OnboardingRejectionReason.OnboardingRejectionReasonType.FAMILY_CRITERIA_KO)){
+        if(evaluationDTO.getOnboardingRejectionReasons() != null && (evaluationDTO.getOnboardingRejectionReasons().stream()
+                    .anyMatch(r -> r.getType() == OnboardingRejectionReason.OnboardingRejectionReasonType.FAMILY_CRITERIA_KO))){
                 log.info("[NOTIFY] Skipping sending message for citizen {} with FAMILY_CRITERIA_KO rejection reason", evaluationDTO.getUserId());
                 return;
-            }
         }
 
         Notification notification = notificationMapper.evaluationToNotification(evaluationDTO);
@@ -125,7 +117,6 @@ public class NotificationManagerServiceImpl implements NotificationManagerServic
             return;
         }
 
-        log.info(NotificationConstants.REQUEST_PDV);
         String fiscalCode = decryptUserToken(evaluationDTO.getUserId());
 
         if (fiscalCode == null) {
@@ -133,8 +124,7 @@ public class NotificationManagerServiceImpl implements NotificationManagerServic
             return;
         }
 
-        log.info("[NOTIFY] Sending request to DECRYPT_TOKEN");
-        String tokenDecrypt = aesUtil.decrypt(passphrase, ioTokens.getPrimaryTokenIO());
+        String tokenDecrypt = ioTokens.getPrimaryKey();
 
         if (isNotSenderAllowed(fiscalCode, tokenDecrypt)) {
             notificationKO(notification, startTime);
@@ -180,7 +170,6 @@ public class NotificationManagerServiceImpl implements NotificationManagerServic
             return false;
         }
 
-        log.info(NotificationConstants.REQUEST_PDV);
         String fiscalCode = decryptUserToken(notification.getUserId());
 
         if (fiscalCode == null) {
@@ -188,8 +177,7 @@ public class NotificationManagerServiceImpl implements NotificationManagerServic
             return false;
         }
 
-        log.info("[NOTIFY] Sending request to DECRYPT_TOKEN");
-        String tokenDecrypt = aesUtil.decrypt(passphrase, ioTokens.getPrimaryTokenIO());
+        String tokenDecrypt = ioTokens.getPrimaryKey();
 
         if (isNotSenderAllowed(fiscalCode, tokenDecrypt)) {
             notificationKO(notification, startTime);
@@ -309,11 +297,11 @@ public class NotificationManagerServiceImpl implements NotificationManagerServic
     public void sendNotificationFromOperationType(AnyOfNotificationQueueDTO anyOfNotificationQueueDTO) {
         long startTime = System.currentTimeMillis();
 
-        String fiscalCode = null;
-        Notification notification = null;
-        String subject = "";
-        String markdown = "";
-        InitiativeAdditionalInfoDTO ioTokens = null;
+        String fiscalCode;
+        Notification notification;
+        String subject;
+        String markdown;
+        InitiativeAdditionalInfoDTO ioTokens;
 
         if (anyOfNotificationQueueDTO instanceof NotificationCitizenOnQueueDTO notificationCitizenOnQueueDTO) {
 
@@ -325,8 +313,8 @@ public class NotificationManagerServiceImpl implements NotificationManagerServic
 
             subject = notificationMarkdown.getSubjectInitiativePublishing();
             markdown = notificationMarkdown.getMarkdownInitiativePublishing();
-        }
-        if (anyOfNotificationQueueDTO instanceof NotificationIbanQueueDTO notificationIbanQueueDTO) {
+
+        } else if (anyOfNotificationQueueDTO instanceof NotificationIbanQueueDTO notificationIbanQueueDTO) {
 
             notification = notificationMapper.toEntity(notificationIbanQueueDTO);
 
@@ -336,9 +324,8 @@ public class NotificationManagerServiceImpl implements NotificationManagerServic
 
             subject = notificationMarkdown.getSubjectCheckIbanKo();
             markdown = notificationMarkdown.getMarkdownCheckIbanKo();
-        }
-
-        if (anyOfNotificationQueueDTO instanceof NotificationRefundQueueDTO notificationRefundOnQueueDTO) {
+            
+        } else if (anyOfNotificationQueueDTO instanceof NotificationRefundQueueDTO notificationRefundOnQueueDTO) {
 
             BigDecimal refund = BigDecimal.valueOf(notificationRefundOnQueueDTO.getRefundReward()).divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_DOWN);
 
@@ -350,9 +337,8 @@ public class NotificationManagerServiceImpl implements NotificationManagerServic
 
             subject = notificationMarkdown.getSubjectRefund(notificationRefundOnQueueDTO.getStatus());
             markdown = notificationMarkdown.getMarkdownRefund(notificationRefundOnQueueDTO.getStatus(), refund);
-        }
 
-        if (anyOfNotificationQueueDTO instanceof NotificationSuspensionQueueDTO notificationSuspensionQueueDTO) {
+        } else if (anyOfNotificationQueueDTO instanceof NotificationSuspensionQueueDTO notificationSuspensionQueueDTO) {
 
             notification = notificationMapper.toEntity(notificationSuspensionQueueDTO);
 
@@ -362,9 +348,8 @@ public class NotificationManagerServiceImpl implements NotificationManagerServic
 
             subject = notificationMarkdown.getSubjectSuspension(notificationSuspensionQueueDTO.getInitiativeName());
             markdown = notificationMarkdown.getMarkdownSuspension();
-        }
 
-        if (anyOfNotificationQueueDTO instanceof NotificationReadmissionQueueDTO notificationReadmissionQueueDTO) {
+        } else if (anyOfNotificationQueueDTO instanceof NotificationReadmissionQueueDTO notificationReadmissionQueueDTO) {
 
             notification = notificationMapper.toEntity(notificationReadmissionQueueDTO);
 
@@ -374,19 +359,17 @@ public class NotificationManagerServiceImpl implements NotificationManagerServic
 
             subject = notificationMarkdown.getSubjectReadmission(notificationReadmissionQueueDTO.getInitiativeName());
             markdown = notificationMarkdown.getMarkdownReadmission();
+
+        } else {
+            return;
         }
 
-        if (ioTokens == null) {
+        if (ioTokens == null || fiscalCode == null) {
             notificationKO(notification, startTime);
             return;
         }
 
-        if (fiscalCode == null) {
-            notificationKO(notification, startTime);
-            return;
-        }
-
-        String tokenDecrypt = aesUtil.decrypt(passphrase, ioTokens.getPrimaryTokenIO());
+        String tokenDecrypt = ioTokens.getPrimaryKey();
 
         if (isNotSenderAllowed(fiscalCode, tokenDecrypt)) {
             notificationKO(notification, startTime);
@@ -433,10 +416,11 @@ public class NotificationManagerServiceImpl implements NotificationManagerServic
 
     private boolean isNotSenderAllowed(String fiscalCode, String primaryKey) {
         try {
-            ProfileResource profileResource = ioBackEndRestConnector.getProfile(fiscalCode, primaryKey);
+            FiscalCodeDTO fiscalCodeDTO = new FiscalCodeDTO(fiscalCode);
+            ProfileResource profileResource = ioBackEndRestConnector.getProfile(fiscalCodeDTO, primaryKey);
             return !profileResource.isSenderAllowed();
         } catch (FeignException e) {
-            log.error("[NOTIFY] The user is not enabled to receive notifications: {}", e.contentUTF8());
+            log.error("[NOTIFY] The user is not enabled to receive notifications: {}", e);
             return true;
         }
     }
