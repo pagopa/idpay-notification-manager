@@ -6,10 +6,15 @@ import it.gov.pagopa.notification.manager.dto.OnboardingRejectionReason;
 import it.gov.pagopa.notification.manager.dto.OnboardingRejectionReason.OnboardingRejectionReasonCode;
 import it.gov.pagopa.notification.manager.dto.OnboardingRejectionReason.OnboardingRejectionReasonType;
 import java.time.LocalDate;
+
+import it.gov.pagopa.notification.manager.dto.mapper.NotificationMapper;
+import it.gov.pagopa.notification.manager.event.producer.OutcomeProducer;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.annotation.PropertySource;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
@@ -21,31 +26,8 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @Slf4j
-@ExtendWith({SpringExtension.class})
+@SpringBootTest
 @ContextConfiguration(classes = NotificationMarkdown.class)
-@TestPropertySource(
-    properties = {
-      "notification.manager.markdown.double.new.line=\\n\\n",
-      "notification.manager.subject.ok=Il tuo Bonus è attivo",
-      "notification.manager.subject.ok.refund=Ti è stato accreditato un rimborso!",
-      "notification.manager.markdown.ok.cta=---\\nit:\\n    cta_1: \\n        text: \"Vai all'iniziativa\"\\n        action: \"ioit://idpay/initiative/%initiativeId%\"\\nen:\\n    cta_1: \\n        text: \"Go to the bonus page\"\\n        action: \"ioit://idpay/initiative/%initiativeId%\"\\n---",
-      "notification.manager.subject.ko=Non è stato possibile attivare %initiativeName%",
-      "notification.manager.subject.ko.tech=Abbiamo riscontrato dei problemi",
-      "notification.manager.subject.suspension=Sospensione temporanea da iniziativa %initiativeName%",
-      "notification.manager.subject.readmission=Riammissione a iniziativa %initiativeName%",
-      "notification.manager.markdown.ok=Buone notizie! Hai ottenuto %initiativeName%. Da questo momento puoi visualizzare il bonus nella sezione Portafoglio dell'app IO.\\n\\nTi ricordiamo che per iniziare ad usufruire del bonus devi configurare almeno un metodo di pagamento.\\n\\nPuoi trovare maggiori informazioni sul [sito](http://example.com/).",
-      "notification.manager.markdown.ok.refund=Hai ottenuto un rimborso di %effectiveReward% euro!",
-      "notification.manager.markdown.ko.pdnd=Purtroppo non hai i requisiti necessari per aderire a %initiativeName% per i seguenti motivi:",
-      "notification.manager.markdown.ko.ranking=Purtroppo non è stato possibile attivare %initiativeName% in quanto i tuoi requisiti non rientrano nella graduatoria.",
-      "notification.manager.markdown.ko.mistake=Se ritieni che ci sia stato un errore puoi segnalarlo direttamente all'Ente erogatore dell'iniziativa.",
-      "notification.manager.markdown.ko.tech=Si è verificato un errore nel processare la tua richiesta di %initiativeName%.\\nTi chiediamo di riprovare.",
-      "notification.manager.markdown.ko.apology=Ci scusiamo per il disagio.",
-      "notification.manager.markdown.suspension=In seguito ad alcune verifiche, il tuo profilo è stato sospeso dall'iniziativa.\\n" +
-              "                  Gli importi ancora da erogare saranno sospesi e le transazioni a partire da questo momento non saranno riconosciute come valide ai fini dell'iniziativa.\\n" +
-              "                  Contatta l'assistenza al numero XXXXX per capire come risolvere entro 60 giorni a partire da oggi e comunica il codice protocollo XXXX.",
-      "notification.manager.markdown.readmission=In seguito ad alcune verifiche, il tuo profilo è stato riammesso all'iniziativa.\\n" +
-              "                   Gli importi precedentemente sospesi saranno riammessi e rimborsati nel prossimo ordine di rimborso a tuo favore."
-    })
 class NotificationMarkdownTest {
 
   private static final String SUBJECT_OK = "Il tuo Bonus è attivo";
@@ -218,5 +200,176 @@ class NotificationMarkdownTest {
   void getSubjectReadmission_ok(){
     String actual = notificationMarkdown.getSubjectReadmission(INITIATIVE_NAME);
     log.info(actual);
+  }
+
+  @Test
+  void getSubjectDemanded(){
+    String subjectDemanded = notificationMarkdown.getSubject(getEvaluationDto(NotificationConstants.STATUS_ONBOARDING_DEMANDED, null));
+    log.info(subjectDemanded);
+  }
+
+  @Test
+  void getMarkdownDemanded(){
+    String subjectDemanded = notificationMarkdown.getMarkdown(getEvaluationDto(NotificationConstants.STATUS_ONBOARDING_DEMANDED, null));
+    log.info(subjectDemanded);
+  }
+
+  @Test
+  void getSubjectJoined(){
+    String subjectDemanded = notificationMarkdown.getSubject(getEvaluationDto(NotificationConstants.STATUS_ONBOARDING_JOINED, null));
+    log.info(subjectDemanded);
+  }
+
+  @Test
+  void getMarkdownJoined(){
+    String subjectDemanded = notificationMarkdown.getMarkdown(getEvaluationDto(NotificationConstants.STATUS_ONBOARDING_JOINED, null));
+    log.info(subjectDemanded);
+  }
+
+  private EvaluationDTO getEvaluationDto(String status, List<OnboardingRejectionReason> rejectionReasons){
+    return new EvaluationDTO(
+            USER_ID,
+            INITIATIVE_ID,
+            INITIATIVE_NAME,
+            TEST_DATE_ONLY_DATE,
+            "ORGANIZATIONID",
+            status,
+            TEST_DATE,
+            TEST_DATE,
+            rejectionReasons,
+            new BigDecimal(500),
+            1L);
+  }
+
+  @Test
+  void markdownTest(){ //TODO remove
+    List<OnboardingRejectionReason> list =
+            List.of(
+//                    new OnboardingRejectionReason(
+//                            OnboardingRejectionReasonType.BUDGET_EXHAUSTED,
+//                            OnboardingRejectionReasonCode.INITIATIVE_BUDGET_EXHAUSTED,
+//                            null,
+//                            null,
+//                            null),
+//                    new OnboardingRejectionReason(
+//                            OnboardingRejectionReasonType.OUT_OF_RANKING,
+//                            OnboardingRejectionReasonCode.CITIZEN_OUT_OF_RANKING,
+//                            null,
+//                            null,
+//                            "9"),
+//                    new OnboardingRejectionReason(
+//                            OnboardingRejectionReasonType.AUTOMATED_CRITERIA_FAIL,
+//                            OnboardingRejectionReasonCode.AUTOMATED_CRITERIA_BIRTHDATE_FAIL,
+//                            "AGID",
+//                            "Agenzia per l'Italia Digitale",
+//                            null),
+//                    new OnboardingRejectionReason(
+//                            OnboardingRejectionReasonType.AUTOMATED_CRITERIA_FAIL,
+//                            OnboardingRejectionReasonCode.AUTOMATED_CRITERIA_ISEE_FAIL,
+//                            "INPS",
+//                            "Istituto Nazionale Previdenza Sociale",
+//                            null),
+//                    new OnboardingRejectionReason(
+//                            OnboardingRejectionReasonType.ISEE_TYPE_KO,
+//                            OnboardingRejectionReasonCode.ISEE_TYPE_FAIL,
+//                            "INPS",
+//                            "Istituto Nazionale Previdenza Sociale",
+//                            "ISEE non disponibile"),
+//                    new OnboardingRejectionReason(
+//                            OnboardingRejectionReasonType.RESIDENCE_KO,
+//                            OnboardingRejectionReasonCode.RESIDENCE_FAIL,
+//                            "AGID",
+//                            "Agenzia per l'Italia Digitale",
+//                            "Residenza non disponibile"),
+//                    new OnboardingRejectionReason(
+//                            OnboardingRejectionReasonType.BIRTHDATE_KO,
+//                            OnboardingRejectionReasonCode.RESIDENCE_FAIL,
+//                            "AGID",
+//                            "Agenzia per l'Italia Digitale",
+//                            "Data di nascita non disponibile"),
+//                    new OnboardingRejectionReason(
+//                            OnboardingRejectionReasonType.FAMILY_KO,
+//                            OnboardingRejectionReasonCode.FAMILY_FAIL,
+//                            "INPS",
+//                            "Istituto Nazionale Previdenza Sociale",
+//                            "Nucleo familiare non disponibile"),
+//                    new OnboardingRejectionReason(
+//                            OnboardingRejectionReasonType.CONSENSUS_MISSED,
+//                            OnboardingRejectionReasonCode.CONSENSUS_CHECK_TC_FAIL,
+//                            null,
+//                            null,
+//                            null),
+//                    new OnboardingRejectionReason(
+//                            OnboardingRejectionReasonType.CONSENSUS_MISSED,
+//                            OnboardingRejectionReasonCode.CONSENSUS_CHECK_PDND_FAIL,
+//                            null,
+//                            null,
+//                            null),
+//                    new OnboardingRejectionReason(
+//                            OnboardingRejectionReasonType.INVALID_REQUEST,
+//                            OnboardingRejectionReasonCode.INVALID_INITIATIVE_ID,
+//                            null,
+//                            null,
+//                            null),
+//                    new OnboardingRejectionReason(
+//                            OnboardingRejectionReasonType.INVALID_REQUEST,
+//                            OnboardingRejectionReasonCode.CONSENSUS_CHECK_TC_ACCEPT_FAIL,
+//                            null,
+//                            null,
+//                            null),
+//                    new OnboardingRejectionReason(
+//                            OnboardingRejectionReasonType.INVALID_REQUEST,
+//                            OnboardingRejectionReasonCode.CONSENSUS_CHECK_CRITERIA_CONSENSUS_FAIL,
+//                            null,
+//                            null,
+//                            null),
+//                    new OnboardingRejectionReason(
+//                            OnboardingRejectionReasonType.AUTOMATED_CRITERIA_FAIL,
+//                            OnboardingRejectionReasonCode.AUTOMATED_CRITERIA_ISEE_FAIL,
+//                            "INPS",
+//                            "Istituto Nazionale Previdenza Sociale",
+//                            null),
+//                    new OnboardingRejectionReason(
+//                            OnboardingRejectionReasonType.AUTOMATED_CRITERIA_FAIL,
+//                            OnboardingRejectionReasonCode.AUTOMATED_CRITERIA_RESIDENCE_FAIL,
+//                            "INPS",
+//                            "Istituto Nazionale Previdenza Sociale",
+//                            null),
+//                    new OnboardingRejectionReason(
+//                            OnboardingRejectionReasonType.AUTOMATED_CRITERIA_FAIL,
+//                            OnboardingRejectionReasonCode.AUTOMATED_CRITERIA_BIRTHDATE_FAIL,
+//                            "INPS",
+//                            "Istituto Nazionale Previdenza Sociale",
+//                            null),
+                    new OnboardingRejectionReason(
+                            OnboardingRejectionReasonType.TECHNICAL_ERROR,
+                            null,
+                            null,
+                            null,
+                            null)
+
+
+            );
+
+
+    EvaluationDTO evaluationDTO =
+            new EvaluationDTO(
+                    "TEST_TOKEN-USERID",
+                    "INITIATIVEID",
+                    "INITIATIVE_NAME",
+                    TEST_DATE_ONLY_DATE, //initiative endDate
+                    "ORGANIZATIONID",
+                    NotificationConstants.STATUS_ONBOARDING_DEMANDED,
+                    TEST_DATE, //ADMISSIBILITY TEST CHEKH
+                    TEST_DATE, //CONSENSUS TIMESTAMP
+                    list, //ONBOARDING REJECTIONS
+                    new BigDecimal(500),  //BENEFICIARY BUDGET
+                    1L); // REANKING VALUE
+
+    System.out.println("SUBJECT");
+    System.out.println(notificationMarkdown.getSubject(evaluationDTO));
+    System.out.println("\nMARCKDOWN");
+    System.out.println(notificationMarkdown.getMarkdown(evaluationDTO));
+
   }
 }

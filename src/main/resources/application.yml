@@ -183,6 +183,8 @@ notification:
     markdown:
       ko:
         ranking: ${MARKDOWN_KO_RANKING:Purtroppo non è stato possibile attivare %initiativeName% in quanto i tuoi requisiti non rientrano nella graduatoria.}
+        budget: ${MARKDOWN_KO_BUDGET_EXHAUSTED:Purtroppo non è stato possibile attivare %initiativeName% in quanto è terminato il budget disponibile.}
+        rejected.noRetry: ${MARKDOWN_KO_REJECTED_NO_RETRY:Purtroppo non è stato possibile aderire a %initiativeName% per i seguenti motivi:}
         tech: |-
           ${MARKDOWN_KO_TECH:Si è verificato un errore nel processare la tua richiesta di %initiativeName%.
           Ti chiediamo di riprovare.}
@@ -225,6 +227,12 @@ notification:
                 text: "Go to the bonus page"
                 action: "ioit://idpay/initiative/%initiativeId%"
         ---}
+      demanded: |-
+        ${MARKDOWN_DEMANDED:Buone notizie! Grazie ad un tuo familiare puoi ottenere %initiativeName%.
+        
+        Aderisce e configura almeno un metodo di pagamento per usufruire del bonus.
+        
+        Puoi trovare maggiori informazioni sul [sito](http://example.com/).}
       suspension: ${MARKDOWN_SUSPENSION:In seguito ad alcune verifiche, il tuo profilo è stato sospeso dall'iniziativa.
                   Gli importi ancora da erogare saranno sospesi e le transazioni a partire da questo momento non saranno riconosciute come valide ai fini dell'iniziativa.
                   Contatta l'assistenza al numero XXXXX per capire come risolvere entro 60 giorni a partire da oggi e comunica il codice protocollo XXXX.}
@@ -241,6 +249,7 @@ notification:
           }
     subject:
       ok: ${SUBJECT_OK:Il tuo Bonus è attivo}
+      demanded: ${SUBJECT_DEMANDED:Attiva il bonus %initiativeName%}
       ok.refund: ${SUBJECT_OK_REFUND:Ti è stato accreditato un rimborso!}
       ko: ${SUBJECT_KO:Non è stato possibile attivare %initiativeName%}
       ko.refund: ${SUBJECT_KO_REFUND:Non è stato possibile effettuare il rimborso}
