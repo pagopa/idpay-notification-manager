@@ -13,22 +13,12 @@ import org.springframework.util.StringUtils;
 import java.math.BigDecimal;
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
+import java.util.ArrayList;
 import java.util.List;
 
 @Component
 @Slf4j
 public class NotificationMarkdown {
-  private static final List<OnboardingRejectionReasonType> ONBOARDING_KO_TYPE_NO_RETRY =
-          List.of(OnboardingRejectionReasonType.AUTOMATED_CRITERIA_FAIL,
-                  OnboardingRejectionReasonType.CONSENSUS_MISSED,
-                  OnboardingRejectionReasonType.INVALID_REQUEST,
-                  OnboardingRejectionReasonType.BUDGET_EXHAUSTED,
-                  OnboardingRejectionReasonType.ISEE_TYPE_KO,
-                  OnboardingRejectionReasonType.BIRTHDATE_KO,
-                  OnboardingRejectionReasonType.RESIDENCE_KO,
-                  OnboardingRejectionReasonType.FAMILY_KO,
-                  OnboardingRejectionReasonType.OUT_OF_RANKING);
-
   private static final List<OnboardingRejectionReasonType> ONBOARDING_KO_TYPE_GENERIC_MARKDOWN_NO_RETRY =
           List.of(OnboardingRejectionReasonType.AUTOMATED_CRITERIA_FAIL,
                   OnboardingRejectionReasonType.CONSENSUS_MISSED,
@@ -39,6 +29,14 @@ public class NotificationMarkdown {
                   OnboardingRejectionReasonType.BIRTHDATE_KO,
                   OnboardingRejectionReasonType.RESIDENCE_KO,
                   OnboardingRejectionReasonType.FAMILY_KO);
+
+  private static final List<OnboardingRejectionReasonType> ONBOARDING_KO_TYPE_NO_RETRY = new ArrayList<>();
+  static {
+    ONBOARDING_KO_TYPE_NO_RETRY.addAll(ONBOARDING_KO_TYPE_GENERIC_MARKDOWN_NO_RETRY);
+    ONBOARDING_KO_TYPE_NO_RETRY.addAll(FAILED_RETRIEVE_PDND_DATA_TYPE);
+    ONBOARDING_KO_TYPE_NO_RETRY.add(OnboardingRejectionReasonType.OUT_OF_RANKING);
+  }
+
 
   @Value("${notification.manager.markdown.double.new.line}")
   private String markdownDoubleNewLine;
