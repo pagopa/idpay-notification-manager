@@ -40,9 +40,6 @@ public class NotificationMarkdown {
                   OnboardingRejectionReasonType.RESIDENCE_KO,
                   OnboardingRejectionReasonType.FAMILY_KO);
 
-  private static final String ONBOARDING_GENERIC_ERROR_MARKDOWN = "Si è verificato un errore nel processare la tua richiesta di %initiativeName%.\n" +
-          "Se ritieni che ci sia stato un errore puoi segnalarlo direttamente all'Ente erogatore dell'iniziativa.";
-
   @Value("${notification.manager.markdown.double.new.line}")
   private String markdownDoubleNewLine;
 
@@ -118,6 +115,9 @@ public class NotificationMarkdown {
   @Value("${notification.manager.markdown.ko.rejected.noRetry}")
   private String markdownKoRejectedNoRetry;
 
+  @Value("${notification.manager.markdown.ko.generic}")
+  private String markdownKoGeneric;
+
 
   public String getSubjectCheckIbanKo() {
     return this.subjectCheckIbanKo;
@@ -144,7 +144,7 @@ public class NotificationMarkdown {
 
   public String getSubject(EvaluationDTO evaluationDTO) {
     if(NotificationConstants.STATUS_ONBOARDING_OK.equals(evaluationDTO.getStatus())
-            || NotificationConstants.STATUS_ONBOARDING_JOINED.equals(evaluationDTO.getStatus())){ //TODO JOINED, onboarding concorrenziali 1) OK 2)JOINED
+            || NotificationConstants.STATUS_ONBOARDING_JOINED.equals(evaluationDTO.getStatus())){
       return this.subjectOk;
     }
 
@@ -321,14 +321,12 @@ public class NotificationMarkdown {
   }
 
   private String getMarkdownKoTech(String initiativeName) {
-    //TODO remove when handling can be onboarding retried for technical errors
-    return replaceMessageItem(ONBOARDING_GENERIC_ERROR_MARKDOWN, NotificationConstants.INITIATIVE_NAME_KEY, initiativeName)
-            .concat(this.markdownDoubleNewLine)
-            .concat(this.markdownKoApology);
-//    TODO uncommented when handling can be onboarding retried for technical errors
-//    return replaceMessageItem(this.markdownKoTech, NotificationConstants.INITIATIVE_NAME_KEY, initiativeName)
-//        .concat(this.markdownDoubleNewLine)
-//        .concat(this.markdownKoApology);
+    return replaceMessageItem(
+            this.markdownKoGeneric,
+            NotificationConstants.INITIATIVE_NAME_KEY,
+            initiativeName)
+        .concat(this.markdownDoubleNewLine)
+        .concat(this.markdownKoApology);
   }
 
   public String getSubjectSuspension(String initiativeName) {

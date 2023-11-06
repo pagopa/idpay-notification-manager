@@ -188,6 +188,9 @@ notification:
         tech: |-
           ${MARKDOWN_KO_TECH:Si è verificato un errore nel processare la tua richiesta di %initiativeName%.
           Ti chiediamo di riprovare.}
+        generic: |-
+          ${MARKDOWN_KO_GENERIC:Si è verificato un errore nel processare la tua richiesta di %initiativeName%.
+          Se ritieni che ci sia stato un errore puoi segnalarlo direttamente all'Ente erogatore dell'iniziativa.}
         apology: ${MARKDOWN_APOLOGY:Ci scusiamo per il disagio.}
         mistake: ${MARKDOWN_KO_MISTAKE:Se ritieni che ci sia stato un errore puoi segnalarlo direttamente all'Ente erogatore dell'iniziativa.}
         checkIban: |- 
