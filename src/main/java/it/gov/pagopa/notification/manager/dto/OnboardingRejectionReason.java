@@ -1,12 +1,14 @@
 package it.gov.pagopa.notification.manager.dto;
 
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
 
 import jakarta.validation.constraints.NotNull;
 
 @Getter
 @AllArgsConstructor
+@Builder
 public class OnboardingRejectionReason {
 
   @NotNull

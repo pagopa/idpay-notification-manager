@@ -5,21 +5,15 @@ import it.gov.pagopa.notification.manager.dto.EvaluationDTO;
 import it.gov.pagopa.notification.manager.dto.OnboardingRejectionReason;
 import it.gov.pagopa.notification.manager.dto.OnboardingRejectionReason.OnboardingRejectionReasonCode;
 import it.gov.pagopa.notification.manager.dto.OnboardingRejectionReason.OnboardingRejectionReasonType;
-import java.time.LocalDate;
-
-import it.gov.pagopa.notification.manager.dto.mapper.NotificationMapper;
-import it.gov.pagopa.notification.manager.event.producer.OutcomeProducer;
 import lombok.extern.slf4j.Slf4j;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.context.annotation.PropertySource;
 import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.TestPropertySource;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -33,6 +27,23 @@ class NotificationMarkdownTest {
   private static final String SUBJECT_OK = "Il tuo Bonus è attivo";
   private static final String SUBJECT_KO = "Non è stato possibile attivare TESTINITIATIVE01";
   private static final String SUBJECT_KO_TECH = "Abbiamo riscontrato dei problemi";
+  private static final String MARKDOWN_OK = """
+            ---
+            it:
+                cta_1:\s
+                    text: "Vai all'iniziativa"
+                    action: "ioit://idpay/initiative/%s"
+            en:
+                cta_1:\s
+                    text: "Go to the bonus page"
+                    action: "ioit://idpay/initiative/%s"
+            ---
+                        
+            Buone notizie! Hai ottenuto %s. Da questo momento puoi visualizzare il bonus nella sezione Portafoglio dell'app IO.
+                        
+            Ti ricordiamo che per iniziare ad usufruire del bonus devi configurare almeno un metodo di pagamento.
+                        
+            Puoi trovare maggiori informazioni sul [sito](http://example.com/).""";
   private static final String USER_ID = "USER_ID";
   private static final String INITIATIVE_ID = "TESTINITIATIVE01";
   private static final String INITIATIVE_NAME = "NAMETESTINITIATIVE01";
@@ -136,26 +147,57 @@ class NotificationMarkdownTest {
 
   @Test
   void getMarkdown_status_ok() {
+    String expectedMarkdownOk = MARKDOWN_OK
+            .formatted(EVALUATION_DTO.getInitiativeId(),
+                    EVALUATION_DTO.getInitiativeId(),
+                    EVALUATION_DTO.getInitiativeName());
     String actual = notificationMarkdown.getMarkdown(EVALUATION_DTO);
-    log.info(actual);
+
+    Assertions.assertEquals(expectedMarkdownOk, actual);
   }
 
   @Test
   void getMarkdown_status_ko_pdnd() {
+    String expectedMarkdown = """
+            Purtroppo non è stato possibile aderire a %s per i seguenti motivi:
+                        
+            * %s
+                        
+            Se ritieni che ci sia stato un errore puoi segnalarlo direttamente all'Ente erogatore dell'iniziativa.
+                        
+            Ci scusiamo per il disagio."""
+            .formatted(
+                    EVALUATION_DTO_KO_TECH.getInitiativeName(),
+                    EVALUATION_DTO_KO_PDND.getOnboardingRejectionReasons().get(0).getDetail());
     String actual = notificationMarkdown.getMarkdown(EVALUATION_DTO_KO_PDND);
-    log.info(actual);
+    Assertions.assertEquals(expectedMarkdown, actual);
   }
 
   @Test
   void getMarkdown_status_ko_ranking() {
+    String expectedMarkdownRankingKo = """
+            Purtroppo non è stato possibile attivare %s in quanto i tuoi requisiti non rientrano nella graduatoria.
+                        
+            Se ritieni che ci sia stato un errore puoi segnalarlo direttamente all'Ente erogatore dell'iniziativa.
+                        
+            Ci scusiamo per il disagio.""".formatted(EVALUATION_DTO_KO_RANKING.getInitiativeName());
+
     String actual = notificationMarkdown.getMarkdown(EVALUATION_DTO_KO_RANKING);
-    log.info(actual);
+
+    Assertions.assertEquals(expectedMarkdownRankingKo, actual);
   }
 
   @Test
   void getMarkdown_status_ko_tech() {
+    String expectedMarkdown = """
+            Si è verificato un errore nel processare la tua richiesta di %s.
+            Se ritieni che ci sia stato un errore puoi segnalarlo direttamente all'Ente erogatore dell'iniziativa.
+                        
+            Ci scusiamo per il disagio."""
+            .formatted(EVALUATION_DTO_KO_TECH.getInitiativeName());
+
     String actual = notificationMarkdown.getMarkdown(EVALUATION_DTO_KO_TECH);
-    log.info(actual);
+    Assertions.assertEquals(expectedMarkdown, actual);
   }
 
   @Test
@@ -203,27 +245,124 @@ class NotificationMarkdownTest {
   }
 
   @Test
-  void getSubjectDemanded(){
-    String subjectDemanded = notificationMarkdown.getSubject(getEvaluationDto(NotificationConstants.STATUS_ONBOARDING_DEMANDED, null));
-    log.info(subjectDemanded);
+  void getSubject_demanded(){
+    EvaluationDTO evaluationDto = getEvaluationDto(NotificationConstants.STATUS_ONBOARDING_DEMANDED, null);
+    String expectedSubject = "Attiva il bonus "+evaluationDto.getInitiativeName();
+
+    String subjectDemanded = notificationMarkdown.getSubject(evaluationDto);
+
+    Assertions.assertNotNull(subjectDemanded);
+    Assertions.assertEquals(expectedSubject, subjectDemanded);
   }
 
   @Test
-  void getMarkdownDemanded(){
-    String subjectDemanded = notificationMarkdown.getMarkdown(getEvaluationDto(NotificationConstants.STATUS_ONBOARDING_DEMANDED, null));
-    log.info(subjectDemanded);
+  void getMarkdown_demanded(){
+    EvaluationDTO evaluationDto = getEvaluationDto(NotificationConstants.STATUS_ONBOARDING_DEMANDED, null);
+    String expectedMarkdown = "Buone notizie! Grazie ad un tuo familiare puoi ottenere %s.\n\n".formatted(evaluationDto.getInitiativeName())+
+            "Aderisce e configura almeno un metodo di pagamento per usufruire del bonus.\n\n"+
+            "Puoi trovare maggiori informazioni sul [sito](http://example.com/).";
+
+    String markdownDemanded = notificationMarkdown.getMarkdown(evaluationDto);
+
+    Assertions.assertNotNull(markdownDemanded);
+    Assertions.assertEquals(expectedMarkdown, markdownDemanded);
+
   }
 
   @Test
-  void getSubjectJoined(){
-    String subjectDemanded = notificationMarkdown.getSubject(getEvaluationDto(NotificationConstants.STATUS_ONBOARDING_JOINED, null));
-    log.info(subjectDemanded);
+  void getSubject_joined(){
+    EvaluationDTO evaluationDto = getEvaluationDto(NotificationConstants.STATUS_ONBOARDING_JOINED, null);
+    String expectedSubject = "Il tuo Bonus è attivo";
+
+    String subjectJoined = notificationMarkdown.getSubject(evaluationDto);
+    Assertions.assertEquals(expectedSubject, subjectJoined);
   }
 
   @Test
-  void getMarkdownJoined(){
-    String subjectDemanded = notificationMarkdown.getMarkdown(getEvaluationDto(NotificationConstants.STATUS_ONBOARDING_JOINED, null));
-    log.info(subjectDemanded);
+  void getMarkdown_joined(){
+    EvaluationDTO evaluationDto = getEvaluationDto(NotificationConstants.STATUS_ONBOARDING_JOINED, null);
+    String markdownExpectedJoined = MARKDOWN_OK
+            .formatted(evaluationDto.getInitiativeId(),
+                    evaluationDto.getInitiativeId(),
+                    evaluationDto.getInitiativeName());
+
+    String markdownJoined = notificationMarkdown.getMarkdown(evaluationDto);
+
+    Assertions.assertEquals(markdownExpectedJoined, markdownJoined);
+  }
+
+  @Test
+  void getSubject_budgetExhausted(){
+    EvaluationDTO evaluationDto = getEvaluationDto(NotificationConstants.STATUS_ONBOARDING_KO,
+            List.of(OnboardingRejectionReason.builder()
+                    .type(OnboardingRejectionReasonType.BUDGET_EXHAUSTED)
+                    .code(OnboardingRejectionReasonCode.INITIATIVE_BUDGET_EXHAUSTED)
+                    .build()));
+
+    String expectedSubject = "Non è stato possibile attivare %s".formatted(evaluationDto.getInitiativeName());
+
+    String actual = notificationMarkdown.getSubject(evaluationDto);
+    Assertions.assertEquals(expectedSubject, actual);
+  }
+
+  @Test
+  void getMarkdown_budgetExhausted(){
+
+    EvaluationDTO evaluationDto = getEvaluationDto(NotificationConstants.STATUS_ONBOARDING_KO,
+            List.of(OnboardingRejectionReason.builder()
+                    .type(OnboardingRejectionReasonType.BUDGET_EXHAUSTED)
+                    .code(OnboardingRejectionReasonCode.INITIATIVE_BUDGET_EXHAUSTED)
+                    .build()));
+
+    String expectedMarkdown = """
+            Purtroppo non è stato possibile attivare %s in quanto è terminato il budget disponibile.
+                        
+            Ci scusiamo per il disagio."""
+            .formatted(evaluationDto.getInitiativeName());
+
+    String actual = notificationMarkdown.getMarkdown(evaluationDto);
+    Assertions.assertEquals(expectedMarkdown, actual);
+  }
+  @Test
+  void getSubject_notRetrieveDataPDND(){
+    EvaluationDTO evaluationDto = getEvaluationDto(NotificationConstants.STATUS_ONBOARDING_KO,
+            List.of(OnboardingRejectionReason.builder()
+                    .type(OnboardingRejectionReasonType.ISEE_TYPE_KO)
+                    .code(OnboardingRejectionReasonCode.ISEE_TYPE_FAIL)
+                    .authority("INPS")
+                    .authorityLabel("Istituto Nazionale Previdenza Sociale")
+                    .detail("ISEE non disponibile").build()));
+
+    String expectedSubject = "Non è stato possibile attivare %s".formatted(evaluationDto.getInitiativeName());
+
+    String actual = notificationMarkdown.getSubject(evaluationDto);
+    Assertions.assertEquals(expectedSubject, actual);
+  }
+
+  @Test
+  void getMarkdown_notRetrieveDataPDND(){
+    OnboardingRejectionReason IseeTypeRejection = OnboardingRejectionReason.builder()
+            .type(OnboardingRejectionReasonType.ISEE_TYPE_KO)
+            .code(OnboardingRejectionReasonCode.ISEE_TYPE_FAIL)
+            .authority("INPS")
+            .authorityLabel("Istituto Nazionale Previdenza Sociale")
+            .detail("ISEE non disponibile").build();
+    EvaluationDTO evaluationDto = getEvaluationDto(NotificationConstants.STATUS_ONBOARDING_KO,
+            List.of(IseeTypeRejection));
+
+    String expectedMarkdown = """
+            Purtroppo non hai i requisiti necessari per aderire a %s per i seguenti motivi:
+                        
+            * %s : %s
+                        
+            Se ritieni che ci sia stato un errore puoi segnalarlo direttamente all'Ente erogatore dell'iniziativa.
+                        
+            Ci scusiamo per il disagio."""
+            .formatted(evaluationDto.getInitiativeName(),
+                    IseeTypeRejection.getAuthorityLabel(), IseeTypeRejection.getDetail());
+
+    String actual = notificationMarkdown.getMarkdown(evaluationDto);
+    Assertions.assertEquals(expectedMarkdown, actual);
   }
 
   private EvaluationDTO getEvaluationDto(String status, List<OnboardingRejectionReason> rejectionReasons){
@@ -241,135 +380,4 @@ class NotificationMarkdownTest {
             1L);
   }
 
-  @Test
-  void markdownTest(){ //TODO remove
-    List<OnboardingRejectionReason> list =
-            List.of(
-//                    new OnboardingRejectionReason(
-//                            OnboardingRejectionReasonType.BUDGET_EXHAUSTED,
-//                            OnboardingRejectionReasonCode.INITIATIVE_BUDGET_EXHAUSTED,
-//                            null,
-//                            null,
-//                            null),
-//                    new OnboardingRejectionReason(
-//                            OnboardingRejectionReasonType.OUT_OF_RANKING,
-//                            OnboardingRejectionReasonCode.CITIZEN_OUT_OF_RANKING,
-//                            null,
-//                            null,
-//                            "9"),
-//                    new OnboardingRejectionReason(
-//                            OnboardingRejectionReasonType.AUTOMATED_CRITERIA_FAIL,
-//                            OnboardingRejectionReasonCode.AUTOMATED_CRITERIA_BIRTHDATE_FAIL,
-//                            "AGID",
-//                            "Agenzia per l'Italia Digitale",
-//                            null),
-//                    new OnboardingRejectionReason(
-//                            OnboardingRejectionReasonType.AUTOMATED_CRITERIA_FAIL,
-//                            OnboardingRejectionReasonCode.AUTOMATED_CRITERIA_ISEE_FAIL,
-//                            "INPS",
-//                            "Istituto Nazionale Previdenza Sociale",
-//                            null),
-//                    new OnboardingRejectionReason(
-//                            OnboardingRejectionReasonType.ISEE_TYPE_KO,
-//                            OnboardingRejectionReasonCode.ISEE_TYPE_FAIL,
-//                            "INPS",
-//                            "Istituto Nazionale Previdenza Sociale",
-//                            "ISEE non disponibile"),
-//                    new OnboardingRejectionReason(
-//                            OnboardingRejectionReasonType.RESIDENCE_KO,
-//                            OnboardingRejectionReasonCode.RESIDENCE_FAIL,
-//                            "AGID",
-//                            "Agenzia per l'Italia Digitale",
-//                            "Residenza non disponibile"),
-//                    new OnboardingRejectionReason(
-//                            OnboardingRejectionReasonType.BIRTHDATE_KO,
-//                            OnboardingRejectionReasonCode.RESIDENCE_FAIL,
-//                            "AGID",
-//                            "Agenzia per l'Italia Digitale",
-//                            "Data di nascita non disponibile"),
-//                    new OnboardingRejectionReason(
-//                            OnboardingRejectionReasonType.FAMILY_KO,
-//                            OnboardingRejectionReasonCode.FAMILY_FAIL,
-//                            "INPS",
-//                            "Istituto Nazionale Previdenza Sociale",
-//                            "Nucleo familiare non disponibile"),
-//                    new OnboardingRejectionReason(
-//                            OnboardingRejectionReasonType.CONSENSUS_MISSED,
-//                            OnboardingRejectionReasonCode.CONSENSUS_CHECK_TC_FAIL,
-//                            null,
-//                            null,
-//                            null),
-//                    new OnboardingRejectionReason(
-//                            OnboardingRejectionReasonType.CONSENSUS_MISSED,
-//                            OnboardingRejectionReasonCode.CONSENSUS_CHECK_PDND_FAIL,
-//                            null,
-//                            null,
-//                            null),
-//                    new OnboardingRejectionReason(
-//                            OnboardingRejectionReasonType.INVALID_REQUEST,
-//                            OnboardingRejectionReasonCode.INVALID_INITIATIVE_ID,
-//                            null,
-//                            null,
-//                            null),
-//                    new OnboardingRejectionReason(
-//                            OnboardingRejectionReasonType.INVALID_REQUEST,
-//                            OnboardingRejectionReasonCode.CONSENSUS_CHECK_TC_ACCEPT_FAIL,
-//                            null,
-//                            null,
-//                            null),
-//                    new OnboardingRejectionReason(
-//                            OnboardingRejectionReasonType.INVALID_REQUEST,
-//                            OnboardingRejectionReasonCode.CONSENSUS_CHECK_CRITERIA_CONSENSUS_FAIL,
-//                            null,
-//                            null,
-//                            null),
-//                    new OnboardingRejectionReason(
-//                            OnboardingRejectionReasonType.AUTOMATED_CRITERIA_FAIL,
-//                            OnboardingRejectionReasonCode.AUTOMATED_CRITERIA_ISEE_FAIL,
-//                            "INPS",
-//                            "Istituto Nazionale Previdenza Sociale",
-//                            null),
-//                    new OnboardingRejectionReason(
-//                            OnboardingRejectionReasonType.AUTOMATED_CRITERIA_FAIL,
-//                            OnboardingRejectionReasonCode.AUTOMATED_CRITERIA_RESIDENCE_FAIL,
-//                            "INPS",
-//                            "Istituto Nazionale Previdenza Sociale",
-//                            null),
-//                    new OnboardingRejectionReason(
-//                            OnboardingRejectionReasonType.AUTOMATED_CRITERIA_FAIL,
-//                            OnboardingRejectionReasonCode.AUTOMATED_CRITERIA_BIRTHDATE_FAIL,
-//                            "INPS",
-//                            "Istituto Nazionale Previdenza Sociale",
-//                            null),
-                    new OnboardingRejectionReason(
-                            OnboardingRejectionReasonType.TECHNICAL_ERROR,
-                            null,
-                            null,
-                            null,
-                            null)
-
-
-            );
-
-
-    EvaluationDTO evaluationDTO =
-            new EvaluationDTO(
-                    "TEST_TOKEN-USERID",
-                    "INITIATIVEID",
-                    "INITIATIVE_NAME",
-                    TEST_DATE_ONLY_DATE, //initiative endDate
-                    "ORGANIZATIONID",
-                    NotificationConstants.STATUS_ONBOARDING_DEMANDED,
-                    TEST_DATE, //ADMISSIBILITY TEST CHEKH
-                    TEST_DATE, //CONSENSUS TIMESTAMP
-                    list, //ONBOARDING REJECTIONS
-                    new BigDecimal(500),  //BENEFICIARY BUDGET
-                    1L); // REANKING VALUE
-
-    System.out.println("SUBJECT");
-    System.out.println(notificationMarkdown.getSubject(evaluationDTO));
-    System.out.println("\nMARCKDOWN");
-    System.out.println(notificationMarkdown.getMarkdown(evaluationDTO));
-
-  }
 }
