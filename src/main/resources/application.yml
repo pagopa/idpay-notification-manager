@@ -233,7 +233,7 @@ notification:
       demanded: |-
         ${MARKDOWN_DEMANDED:Buone notizie! Grazie ad un tuo familiare puoi ottenere %initiativeName%.
         
-        Aderisce e configura almeno un metodo di pagamento per usufruire del bonus.
+        Aderisci all’iniziativa per usufruire del bonus.
         
         Puoi trovare maggiori informazioni sul [sito](http://example.com/).}
       suspension: ${MARKDOWN_SUSPENSION:In seguito ad alcune verifiche, il tuo profilo è stato sospeso dall'iniziativa.

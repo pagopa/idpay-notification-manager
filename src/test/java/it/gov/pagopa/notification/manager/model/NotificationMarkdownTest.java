@@ -259,7 +259,7 @@ class NotificationMarkdownTest {
   void getMarkdown_demanded(){
     EvaluationDTO evaluationDto = getEvaluationDto(NotificationConstants.STATUS_ONBOARDING_DEMANDED, null);
     String expectedMarkdown = "Buone notizie! Grazie ad un tuo familiare puoi ottenere %s.\n\n".formatted(evaluationDto.getInitiativeName())+
-            "Aderisce e configura almeno un metodo di pagamento per usufruire del bonus.\n\n"+
+            "Aderisci all’iniziativa per usufruire del bonus.\n\n"+
             "Puoi trovare maggiori informazioni sul [sito](http://example.com/).";
 
     String markdownDemanded = notificationMarkdown.getMarkdown(evaluationDto);
