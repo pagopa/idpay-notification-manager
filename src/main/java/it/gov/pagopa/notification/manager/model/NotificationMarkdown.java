@@ -4,20 +4,39 @@ import it.gov.pagopa.notification.manager.constants.NotificationConstants;
 import it.gov.pagopa.notification.manager.dto.EvaluationDTO;
 import it.gov.pagopa.notification.manager.dto.OnboardingRejectionReason;
 import it.gov.pagopa.notification.manager.dto.OnboardingRejectionReason.OnboardingRejectionReasonType;
-import java.math.BigDecimal;
-import java.text.DecimalFormat;
-import java.text.DecimalFormatSymbols;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
+import java.math.BigDecimal;
+import java.text.DecimalFormat;
+import java.text.DecimalFormatSymbols;
+import java.util.ArrayList;
 import java.util.List;
 
 @Component
 @Slf4j
 public class NotificationMarkdown {
+  private static final List<OnboardingRejectionReasonType> ONBOARDING_KO_TYPE_GENERIC_MARKDOWN_NO_RETRY =
+          List.of(OnboardingRejectionReasonType.AUTOMATED_CRITERIA_FAIL,
+                  OnboardingRejectionReasonType.CONSENSUS_MISSED,
+                  OnboardingRejectionReasonType.INVALID_REQUEST,
+                  OnboardingRejectionReasonType.BUDGET_EXHAUSTED);
+  private static final List<OnboardingRejectionReasonType> FAILED_RETRIEVE_PDND_DATA_TYPE =
+          List.of(OnboardingRejectionReasonType.ISEE_TYPE_KO,
+                  OnboardingRejectionReasonType.BIRTHDATE_KO,
+                  OnboardingRejectionReasonType.RESIDENCE_KO,
+                  OnboardingRejectionReasonType.FAMILY_KO);
+
+  private static final List<OnboardingRejectionReasonType> ONBOARDING_KO_TYPE_NO_RETRY = new ArrayList<>();
+  static {
+    ONBOARDING_KO_TYPE_NO_RETRY.addAll(ONBOARDING_KO_TYPE_GENERIC_MARKDOWN_NO_RETRY);
+    ONBOARDING_KO_TYPE_NO_RETRY.addAll(FAILED_RETRIEVE_PDND_DATA_TYPE);
+    ONBOARDING_KO_TYPE_NO_RETRY.add(OnboardingRejectionReasonType.OUT_OF_RANKING);
+  }
+
 
   @Value("${notification.manager.markdown.double.new.line}")
   private String markdownDoubleNewLine;
@@ -85,6 +104,18 @@ public class NotificationMarkdown {
   private String subjectReadmission;
   @Value("${notification.manager.markdown.readmission}")
   private String markdownReadmission;
+  @Value("${notification.manager.subject.demanded}")
+  private String subjectDemanded;
+  @Value("${notification.manager.markdown.demanded}")
+  private String markdownDemanded;
+  @Value("${notification.manager.markdown.ko.budget}")
+  private String markdownKoBudget;
+  @Value("${notification.manager.markdown.ko.rejected.noRetry}")
+  private String markdownKoRejectedNoRetry;
+
+  @Value("${notification.manager.markdown.ko.generic}")
+  private String markdownKoGeneric;
+
 
   public String getSubjectCheckIbanKo() {
     return this.subjectCheckIbanKo;
@@ -110,10 +141,16 @@ public class NotificationMarkdown {
   }
 
   public String getSubject(EvaluationDTO evaluationDTO) {
-    return evaluationDTO.getStatus().equals(NotificationConstants.STATUS_ONBOARDING_OK)||
-            evaluationDTO.getStatus().equals(NotificationConstants.STATUS_ONBOARDING_JOINED)
-        ? this.subjectOk
-        : getSubjectKo(
+    if(NotificationConstants.STATUS_ONBOARDING_OK.equals(evaluationDTO.getStatus())
+            || NotificationConstants.STATUS_ONBOARDING_JOINED.equals(evaluationDTO.getStatus())){
+      return this.subjectOk;
+    }
+
+    if(NotificationConstants.STATUS_ONBOARDING_DEMANDED.equals(evaluationDTO.getStatus())){
+      return replaceMessageItem(subjectDemanded, NotificationConstants.INITIATIVE_NAME_KEY, evaluationDTO.getInitiativeName());
+    }
+
+    return getSubjectKo(
             evaluationDTO.getInitiativeName(), evaluationDTO.getOnboardingRejectionReasons());
   }
 
@@ -126,28 +163,38 @@ public class NotificationMarkdown {
   }
 
   private String getSubjectKo(
-      String initiativeName, List<OnboardingRejectionReason> onboardingRejectionReasons) {
-    String reason = onboardingRejectionReasons.get(0).getType().name();
-    return reason.startsWith(OnboardingRejectionReasonType.AUTOMATED_CRITERIA_FAIL.name())
-            || reason.equals(OnboardingRejectionReasonType.OUT_OF_RANKING.name())
+          String initiativeName, List<OnboardingRejectionReason> onboardingRejectionReasons) {
+
+    OnboardingRejectionReasonType reason = onboardingRejectionReasons.get(0).getType();
+
+    return ONBOARDING_KO_TYPE_NO_RETRY.contains(reason)
         ? replaceMessageItem(
             this.subjectKo, NotificationConstants.INITIATIVE_NAME_KEY, initiativeName)
         : this.subjectKoTech;
   }
 
   public String getMarkdown(EvaluationDTO evaluationDTO) {
-    return evaluationDTO.getStatus().equals(NotificationConstants.STATUS_ONBOARDING_OK) ||
-            evaluationDTO.getStatus().equals(NotificationConstants.STATUS_ONBOARDING_JOINED)
-        ? replaceMessageItem(
-        this.markdownOkCta,
-        NotificationConstants.INITIATIVE_ID_KEY,
-        evaluationDTO.getInitiativeId())
-            .concat(this.markdownDoubleNewLine)
-            .concat(replaceMessageItem(
-                this.markdownOk,
-                NotificationConstants.INITIATIVE_NAME_KEY,
-                evaluationDTO.getInitiativeName()))
-        : getMarkdownKo(
+
+    if (NotificationConstants.STATUS_ONBOARDING_OK.equals(evaluationDTO.getStatus())
+            || NotificationConstants.STATUS_ONBOARDING_JOINED.equals(evaluationDTO.getStatus())){
+      return replaceMessageItem(
+              this.markdownOkCta,
+              NotificationConstants.INITIATIVE_ID_KEY,
+              evaluationDTO.getInitiativeId())
+              .concat(this.markdownDoubleNewLine)
+              .concat(replaceMessageItem(
+                      this.markdownOk,
+                      NotificationConstants.INITIATIVE_NAME_KEY,
+                      evaluationDTO.getInitiativeName()));
+    }
+
+    if(NotificationConstants.STATUS_ONBOARDING_DEMANDED.equals(evaluationDTO.getStatus())){
+      return replaceMessageItem(markdownDemanded,
+              NotificationConstants.INITIATIVE_NAME_KEY,
+              evaluationDTO.getInitiativeName());
+    }
+
+    return getMarkdownKo(
             evaluationDTO.getInitiativeName(), evaluationDTO.getOnboardingRejectionReasons());
   }
 
@@ -174,13 +221,24 @@ public class NotificationMarkdown {
   }
 
   private String getMarkdownKo(
-      String initiativeName, List<OnboardingRejectionReason> onboardingRejectionReasons) {
-    String reason = onboardingRejectionReasons.get(0).getType().name();
-    if (reason.startsWith(OnboardingRejectionReasonType.AUTOMATED_CRITERIA_FAIL.name())) {
+          String initiativeName, List<OnboardingRejectionReason> onboardingRejectionReasons) {
+
+    OnboardingRejectionReasonType reason = onboardingRejectionReasons.get(0).getType();
+
+    if (FAILED_RETRIEVE_PDND_DATA_TYPE.contains(reason)){
       return getMarkdownKoPdnd(initiativeName, onboardingRejectionReasons);
     }
-    if (reason.equals(OnboardingRejectionReasonType.OUT_OF_RANKING.name())) {
+
+    if (reason.equals(OnboardingRejectionReasonType.OUT_OF_RANKING)) {
       return getMarkdownKoRanking(initiativeName);
+    }
+
+    if(reason.equals(OnboardingRejectionReasonType.BUDGET_EXHAUSTED)){
+      return getMarkdownKoBudget(initiativeName);
+    }
+
+    if(ONBOARDING_KO_TYPE_GENERIC_MARKDOWN_NO_RETRY.contains(reason)){
+      return getMarkdownKoNoRetry(initiativeName, onboardingRejectionReasons);
     }
     return getMarkdownKoTech(initiativeName);
   }
@@ -201,7 +259,7 @@ public class NotificationMarkdown {
     onboardingRejectionReasons.stream()
         .filter(
             reason ->
-                reason.getType().equals(OnboardingRejectionReasonType.AUTOMATED_CRITERIA_FAIL))
+                    FAILED_RETRIEVE_PDND_DATA_TYPE.contains(reason.getType()))
         .toList()
         .forEach(
             reason ->
@@ -209,7 +267,7 @@ public class NotificationMarkdown {
                     .append("* ")
                     .append(reason.getAuthorityLabel())
                     .append(" : ")
-                    .append(reason.getCode().getDetail())
+                    .append(reason.getDetail() != null ? reason.getDetail() : reason.getCode().getDetail())
                     .append(this.markdownDoubleNewLine));
     return builder.toString();
   }
@@ -223,8 +281,48 @@ public class NotificationMarkdown {
         .concat(this.markdownKoApology);
   }
 
+  private String getMarkdownKoBudget(String initiativeName) {
+    return replaceMessageItem(
+            this.markdownKoBudget, NotificationConstants.INITIATIVE_NAME_KEY, initiativeName)
+            .concat(this.markdownDoubleNewLine)
+            .concat(this.markdownKoApology);
+  }
+
+  private String getMarkdownKoNoRetry(String initiativeName, List<OnboardingRejectionReason> onboardingRejectionReasons) {
+    return replaceMessageItem(
+            this.markdownKoRejectedNoRetry, NotificationConstants.INITIATIVE_NAME_KEY, initiativeName)
+            .concat(this.markdownDoubleNewLine)
+            .concat(getRejectedReasons(onboardingRejectionReasons))
+            .concat(this.markdownKoMistake)
+            .concat(this.markdownDoubleNewLine)
+            .concat(this.markdownKoApology);
+  }
+
+  private String getRejectedReasons(List<OnboardingRejectionReason> onboardingRejectionReasons) {
+    final StringBuilder builder = new StringBuilder();
+    onboardingRejectionReasons.stream()
+            .filter(
+                    reason ->
+                            ONBOARDING_KO_TYPE_GENERIC_MARKDOWN_NO_RETRY.contains(reason.getType()))
+            .toList()
+            .forEach(
+                    reason ->
+                            builder
+                                    .append("* ")
+                                    .append(reason.getDetail() != null
+                                            ? reason.getDetail()
+                                            : reason.getCode().getDetail())
+                                    .append(this.markdownDoubleNewLine)
+
+                    );
+    return builder.toString();
+  }
+
   private String getMarkdownKoTech(String initiativeName) {
-    return replaceMessageItem(this.markdownKoTech, NotificationConstants.INITIATIVE_NAME_KEY, initiativeName)
+    return replaceMessageItem(
+            this.markdownKoGeneric,
+            NotificationConstants.INITIATIVE_NAME_KEY,
+            initiativeName)
         .concat(this.markdownDoubleNewLine)
         .concat(this.markdownKoApology);
   }
