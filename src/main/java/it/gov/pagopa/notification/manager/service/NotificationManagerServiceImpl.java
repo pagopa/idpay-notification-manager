@@ -19,7 +19,6 @@ import it.gov.pagopa.notification.manager.utils.AuditUtilities;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.scheduling.concurrent.CustomizableThreadFactory;
@@ -42,26 +41,16 @@ public class NotificationManagerServiceImpl implements NotificationManagerServic
     public static final String GENERIC_ERROR_LOG = "[NOTIFY][RECOVER] Something went wrong while recovering notifications";
     private final int pageSize;
     private final long delay;
-    @Autowired
-    private OutcomeProducer outcomeProducer;
-    @Autowired
-    private InitiativeRestConnector initiativeRestConnector;
-    @Autowired
-    private IOBackEndRestConnector ioBackEndRestConnector;
-    @Autowired
-    private NotificationManagerRepository notificationManagerRepository;
-    @Autowired
-    private NotificationManagerRepositoryExtended notificationManagerRepositoryExtended;
-    @Autowired
-    private NotificationDTOMapper notificationDTOMapper;
-    @Autowired
-    private PdvDecryptRestConnector pdvDecryptRestConnector;
-    @Autowired
-    private NotificationMapper notificationMapper;
-    @Autowired
-    private NotificationMarkdown notificationMarkdown;
-    @Autowired
-    AuditUtilities auditUtilities;
+    private final OutcomeProducer outcomeProducer;
+    private final InitiativeRestConnector initiativeRestConnector;
+    private final IOBackEndRestConnector ioBackEndRestConnector;
+    private final NotificationManagerRepository notificationManagerRepository;
+    private final NotificationManagerRepositoryExtended notificationManagerRepositoryExtended;
+    private final NotificationDTOMapper notificationDTOMapper;
+    private final PdvDecryptRestConnector pdvDecryptRestConnector;
+    private final NotificationMapper notificationMapper;
+    private final NotificationMarkdown notificationMarkdown;
+    private final AuditUtilities auditUtilities;
     @Value("${rest-client.notification.backend-io.ttl}")
     private Long timeToLive;
     @Value("${notification.manager.recover.parallelism}")
@@ -70,9 +59,19 @@ public class NotificationManagerServiceImpl implements NotificationManagerServic
     private ExecutorService executorService;
 
     public NotificationManagerServiceImpl(@Value("${app.delete.paginationSize:100}") int pageSize,
-                                          @Value("${app.delete.delayTime:1000}") long delay) {
+                                          @Value("${app.delete.delayTime:1000}") long delay, OutcomeProducer outcomeProducer, InitiativeRestConnector initiativeRestConnector, IOBackEndRestConnector ioBackEndRestConnector, NotificationManagerRepository notificationManagerRepository, NotificationManagerRepositoryExtended notificationManagerRepositoryExtended, NotificationDTOMapper notificationDTOMapper, PdvDecryptRestConnector pdvDecryptRestConnector, NotificationMapper notificationMapper, NotificationMarkdown notificationMarkdown, AuditUtilities auditUtilities) {
         this.pageSize = pageSize;
         this.delay = delay;
+        this.outcomeProducer = outcomeProducer;
+        this.initiativeRestConnector = initiativeRestConnector;
+        this.ioBackEndRestConnector = ioBackEndRestConnector;
+        this.notificationManagerRepository = notificationManagerRepository;
+        this.notificationManagerRepositoryExtended = notificationManagerRepositoryExtended;
+        this.notificationDTOMapper = notificationDTOMapper;
+        this.pdvDecryptRestConnector = pdvDecryptRestConnector;
+        this.notificationMapper = notificationMapper;
+        this.notificationMarkdown = notificationMarkdown;
+        this.auditUtilities = auditUtilities;
     }
 
     @PostConstruct
