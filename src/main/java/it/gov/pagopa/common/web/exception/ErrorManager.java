@@ -7,16 +7,20 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.lang.Nullable;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+
+import java.util.Optional;
 
 @RestControllerAdvice
 @Slf4j
 public class ErrorManager {
-  private static final ErrorDTO defaultErrorDTO;
+  private final ErrorDTO defaultErrorDTO;
 
-  static {
-    defaultErrorDTO = new ErrorDTO(NotificationConstants.ExceptionCode.GENERIC_ERROR, "Something gone wrong");
+  public ErrorManager(@Nullable ErrorDTO defaultErrorDTO) {
+    this.defaultErrorDTO = Optional.ofNullable(defaultErrorDTO)
+            .orElse(new ErrorDTO("Error", "Something gone wrong"));
   }
 
   @ExceptionHandler(RuntimeException.class)
@@ -25,11 +29,11 @@ public class ErrorManager {
       log.error("Something went wrong handling request {}", getRequestDetails(request), error);
     } else {
       log.info("A {} occurred handling request {}: HttpStatus {} - {} at {}",
-          clientException.getClass().getSimpleName(),
-          getRequestDetails(request),
-          clientException.getHttpStatus(),
-          clientException.getMessage(),
-          clientException.getStackTrace().length > 0 ? clientException.getStackTrace()[0] : "UNKNOWN");
+              clientException.getClass().getSimpleName(),
+              getRequestDetails(request),
+              clientException.getHttpStatus(),
+              clientException.getMessage(),
+              clientException.getStackTrace().length > 0 ? clientException.getStackTrace()[0] : "UNKNOWN");
     }
 
     if(error instanceof ClientExceptionNoBody clientExceptionNoBody){
@@ -47,8 +51,8 @@ public class ErrorManager {
         errorDTO = defaultErrorDTO;
       }
       return ResponseEntity.status(httpStatus)
-          .contentType(MediaType.APPLICATION_JSON)
-          .body(errorDTO);
+              .contentType(MediaType.APPLICATION_JSON)
+              .body(errorDTO);
     }
   }
 
