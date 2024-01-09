@@ -1,9 +1,11 @@
 package it.gov.pagopa.notification.manager.dto.mapper;
 
+import static it.gov.pagopa.notification.manager.constants.NotificationConstants.AnyNotificationConsumer.SubTypes.REFUND;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import it.gov.pagopa.notification.manager.dto.EvaluationDTO;
 import it.gov.pagopa.notification.manager.dto.event.NotificationQueueDTO;
+import it.gov.pagopa.notification.manager.dto.event.NotificationRefundQueueDTO;
 import it.gov.pagopa.notification.manager.model.Notification;
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -75,6 +77,28 @@ class NotificationMapperTest {
     NOTIFICATION_QUEUE.setNotificationDate(actual.getNotificationDate());
 
     assertEquals(NOTIFICATION_QUEUE, actual);
+  }
+
+  @Test
+  void notificationRefund_toEntity(){
+    NotificationRefundQueueDTO notificationRefundQueueDTO = new NotificationRefundQueueDTO();
+    notificationRefundQueueDTO.setInitiativeId(INITIATIVE_ID);
+    notificationRefundQueueDTO.setUserId(USER_ID);
+    notificationRefundQueueDTO.setOperationType("REFUND");
+    notificationRefundQueueDTO.setRefundReward(10L);
+    notificationRefundQueueDTO.setRefundDate(LocalDate.now());
+    notificationRefundQueueDTO.setStatus("ACCEPTED");
+
+    Notification actual = notificationMapper.toEntity(notificationRefundQueueDTO);
+    Notification expected = Notification.builder()
+            .initiativeId(INITIATIVE_ID)
+            .userId(USER_ID)
+            .operationType(REFUND)
+            .notificationDate(actual.getNotificationDate())
+            .refundReward(BigDecimal.TEN)
+            .refundStatus("ACCEPTED").build();
+
+    assertEquals(expected, actual);
   }
 
 }

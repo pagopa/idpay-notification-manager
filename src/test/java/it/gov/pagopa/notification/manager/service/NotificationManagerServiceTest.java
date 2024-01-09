@@ -41,6 +41,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.stream.Stream;
 
+import static it.gov.pagopa.notification.manager.constants.NotificationConstants.AnyNotificationConsumer.SubTypes.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
@@ -137,6 +138,56 @@ class NotificationManagerServiceTest {
             .rejectReasons(EVALUATION_DTO.getOnboardingRejectionReasons())
             .notificationStatus(NotificationConstants.NOTIFICATION_STATUS_RECOVER)
             .retryDate(LocalDateTime.now())
+            .operationType(ONBOARDING)
+            .build();
+
+    private static final Notification KO_REFUND_NOTIFICATION_FIRST_RETRY = Notification.builder()
+            .notificationDate(TEST_DATE)
+            .initiativeId(INITIATIVE_ID)
+            .userId(TEST_TOKEN)
+            .notificationStatus(NotificationConstants.NOTIFICATION_STATUS_RECOVER)
+            .retryDate(LocalDateTime.now())
+            .operationType(REFUND)
+            .refundStatus("ACCEPTED")
+            .refundReward(BigDecimal.valueOf(100))
+            .build();
+
+    private static final Notification KO_CHECK_IBAN_NOTIFICATION_FIRST_RETRY = Notification.builder()
+            .notificationDate(TEST_DATE)
+            .initiativeId(INITIATIVE_ID)
+            .userId(TEST_TOKEN)
+            .notificationStatus(NotificationConstants.NOTIFICATION_STATUS_RECOVER)
+            .retryDate(LocalDateTime.now())
+            .operationType(CHECKIBAN_KO)
+            .build();
+
+    private static final Notification KO_SUSPENSION_NOTIFICATION_FIRST_RETRY = Notification.builder()
+            .notificationDate(TEST_DATE)
+            .initiativeId(INITIATIVE_ID)
+            .initiativeName(INITIATIVE_NAME)
+            .userId(TEST_TOKEN)
+            .notificationStatus(NotificationConstants.NOTIFICATION_STATUS_RECOVER)
+            .retryDate(LocalDateTime.now())
+            .operationType(SUSPENSION)
+            .build();
+
+    private static final Notification KO_READMISSION_NOTIFICATION_FIRST_RETRY = Notification.builder()
+            .notificationDate(TEST_DATE)
+            .initiativeId(INITIATIVE_ID)
+            .initiativeName(INITIATIVE_NAME)
+            .userId(TEST_TOKEN)
+            .notificationStatus(NotificationConstants.NOTIFICATION_STATUS_RECOVER)
+            .retryDate(LocalDateTime.now())
+            .operationType(READMISSION)
+            .build();
+
+    private static final Notification KO_NOTIFICATION_WHITELIST = Notification.builder()
+            .notificationDate(TEST_DATE)
+            .initiativeId(INITIATIVE_ID)
+            .userId(TEST_TOKEN)
+            .notificationStatus(NotificationConstants.NOTIFICATION_STATUS_RECOVER)
+            .retryDate(LocalDateTime.now())
+            .operationType(ALLOWED_CITIZEN_PUBLISH)
             .build();
 
     private static final Notification KO_NOTIFICATION_N_RETRY = Notification.builder()
@@ -148,6 +199,7 @@ class NotificationManagerServiceTest {
             .notificationStatus(NotificationConstants.NOTIFICATION_STATUS_RECOVER)
             .retry(2)
             .retryDate(LocalDateTime.now())
+            .operationType(ONBOARDING)
             .build();
     private static final NotificationSuspensionQueueDTO NOTIFICATION_SUSPENSION_QUEUE_DTO = NotificationSuspensionQueueDTO.builder()
             .initiativeName(INITIATIVE_NAME)
@@ -802,8 +854,10 @@ class NotificationManagerServiceTest {
     //region recovery
     @Test
     void recoverKoNotifications() {
-
-        Mockito.when(notificationManagerRepository.findKoToRecover(Mockito.any(LocalDateTime.class))).thenReturn(KO_NOTIFICATION_FIRST_RETRY, KO_NOTIFICATION_N_RETRY, null);
+        Mockito.when(notificationManagerRepository.findKoToRecover(Mockito.any(LocalDateTime.class)))
+                .thenReturn(KO_NOTIFICATION_FIRST_RETRY, KO_REFUND_NOTIFICATION_FIRST_RETRY,
+                        KO_CHECK_IBAN_NOTIFICATION_FIRST_RETRY, KO_SUSPENSION_NOTIFICATION_FIRST_RETRY,
+                        KO_READMISSION_NOTIFICATION_FIRST_RETRY, KO_NOTIFICATION_N_RETRY, null);
 
         Mockito.when(initiativeRestConnector.getIOTokens(EVALUATION_DTO.getInitiativeId()))
                 .thenReturn(INITIATIVE_ADDITIONAL_INFO_DTO);
@@ -813,8 +867,16 @@ class NotificationManagerServiceTest {
         Mockito.when(ioBackEndRestConnector.getProfile(FISCAL_CODE_DTO, TOKEN)).thenReturn(PROFILE_RESOURCE);
 
         Mockito.when(notificationMarkdown.getSubject(Mockito.any(Notification.class))).thenReturn(SUBJECT);
+        Mockito.when(notificationMarkdown.getSubjectCheckIbanKo()).thenReturn(SUBJECT);
+        Mockito.when(notificationMarkdown.getSubjectRefund(Mockito.anyString())).thenReturn(SUBJECT);
+        Mockito.when(notificationMarkdown.getSubjectSuspension(Mockito.anyString())).thenReturn(SUBJECT);
+        Mockito.when(notificationMarkdown.getSubjectReadmission(Mockito.anyString())).thenReturn(SUBJECT);
 
         Mockito.when(notificationMarkdown.getMarkdown(Mockito.any(Notification.class))).thenReturn(MARKDOWN);
+        Mockito.when(notificationMarkdown.getMarkdownCheckIbanKo()).thenReturn(MARKDOWN);
+        Mockito.when(notificationMarkdown.getMarkdownRefund(Mockito.anyString(), Mockito.any())).thenReturn(MARKDOWN);
+        Mockito.when(notificationMarkdown.getMarkdownSuspension()).thenReturn(MARKDOWN);
+        Mockito.when(notificationMarkdown.getMarkdownReadmission()).thenReturn(MARKDOWN);
 
         Mockito.when(
                         notificationDTOMapper.map(
@@ -834,8 +896,30 @@ class NotificationManagerServiceTest {
             Assertions.fail();
         }
 
-        Mockito.verify(notificationManagerRepository, Mockito.times(2))
+        Mockito.verify(notificationManagerRepository, Mockito.times(6))
                 .save(Mockito.any(Notification.class));
+    }
+
+    @Test
+    void recoverKoNotification_ko_for_whitelist() {
+        Mockito.when(notificationManagerRepository.findKoToRecover(Mockito.any(LocalDateTime.class)))
+                .thenReturn(KO_NOTIFICATION_WHITELIST, KO_NOTIFICATION_WHITELIST, null);
+        Mockito.when(initiativeRestConnector.getIOTokens(EVALUATION_DTO.getInitiativeId()))
+                .thenReturn(INITIATIVE_ADDITIONAL_INFO_DTO);
+
+        Mockito.when(pdvDecryptRestConnector.getPii(TEST_TOKEN)).thenReturn(FISCAL_CODE_RESOURCE);
+
+        Mockito.when(ioBackEndRestConnector.getProfile(FISCAL_CODE_DTO, TOKEN)).thenReturn(PROFILE_RESOURCE);
+
+        try {
+            notificationManagerService.schedule();
+        } catch (FeignException e) {
+            Assertions.fail();
+        }
+
+        Mockito.verify(notificationManagerRepository, Mockito.times(0))
+                .save(Mockito.any(Notification.class));
+
     }
 
     @Test
@@ -939,6 +1023,18 @@ class NotificationManagerServiceTest {
 
     private void checkKoNotifications() {
         Assertions.assertEquals(1, KO_NOTIFICATION_FIRST_RETRY.getRetry());
+        Assertions.assertTrue(KO_NOTIFICATION_FIRST_RETRY.getNotificationDate().isAfter(TEST_DATE));
+
+        Assertions.assertEquals(1, KO_CHECK_IBAN_NOTIFICATION_FIRST_RETRY.getRetry());
+        Assertions.assertTrue(KO_NOTIFICATION_FIRST_RETRY.getNotificationDate().isAfter(TEST_DATE));
+
+        Assertions.assertEquals(1, KO_REFUND_NOTIFICATION_FIRST_RETRY.getRetry());
+        Assertions.assertTrue(KO_NOTIFICATION_FIRST_RETRY.getNotificationDate().isAfter(TEST_DATE));
+
+        Assertions.assertEquals(1, KO_SUSPENSION_NOTIFICATION_FIRST_RETRY.getRetry());
+        Assertions.assertTrue(KO_NOTIFICATION_FIRST_RETRY.getNotificationDate().isAfter(TEST_DATE));
+
+        Assertions.assertEquals(1, KO_READMISSION_NOTIFICATION_FIRST_RETRY.getRetry());
         Assertions.assertTrue(KO_NOTIFICATION_FIRST_RETRY.getNotificationDate().isAfter(TEST_DATE));
 
         Assertions.assertEquals(3, KO_NOTIFICATION_N_RETRY.getRetry());
