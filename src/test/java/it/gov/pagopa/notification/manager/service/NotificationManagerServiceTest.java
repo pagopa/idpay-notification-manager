@@ -277,8 +277,17 @@ class NotificationManagerServiceTest {
         Mockito.verify(outcomeProducer, Mockito.times(1)).sendOutcome(EVALUATION_DTO);
     }
 
-    @Test
-    void not_to_notify(){
+    private static Stream<Arguments> onboardingRejectionReasonNotToNotify() {
+        return Stream.of(
+                Arguments.of(new OnboardingRejectionReason(OnboardingRejectionReason.OnboardingRejectionReasonType.TECHNICAL_ERROR,
+                        OnboardingRejectionReason.OnboardingRejectionReasonCode.RULE_ENGINE_NOT_READY, null, null, null)),
+                Arguments.of(new OnboardingRejectionReason(OnboardingRejectionReason.OnboardingRejectionReasonType.FAMILY_CRITERIA_KO,
+                        OnboardingRejectionReason.OnboardingRejectionReasonCode.FAMILY_CRITERIA_FAIL, null, null, null))
+        );
+    }
+    @ParameterizedTest
+    @MethodSource("onboardingRejectionReasonNotToNotify")
+    void onboarding_ko_not_to_notify_citizen(OnboardingRejectionReason onboardingRejectionReason){
         EvaluationDTO evaluationDTO =
         new EvaluationDTO(
                 TEST_TOKEN,
@@ -289,10 +298,7 @@ class NotificationManagerServiceTest {
                 NotificationConstants.STATUS_ONBOARDING_OK,
                 TEST_DATE,
                 TEST_DATE,
-                List.of(new OnboardingRejectionReason(OnboardingRejectionReason.OnboardingRejectionReasonType.FAMILY_CRITERIA_KO,
-                        OnboardingRejectionReason.OnboardingRejectionReasonCode.FAMILY_CRITERIA_FAIL, null, null, null),
-                        new OnboardingRejectionReason(OnboardingRejectionReason.OnboardingRejectionReasonType.ISEE_TYPE_KO,
-                                OnboardingRejectionReason.OnboardingRejectionReasonCode.ISEE_TYPE_FAIL, null, null, null)),
+                List.of(onboardingRejectionReason),
                 new BigDecimal(500), 1L);
 
         try {
@@ -307,6 +313,7 @@ class NotificationManagerServiceTest {
         Mockito.verify(notificationManagerRepository, Mockito.times(0))
                 .save(NOTIFICATION);
     }
+
     @Test
     void notify_ok() {
         Mockito.when(notificationMapper.evaluationToNotification(EVALUATION_DTO))
