@@ -97,17 +97,10 @@ public class NotificationManagerServiceImpl implements NotificationManagerServic
     public void notify(EvaluationDTO evaluationDTO) {
         long startTime = System.currentTimeMillis();
 
-        if(evaluationDTO.getOnboardingRejectionReasons() != null){
-            if(evaluationDTO.getOnboardingRejectionReasons().stream()
-                    .anyMatch(r -> r.getType() == OnboardingRejectionReason.OnboardingRejectionReasonType.FAMILY_CRITERIA_KO)) {
-                log.info("[NOTIFY] Skipping sending message to citizen {} with FAMILY_CRITERIA_KO rejection reason", evaluationDTO.getUserId());
-                return;
-            }
-            if(evaluationDTO.getOnboardingRejectionReasons().stream()
-                    .anyMatch(r -> r.getCode() == OnboardingRejectionReason.OnboardingRejectionReasonCode.RULE_ENGINE_NOT_READY)){
-                log.info("[NOTIFY] Skipping sending message to citizen {} for technical error", evaluationDTO.getUserId());
-                return;
-            }
+        if(evaluationDTO.getOnboardingRejectionReasons() != null && (evaluationDTO.getOnboardingRejectionReasons().stream()
+                .anyMatch(r -> r.getType() == OnboardingRejectionReason.OnboardingRejectionReasonType.FAMILY_CRITERIA_KO))){
+            log.info("[NOTIFY] Skipping sending message for citizen {} with FAMILY_CRITERIA_KO rejection reason", evaluationDTO.getUserId());
+            return;
         }
 
         Notification notification = notificationMapper.evaluationToNotification(evaluationDTO);
