@@ -37,6 +37,7 @@ public class NotificationConstants {
       public static final String REFUND = "REFUND";
       public static final String SUSPENSION = "SUSPENSION";
       public static final String READMISSION = "READMISSION";
+      public static final String ONBOARDING = "ONBOARDING";
     }
   }
 }
