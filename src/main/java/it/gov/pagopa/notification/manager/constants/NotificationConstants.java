@@ -20,6 +20,14 @@ public class NotificationConstants {
 
   private NotificationConstants(){}
 
+  public static final class ExceptionCode {
+    public static final String GENERIC_ERROR = "NOTIFICATION_MANAGER_GENERIC_ERROR";
+    public static final String TOO_MANY_REQUESTS = "NOTIFICATION_MANAGER_TOO_MANY_REQUESTS";
+    public static final String INVALID_REQUEST = "NOTIFICATION_MANAGER_INVALID_REQUEST";
+
+    private ExceptionCode() {}
+  }
+
   public static final class AnyNotificationConsumer{
     private AnyNotificationConsumer(){}
     public static final class SubTypes{
@@ -29,6 +37,7 @@ public class NotificationConstants {
       public static final String REFUND = "REFUND";
       public static final String SUSPENSION = "SUSPENSION";
       public static final String READMISSION = "READMISSION";
+      public static final String ONBOARDING = "ONBOARDING";
     }
   }
 }

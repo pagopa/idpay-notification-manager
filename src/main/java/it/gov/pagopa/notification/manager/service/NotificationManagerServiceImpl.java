@@ -35,6 +35,8 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.stream.IntStream;
 
+import static it.gov.pagopa.notification.manager.constants.NotificationConstants.AnyNotificationConsumer.SubTypes.*;
+
 @Service
 @Slf4j
 public class NotificationManagerServiceImpl implements NotificationManagerService {
@@ -96,9 +98,9 @@ public class NotificationManagerServiceImpl implements NotificationManagerServic
         long startTime = System.currentTimeMillis();
 
         if(evaluationDTO.getOnboardingRejectionReasons() != null && (evaluationDTO.getOnboardingRejectionReasons().stream()
-                    .anyMatch(r -> r.getType() == OnboardingRejectionReason.OnboardingRejectionReasonType.FAMILY_CRITERIA_KO))){
-                log.info("[NOTIFY] Skipping sending message for citizen {} with FAMILY_CRITERIA_KO rejection reason", evaluationDTO.getUserId());
-                return;
+                .anyMatch(r -> r.getType() == OnboardingRejectionReason.OnboardingRejectionReasonType.FAMILY_CRITERIA_KO))){
+            log.info("[NOTIFY] Skipping sending message for citizen {} with FAMILY_CRITERIA_KO rejection reason", evaluationDTO.getUserId());
+            return;
         }
 
         Notification notification = notificationMapper.evaluationToNotification(evaluationDTO);
@@ -183,8 +185,32 @@ public class NotificationManagerServiceImpl implements NotificationManagerServic
             return false;
         }
 
-        String subject = notificationMarkdown.getSubject(notification);
-        String markdown = notificationMarkdown.getMarkdown(notification);
+        String subject;
+        String markdown;
+
+        switch (notification.getOperationType()){
+            case ONBOARDING -> {
+                subject = notificationMarkdown.getSubject(notification);
+                markdown = notificationMarkdown.getMarkdown(notification);
+            }
+            case CHECKIBAN_KO -> {
+                subject = notificationMarkdown.getSubjectCheckIbanKo();
+                markdown = notificationMarkdown.getMarkdownCheckIbanKo();
+            }
+            case REFUND -> {
+                subject = notificationMarkdown.getSubjectRefund(notification.getRefundStatus());
+                markdown = notificationMarkdown.getMarkdownRefund(notification.getRefundStatus(), notification.getRefundReward());
+            }
+            case SUSPENSION -> {
+                subject = notificationMarkdown.getSubjectSuspension(notification.getInitiativeName());
+                markdown = notificationMarkdown.getMarkdownSuspension();
+            }
+            case READMISSION -> {
+                subject = notificationMarkdown.getSubjectReadmission(notification.getInitiativeName());
+                markdown = notificationMarkdown.getMarkdownReadmission();
+            }
+            default -> {return false;}
+        }
 
         NotificationDTO notificationDTO =
                 notificationDTOMapper.map(fiscalCode, timeToLive, subject, markdown);
