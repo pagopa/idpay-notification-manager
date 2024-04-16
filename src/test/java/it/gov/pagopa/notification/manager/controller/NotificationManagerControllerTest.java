@@ -4,9 +4,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import it.gov.pagopa.notification.manager.constants.NotificationConstants;
 import it.gov.pagopa.notification.manager.dto.EvaluationDTO;
 import it.gov.pagopa.notification.manager.service.NotificationManagerService;
-import java.math.BigDecimal;
-import java.time.LocalDate;
-import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mockito;
@@ -19,6 +16,9 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
+
+import java.time.LocalDate;
+import java.util.List;
 
 @ExtendWith(MockitoExtension.class)
 @WebMvcTest(
@@ -43,7 +43,7 @@ class NotificationManagerControllerTest {
           TEST_DATE.atStartOfDay(),
           TEST_DATE.atStartOfDay(),
           List.of(),
-          new BigDecimal(500), 1L);
+              50000L, 1L);
 
   @MockBean NotificationManagerService notificationManagerServiceMock;
 

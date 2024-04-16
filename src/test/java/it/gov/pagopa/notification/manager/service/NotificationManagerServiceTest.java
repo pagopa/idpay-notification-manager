@@ -87,7 +87,7 @@ class NotificationManagerServiceTest {
                     TEST_DATE,
                     TEST_DATE,
                     List.of(),
-                    new BigDecimal(500), 1L);
+                    50000L, 1L);
     private static final FiscalCodeDTO FISCAL_CODE_DTO = new FiscalCodeDTO(FISCAL_CODE);
 
     private static final NotificationResource NOTIFICATION_RESOURCE = new NotificationResource();
@@ -293,7 +293,7 @@ class NotificationManagerServiceTest {
                                 OnboardingRejectionReason.OnboardingRejectionReasonCode.FAMILY_CRITERIA_FAIL, null, null, null),
                         new OnboardingRejectionReason(OnboardingRejectionReason.OnboardingRejectionReasonType.ISEE_TYPE_KO,
                                 OnboardingRejectionReason.OnboardingRejectionReasonCode.ISEE_TYPE_FAIL, null, null, null)),
-                new BigDecimal(500), 1L);
+                50000L, 1L);
 
         try {
             notificationManagerService.notify(evaluationDTO);
@@ -358,7 +358,7 @@ class NotificationManagerServiceTest {
                         TEST_DATE,
                         TEST_DATE,
                         null,
-                        new BigDecimal(500), 1L);
+                        50000L, 1L);
         Mockito.when(pdvDecryptRestConnector.getPii(TEST_TOKEN)).thenReturn(FISCAL_CODE_RESOURCE);
         Mockito.when(ioBackEndRestConnector.getProfile(FISCAL_CODE_DTO, TOKEN))
                 .thenReturn(PROFILE_RESOURCE);
@@ -417,7 +417,7 @@ class NotificationManagerServiceTest {
                                         OnboardingRejectionReason.OnboardingRejectionReasonCode.AUTOMATED_CRITERIA_ISEE_FAIL, null, null, null),
                                 new OnboardingRejectionReason(OnboardingRejectionReason.OnboardingRejectionReasonType.ISEE_TYPE_KO,
                                         OnboardingRejectionReason.OnboardingRejectionReasonCode.ISEE_TYPE_FAIL, null, null, null)),
-                        new BigDecimal(500), 1L);
+                        50000L, 1L);
 
         Request request =
                 Request.create(Request.HttpMethod.GET, "url", new HashMap<>(), null, new RequestTemplate());

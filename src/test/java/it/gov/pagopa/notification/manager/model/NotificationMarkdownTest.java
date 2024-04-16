@@ -61,7 +61,7 @@ class NotificationMarkdownTest {
           TEST_DATE,
           TEST_DATE,
           List.of(),
-          new BigDecimal(500), 1L);
+          50000L, 1L);
   private static final EvaluationDTO EVALUATION_DTO_KO_PDND =
       new EvaluationDTO(
           USER_ID,
@@ -79,7 +79,7 @@ class NotificationMarkdownTest {
                   "AUTHORITY",
                   "LABEL",
                   "DETAIL")),
-          new BigDecimal(500), 1L);
+          50000L, 1L);
 
   private static final EvaluationDTO EVALUATION_DTO_KO_RANKING =
       new EvaluationDTO(
@@ -98,7 +98,7 @@ class NotificationMarkdownTest {
                   "AUTHORITY",
                   "LABEL",
                   "DETAIL")),
-          new BigDecimal(500),1L);
+          50000L,1L);
 
   private static final EvaluationDTO EVALUATION_DTO_KO_TECH =
       new EvaluationDTO(
@@ -117,7 +117,7 @@ class NotificationMarkdownTest {
                   "AUTHORITY",
                   "LABEL",
                   "DETAIL")),
-          new BigDecimal(500), 1L);
+          50000L, 1L);
 
   @Autowired NotificationMarkdown notificationMarkdown;
 
@@ -376,7 +376,7 @@ class NotificationMarkdownTest {
             TEST_DATE,
             TEST_DATE,
             rejectionReasons,
-            new BigDecimal(500),
+            50000L,
             1L);
   }
 

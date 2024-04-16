@@ -1,20 +1,21 @@
 package it.gov.pagopa.notification.manager.dto.mapper;
 
-import static it.gov.pagopa.notification.manager.constants.NotificationConstants.AnyNotificationConsumer.SubTypes.REFUND;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-
 import it.gov.pagopa.notification.manager.dto.EvaluationDTO;
 import it.gov.pagopa.notification.manager.dto.event.NotificationQueueDTO;
 import it.gov.pagopa.notification.manager.dto.event.NotificationRefundQueueDTO;
 import it.gov.pagopa.notification.manager.model.Notification;
-import java.math.BigDecimal;
-import java.time.LocalDate;
-import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
+
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.util.List;
+
+import static it.gov.pagopa.notification.manager.constants.NotificationConstants.AnyNotificationConsumer.SubTypes.REFUND;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @ExtendWith(SpringExtension.class)
 @ContextConfiguration(classes = NotificationMapper.class)
@@ -36,7 +37,7 @@ class NotificationMapperTest {
           TEST_DATE.atStartOfDay(),
           TEST_DATE.atStartOfDay(),
           List.of(),
-          new BigDecimal(500), 1L);
+          50000L, 1L);
 
   private static final Notification NOTIFICATION =
       Notification.builder()
