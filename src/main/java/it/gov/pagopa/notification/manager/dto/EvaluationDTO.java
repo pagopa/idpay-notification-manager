@@ -1,13 +1,12 @@
 package it.gov.pagopa.notification.manager.dto;
 
-import java.time.LocalDate;
+import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-import jakarta.validation.constraints.NotEmpty;
-import jakarta.validation.constraints.NotNull;
-import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -29,6 +28,6 @@ public class EvaluationDTO {
   private LocalDateTime admissibilityCheckDate;
   private LocalDateTime criteriaConsensusTimestamp;
   private List<OnboardingRejectionReason> onboardingRejectionReasons;
-  private BigDecimal beneficiaryBudget;
+  private Long beneficiaryBudgetCents;
   private Long rankingValue;
 }
