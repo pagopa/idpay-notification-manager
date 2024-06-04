@@ -1,0 +1,303 @@
+asyncapi: 2.0.0
+info:
+  title: Notification Manager Service
+  version: 1.0.0
+  description: >-
+    Its purpose is to notify allowed citizen notification and cancellation of an initiative
+tags:
+  - name: "notificationQueue"
+    description: ""
+  - name: "onboardingConsumer"
+    description: ""
+  - name: "anyNotificationConsumer"
+    description: ""
+  - name: "deleteInitiative"
+    description: "Delete the initiative"
+channels:
+  notification-manager-notification-queue:
+    subscribe:
+      message:
+        $ref: '#/components/messages/EvaluationDTO'
+      bindings:
+        kafka:
+          topic: idpay_onboarding_outcome_topic
+      tags:
+        - name: "notificationQueue"
+  notification-manager-onboarding-consumer:
+    publish:
+      message:
+        $ref: '#/components/messages/EvaluationDTO'
+      bindings:
+        kafka:
+          topic: idpay-onboarding-outcome-notify-consumer-group
+      tags:
+        - name: "onboardingConsumer"
+  notification-manager-any-notification:
+    subscribe:
+      message:
+        $ref: '#/components/messages/AnyOfNotificationQueueDTO'
+      bindings:
+        kafka:
+          topic: idpay-notification-request-consumer-group
+      tags:
+        - name: "anyNotificationConsumer"
+  notification-manager-delete-initiative:
+    subscribe:
+      message:
+        $ref: '#/components/messages/CommandOperationQueueDTO'
+      bindings:
+        kafka:
+          topic: idpay_commands_topic
+      tags:
+        - name: "deleteInitiative"
+components:
+  messages:
+    EvaluationDTO:
+      contentType: application/json
+      description: >-
+        Event consumed from application when a notification was sent
+      summary: Send the notification
+      payload:
+        $ref: "#/components/schemas/EvaluationDTO"
+    AnyOfNotificationQueueDTO:
+      contentType: application/json
+      description: >-
+        Event consumed from application when a notification was sent
+      summary: Send the notification
+      payload:
+        $ref: "#/components/schemas/AnyOfNotificationQueueDTO"
+    CommandOperationQueueDTO:
+      contentType: application/json
+      description: >-
+        Event consumed from application when a delete initiative command has published
+      summary: Delete documents of the initiative
+      payload:
+        $ref: "#/components/schemas/CommandOperationQueueDTO"
+  schemas:
+    AnyOfNotificationQueueDTO:
+      oneOf:
+        - $ref: '#/components/schemas/NotificationCitizenOnQueueDTO'
+        - $ref: '#/components/schemas/NotificationRefundQueueDTO'
+        - $ref: '#/components/schemas/NotificationIbanQueueDTO'
+        - $ref: '#/components/schemas/NotificationSuspensionQueueDTO'
+        - $ref: '#/components/schemas/NotificationReadmissionQueueDTO'
+    NotificationCitizenOnQueueDTO:
+      allOf:
+        - $ref: "#/components/schemas/NotificationQueueDTO"
+        - type: object
+          properties:
+            initiativeName:
+              type: string
+              description: Initiative name
+              example: "initiativeTest"
+    NotificationRefundQueueDTO:
+      allOf:
+        - $ref: "#/components/schemas/NotificationQueueDTO"
+        - type: object
+          properties:
+            rewardNotificationId:
+              type: string
+              description: Identifier of the reward notification
+              example: "123456789"
+            refundReward:
+              type: integer
+              format: int64
+              description: Amount of the refund reward
+              example: 5000
+            rejectionCode:
+              type: string
+              description: Code associated with the rejection
+              example: "REJ001"
+            rejectionReason:
+              type: string
+              description: Reason for the rejection
+              example: "Invalid transaction"
+            refundDate:
+              type: string
+              format: date
+              description: Date of the refund
+              example: "2024-05-25"
+            refundFeedbackProgressive:
+              type: integer
+              format: int64
+              description: Progressive number associated with the refund feedback
+              example: 123456
+            refundCro:
+              type: string
+              description: CRO (Confirmation Reference Order) of the refund
+              example: "CRO123456"
+            status:
+              type: string
+              description: Status of the refund
+              example: "COMPLETED"
+    NotificationIbanQueueDTO:
+      allOf:
+        - $ref: "#/components/schemas/NotificationQueueDTO"
+        - type: object
+          properties:
+            iban:
+              type: string
+              description: IBAN associated with the notification
+              example: IT60X0542811101000000123456
+    NotificationSuspensionQueueDTO:
+      allOf:
+        - $ref: "#/components/schemas/NotificationQueueDTO"
+        - type: object
+          properties:
+            initiativeName:
+              type: string
+              description: Name of the suspended initiative
+              example: "initiativeTest"
+    NotificationReadmissionQueueDTO:
+      allOf:
+        - $ref: "#/components/schemas/NotificationQueueDTO"
+        - type: object
+          properties:
+            initiativeName:
+              type: string
+              description: Name of the readmitted initiative
+              example: "initiativeTest"
+    NotificationQueueDTO:
+      type: object
+      description: DTO for notification queue events
+      properties:
+        operationType:
+          type: string
+          description: Type of operation associated with the notification
+        userId:
+          type: string
+          description: ID of the user associated with the notification
+          example: "bcf3651c-d2d3-4998-81a9-5f24302ab674"
+        initiativeId:
+          type: string
+          description: ID of the initiative associated with the notification
+          example: "661626073785876cb5aa7601"
+        serviceId:
+          type: string
+          description: ID of the service associated with the notification
+          example: "661626073785876cb5aa7601"
+    EvaluationDTO:
+      type: object
+      description: DTO for evaluation data
+      properties:
+        userId:
+          type: string
+          description: ID of the user
+          example: "bcf3651c-d2d3-4998-81a9-5f24302ab674"
+        initiativeId:
+          type: string
+          description: ID of the initiative
+          example: "661626073785876cb5aa7601"
+        initiativeName:
+          type: string
+          description: Name of the initiative
+          example: "My Initiative"
+        initiativeEndDate:
+          type: string
+          format: date
+          description: End date of the initiative
+          example: "2024-12-31"
+        organizationId:
+          type: string
+          description: ID of the organization
+          example: "org123"
+        status:
+          type: string
+          description: Status of the evaluation
+          example: "approved"
+          nullable: false
+        admissibilityCheckDate:
+          type: string
+          format: date-time
+          description: Date of the admissibility check
+          example: "2024-05-23T10:30:00"
+          nullable: false
+        criteriaConsensusTimestamp:
+          type: string
+          format: date-time
+          description: Timestamp of criteria consensus
+          example: "2024-05-23T10:30:00"
+        onboardingRejectionReasons:
+          type: array
+          description: Reasons for onboarding rejection
+          items:
+            $ref: "#/components/schemas/OnboardingRejectionReason"
+        beneficiaryBudgetCents:
+          type: integer
+          description: Budget in cents allocated to the beneficiary
+          example: 50000
+        rankingValue:
+          type: integer
+          description: Ranking value of the evaluation
+          example: 10
+    OnboardingRejectionReason:
+      type: object
+      description: DTO for onboarding rejection reasons
+      properties:
+        type:
+          $ref: "#/components/schemas/OnboardingRejectionReasonType"
+          description: Type of rejection reason
+        code:
+          $ref: "#/components/schemas/OnboardingRejectionReasonCode"
+          description: Code of rejection reason
+        authority:
+          type: string
+          description: Authority related to the rejection reason
+        authorityLabel:
+          type: string
+          description: Label of the authority related to the rejection reason
+        detail:
+          type: string
+          description: Details of the rejection reason
+          nullable: true
+    OnboardingRejectionReasonType:
+      type: string
+      description: Type of onboarding rejection reason
+      enum:
+        - TECHNICAL_ERROR
+        - CONSENSUS_MISSED
+        - INVALID_REQUEST
+        - BUDGET_EXHAUSTED
+        - AUTOMATED_CRITERIA_FAIL
+        - ISEE_TYPE_KO
+        - FAMILY_KO
+        - BIRTHDATE_KO
+        - RESIDENCE_KO
+        - OUT_OF_RANKING
+        - FAMILY_CRITERIA_KO
+    OnboardingRejectionReasonCode:
+      type: string
+      description: Code of onboarding rejection reason
+      enum:
+        - AUTOMATED_CRITERIA_ISEE_FAIL
+        - AUTOMATED_CRITERIA_BIRTHDATE_FAIL
+        - AUTOMATED_CRITERIA_RESIDENCE_FAIL
+        - CITIZEN_OUT_OF_RANKING
+        - INITIATIVE_BUDGET_EXHAUSTED
+        - ISEE_TYPE_FAIL
+        - FAMILY_CRITERIA_FAIL
+        - CONSENSUS_CHECK_TC_FAIL
+        - CONSENSUS_CHECK_PDND_FAIL
+        - CONSENSUS_CHECK_TC_ACCEPT_FAIL
+        - CONSENSUS_CHECK_CRITERIA_CONSENSUS_FAIL
+        - INVALID_INITIATIVE_ID
+        - RESIDENCE_FAIL
+        - BIRTHDATE_FAIL
+        - FAMILY_FAIL
+        - RULE_ENGINE_NOT_READY
+    CommandOperationQueueDTO:
+      type: object
+      properties:
+        operationType:
+          type: string
+          description: Constant that define operation type
+          example: DELETE_INITIATIVE
+        entityId:
+          type: string
+          description: familyId if the initiative is family-based or userId otherwise
+          example: 66176f4e3785876cb5aa764d
+        operationTime:
+          type: string
+          format: date-time
+          description: operation time
+          example: "2024-04-11T07:23:08.874869466"
