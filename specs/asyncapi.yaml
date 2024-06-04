@@ -7,7 +7,7 @@ info:
 tags:
   - name: "notificationQueue"
     description: ""
-  - name: "onboardingConsumer"
+  - name: "onboardingProducer"
     description: ""
   - name: "anyNotificationConsumer"
     description: ""
@@ -17,46 +17,56 @@ channels:
   notification-manager-notification-queue:
     subscribe:
       message:
-        $ref: '#/components/messages/EvaluationDTO'
+        $ref: '#/components/messages/NotificationQueue'
       bindings:
         kafka:
           topic: idpay_onboarding_outcome_topic
       tags:
         - name: "notificationQueue"
-  notification-manager-onboarding-consumer:
+  notification-manager-onboarding-producer:
     publish:
       message:
-        $ref: '#/components/messages/EvaluationDTO'
+        $ref: '#/components/messages/OnboardingProducer'
       bindings:
         kafka:
-          topic: idpay-onboarding-outcome-notify-consumer-group
+          topic: idpay_onboarding_outcome_topic
       tags:
-        - name: "onboardingConsumer"
+        - name: "onboardingProducer"
   notification-manager-any-notification:
     subscribe:
       message:
         $ref: '#/components/messages/AnyOfNotificationQueueDTO'
       bindings:
         kafka:
-          topic: idpay-notification-request-consumer-group
+          topic: idpay-notification-request-topic
       tags:
         - name: "anyNotificationConsumer"
   notification-manager-delete-initiative:
     subscribe:
       message:
-        $ref: '#/components/messages/CommandOperationQueueDTO'
+        $ref: '#/components/messages/DeleteInitiative'
       bindings:
         kafka:
-          topic: idpay_commands_topic
+          topic: idpay_commands
       tags:
         - name: "deleteInitiative"
 components:
   messages:
-    EvaluationDTO:
+    NotificationQueue:
       contentType: application/json
       description: >-
         Event consumed from application when a notification was sent
       summary: Send the notification
+      payload:
+        oneOf:
+          - $ref: "https://raw.githubusercontent.com/pagopa/idpay-admissibility-assessor/main/specs/asyncapi.yml#/components/schemas/EvaluationCompletedDTO"
+          - $ref: "https://raw.githubusercontent.com/pagopa/idpay-ranking/main/specs/asyncapi.yml#/components/schemas/EvaluationRankingDTO"
+          - $ref: "https://raw.githubusercontent.com/pagopa/idpay-onboarding-workflow/main/specs/asyncapi.yaml#/components/schemas/EvaluationDTO"
+    OnboardingProducer:
+      contentType: application/json
+      description: >-
+        Send onboarding notify information
+      summary: Onboarding information
       payload:
         $ref: "#/components/schemas/EvaluationDTO"
     AnyOfNotificationQueueDTO:
@@ -65,117 +75,18 @@ components:
         Event consumed from application when a notification was sent
       summary: Send the notification
       payload:
-        $ref: "#/components/schemas/AnyOfNotificationQueueDTO"
-    CommandOperationQueueDTO:
+        oneOf:
+          - $ref: "https://raw.githubusercontent.com/pagopa/idpay-wallet/main/specs/asyncapi.yml#/components/schemas/NotificationQueueDTO"
+          - $ref: "https://raw.githubusercontent.com/pagopa/idpay-group/main/specs/asyncapi.yaml#/components/schemas/CitizenNotificationOnQueueDTO"
+    DeleteInitiative:
       contentType: application/json
       description: >-
         Event consumed from application when a delete initiative command has published
       summary: Delete documents of the initiative
       payload:
-        $ref: "#/components/schemas/CommandOperationQueueDTO"
+        $ref: "https://raw.githubusercontent.com/pagopa/idpay-portal-welfare-backend-initiative/main/specs/asyncapi.yml#/components/schemas/QueueCommandOperationDTO"
   schemas:
-    AnyOfNotificationQueueDTO:
-      oneOf:
-        - $ref: '#/components/schemas/NotificationCitizenOnQueueDTO'
-        - $ref: '#/components/schemas/NotificationRefundQueueDTO'
-        - $ref: '#/components/schemas/NotificationIbanQueueDTO'
-        - $ref: '#/components/schemas/NotificationSuspensionQueueDTO'
-        - $ref: '#/components/schemas/NotificationReadmissionQueueDTO'
-    NotificationCitizenOnQueueDTO:
-      allOf:
-        - $ref: "#/components/schemas/NotificationQueueDTO"
-        - type: object
-          properties:
-            initiativeName:
-              type: string
-              description: Initiative name
-              example: "initiativeTest"
-    NotificationRefundQueueDTO:
-      allOf:
-        - $ref: "#/components/schemas/NotificationQueueDTO"
-        - type: object
-          properties:
-            rewardNotificationId:
-              type: string
-              description: Identifier of the reward notification
-              example: "123456789"
-            refundReward:
-              type: integer
-              format: int64
-              description: Amount of the refund reward
-              example: 5000
-            rejectionCode:
-              type: string
-              description: Code associated with the rejection
-              example: "REJ001"
-            rejectionReason:
-              type: string
-              description: Reason for the rejection
-              example: "Invalid transaction"
-            refundDate:
-              type: string
-              format: date
-              description: Date of the refund
-              example: "2024-05-25"
-            refundFeedbackProgressive:
-              type: integer
-              format: int64
-              description: Progressive number associated with the refund feedback
-              example: 123456
-            refundCro:
-              type: string
-              description: CRO (Confirmation Reference Order) of the refund
-              example: "CRO123456"
-            status:
-              type: string
-              description: Status of the refund
-              example: "COMPLETED"
-    NotificationIbanQueueDTO:
-      allOf:
-        - $ref: "#/components/schemas/NotificationQueueDTO"
-        - type: object
-          properties:
-            iban:
-              type: string
-              description: IBAN associated with the notification
-              example: IT60X0542811101000000123456
-    NotificationSuspensionQueueDTO:
-      allOf:
-        - $ref: "#/components/schemas/NotificationQueueDTO"
-        - type: object
-          properties:
-            initiativeName:
-              type: string
-              description: Name of the suspended initiative
-              example: "initiativeTest"
-    NotificationReadmissionQueueDTO:
-      allOf:
-        - $ref: "#/components/schemas/NotificationQueueDTO"
-        - type: object
-          properties:
-            initiativeName:
-              type: string
-              description: Name of the readmitted initiative
-              example: "initiativeTest"
-    NotificationQueueDTO:
-      type: object
-      description: DTO for notification queue events
-      properties:
-        operationType:
-          type: string
-          description: Type of operation associated with the notification
-        userId:
-          type: string
-          description: ID of the user associated with the notification
-          example: "bcf3651c-d2d3-4998-81a9-5f24302ab674"
-        initiativeId:
-          type: string
-          description: ID of the initiative associated with the notification
-          example: "661626073785876cb5aa7601"
-        serviceId:
-          type: string
-          description: ID of the service associated with the notification
-          example: "661626073785876cb5aa7601"
+
     EvaluationDTO:
       type: object
       description: DTO for evaluation data
@@ -285,19 +196,3 @@ components:
         - BIRTHDATE_FAIL
         - FAMILY_FAIL
         - RULE_ENGINE_NOT_READY
-    CommandOperationQueueDTO:
-      type: object
-      properties:
-        operationType:
-          type: string
-          description: Constant that define operation type
-          example: DELETE_INITIATIVE
-        entityId:
-          type: string
-          description: familyId if the initiative is family-based or userId otherwise
-          example: 66176f4e3785876cb5aa764d
-        operationTime:
-          type: string
-          format: date-time
-          description: operation time
-          example: "2024-04-11T07:23:08.874869466"
