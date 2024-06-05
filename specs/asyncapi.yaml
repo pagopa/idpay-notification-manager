@@ -6,11 +6,11 @@ info:
     Its purpose is to notify allowed citizen notification and cancellation of an initiative
 tags:
   - name: "notificationQueue"
-    description: ""
+    description: "Receive information about onboarding result"
   - name: "onboardingProducer"
-    description: ""
+    description: "Send onboarding notify information"
   - name: "anyNotificationConsumer"
-    description: ""
+    description: "Receive generic notification"
   - name: "deleteInitiative"
     description: "Delete the initiative"
 channels:
@@ -54,9 +54,8 @@ components:
   messages:
     NotificationQueue:
       contentType: application/json
-      description: >-
-        Event consumed from application when a notification was sent
-      summary: Send the notification
+      description: Receive information about onboarding results
+      summary: Information about onboarding result
       payload:
         oneOf:
           - $ref: "https://raw.githubusercontent.com/pagopa/idpay-admissibility-assessor/main/specs/asyncapi.yml#/components/schemas/EvaluationCompletedDTO"
@@ -64,16 +63,14 @@ components:
           - $ref: "https://raw.githubusercontent.com/pagopa/idpay-onboarding-workflow/main/specs/asyncapi.yaml#/components/schemas/EvaluationDTO"
     OnboardingProducer:
       contentType: application/json
-      description: >-
-        Send onboarding notify information
+      description: Send onboarding notify information
       summary: Onboarding information
       payload:
         $ref: "#/components/schemas/EvaluationDTO"
     AnyOfNotificationQueueDTO:
       contentType: application/json
-      description: >-
-        Event consumed from application when a notification was sent
-      summary: Send the notification
+      description: Receive generic notification
+      summary: Generic notification
       payload:
         oneOf:
           - $ref: "https://raw.githubusercontent.com/pagopa/idpay-wallet/main/specs/asyncapi.yml#/components/schemas/NotificationQueueDTO"
