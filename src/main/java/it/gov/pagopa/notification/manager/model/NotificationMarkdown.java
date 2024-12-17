@@ -116,6 +116,11 @@ public class NotificationMarkdown {
   @Value("${notification.manager.markdown.ko.generic}")
   private String markdownKoGeneric;
 
+  @Value("${notification.manager.subject.ok.guid}")
+  private String subjectOkGuid;
+
+  @Value("${notification.manager.markdown.ok.guid}")
+  private String markdownOkGuid;
 
   public String getSubjectCheckIbanKo() {
     return this.subjectCheckIbanKo;
@@ -141,8 +146,11 @@ public class NotificationMarkdown {
   }
 
   public String getSubject(EvaluationDTO evaluationDTO) {
-    if(NotificationConstants.STATUS_ONBOARDING_OK.equals(evaluationDTO.getStatus())
-            || NotificationConstants.STATUS_ONBOARDING_JOINED.equals(evaluationDTO.getStatus())){
+    if(NotificationConstants.STATUS_ONBOARDING_OK.equals(evaluationDTO.getStatus()) && evaluationDTO.getInitiativeId().equals("6761aaa29e9c0747b92c4b37")){
+      return this.subjectOkGuid;
+    }
+
+    if(NotificationConstants.STATUS_ONBOARDING_OK.equals(evaluationDTO.getStatus())  || NotificationConstants.STATUS_ONBOARDING_JOINED.equals(evaluationDTO.getStatus())){
       return this.subjectOk;
     }
 
@@ -155,6 +163,11 @@ public class NotificationMarkdown {
   }
 
   public String getSubject(Notification notification) {
+
+    if( notification.getOnboardingOutcome().equals(NotificationConstants.STATUS_ONBOARDING_OK) && notification.getInitiativeId().equals("6761aaa29e9c0747b92c4b37")){
+      return this.subjectOkGuid;
+    }
+
     return notification.getOnboardingOutcome().equals(NotificationConstants.STATUS_ONBOARDING_OK)||
             notification.getOnboardingOutcome().equals(NotificationConstants.STATUS_ONBOARDING_JOINED)
         ? this.subjectOk
@@ -174,6 +187,12 @@ public class NotificationMarkdown {
   }
 
   public String getMarkdown(EvaluationDTO evaluationDTO) {
+
+    if (NotificationConstants.STATUS_ONBOARDING_OK.equals(evaluationDTO.getStatus())  &&   evaluationDTO.getInitiativeId().equals("6761aaa29e9c0747b92c4b37")){
+      return replaceMessageItem(markdownOkGuid,
+              NotificationConstants.INITIATIVE_NAME_KEY,
+              evaluationDTO.getInitiativeName());
+    }
 
     if (NotificationConstants.STATUS_ONBOARDING_OK.equals(evaluationDTO.getStatus())
             || NotificationConstants.STATUS_ONBOARDING_JOINED.equals(evaluationDTO.getStatus())){
@@ -199,6 +218,12 @@ public class NotificationMarkdown {
   }
 
   public String getMarkdown(Notification notification) {
+    if( notification.getOnboardingOutcome().equals(NotificationConstants.STATUS_ONBOARDING_OK) && notification.getInitiativeId().equals("6761aaa29e9c0747b92c4b37")){
+      return replaceMessageItem(markdownOkGuid,
+              NotificationConstants.INITIATIVE_NAME_KEY,
+              notification.getInitiativeName());
+    }
+
     return notification.getOnboardingOutcome().equals(NotificationConstants.STATUS_ONBOARDING_OK) ||
             notification.getOnboardingOutcome().equals(NotificationConstants.STATUS_ONBOARDING_JOINED)
         ? replaceMessageItem(
