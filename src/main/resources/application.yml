@@ -234,7 +234,7 @@ notification:
         ${MARKDOWN_OK_CTA_GUID:Ciao,
         abbiamo ricevuto la tua richiesta di adesione per il **Rimborso centri estivi**!
         
-        Per finalizzare l'adesione è necessario inviare entro il **28/02/2025** all'indirizzo email **politichesociali@comune.guidoniamontecelio.rm.it** la seguente documentazione:
+        Per finalizzare l'adesione è necessario inviare entro il **28/02/2025** all'indirizzo email [politichesociali@comune.guidoniamontecelio.rm.it](mailto:politichesociali@comune.guidoniamontecelio.rm.it) la seguente documentazione:
     
           - **Attestazione ISEE 2024**
           - **Ricevuta o documento equivalente** da parte della struttura, in cui si evince chi ha beneficiato del servizio (nome del minore). Se questo dato non è presente, è necessaria anche una **prova del pagamento** (ad esempio la ricevuta del bonifico).
