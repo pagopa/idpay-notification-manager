@@ -14,6 +14,7 @@ import java.math.BigDecimal;
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 @Component
@@ -122,6 +123,8 @@ public class NotificationMarkdown {
   @Value("${notification.manager.markdown.ok.guid}")
   private String markdownOkGuid;
 
+  List<String> listInitiativeId = new ArrayList<>(Arrays.asList("6761aaa29e9c0747b92c4b37", "6762d4f50fe7e635815b233b"));
+
   public String getSubjectCheckIbanKo() {
     return this.subjectCheckIbanKo;
   }
@@ -146,7 +149,7 @@ public class NotificationMarkdown {
   }
 
   public String getSubject(EvaluationDTO evaluationDTO) {
-    if(NotificationConstants.STATUS_ONBOARDING_OK.equals(evaluationDTO.getStatus()) && evaluationDTO.getInitiativeId().equals("6761aaa29e9c0747b92c4b37")){
+    if(NotificationConstants.STATUS_ONBOARDING_OK.equals(evaluationDTO.getStatus()) && listInitiativeId.contains(evaluationDTO.getInitiativeId())){
       return this.subjectOkGuid;
     }
 
@@ -164,7 +167,7 @@ public class NotificationMarkdown {
 
   public String getSubject(Notification notification) {
 
-    if( notification.getOnboardingOutcome().equals(NotificationConstants.STATUS_ONBOARDING_OK) && notification.getInitiativeId().equals("6761aaa29e9c0747b92c4b37")){
+    if( notification.getOnboardingOutcome().equals(NotificationConstants.STATUS_ONBOARDING_OK) && listInitiativeId.contains(notification.getInitiativeId())){
       return this.subjectOkGuid;
     }
 
@@ -188,7 +191,7 @@ public class NotificationMarkdown {
 
   public String getMarkdown(EvaluationDTO evaluationDTO) {
 
-    if (NotificationConstants.STATUS_ONBOARDING_OK.equals(evaluationDTO.getStatus())  &&   evaluationDTO.getInitiativeId().equals("6761aaa29e9c0747b92c4b37")){
+    if (NotificationConstants.STATUS_ONBOARDING_OK.equals(evaluationDTO.getStatus())  &&   listInitiativeId.contains(evaluationDTO.getInitiativeId())){
       return replaceMessageItem(markdownOkGuid,
               NotificationConstants.INITIATIVE_NAME_KEY,
               evaluationDTO.getInitiativeName());
@@ -218,7 +221,7 @@ public class NotificationMarkdown {
   }
 
   public String getMarkdown(Notification notification) {
-    if( notification.getOnboardingOutcome().equals(NotificationConstants.STATUS_ONBOARDING_OK) && notification.getInitiativeId().equals("6761aaa29e9c0747b92c4b37")){
+    if( notification.getOnboardingOutcome().equals(NotificationConstants.STATUS_ONBOARDING_OK) && listInitiativeId.contains(notification.getInitiativeId())){
       return replaceMessageItem(markdownOkGuid,
               NotificationConstants.INITIATIVE_NAME_KEY,
               notification.getInitiativeName());
