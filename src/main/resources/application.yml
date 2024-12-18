@@ -248,7 +248,7 @@ notification:
                     - Eventuale **certificazione di disabilità** e di diagnosi funzionale rilasciata dalla ASL competente (verbale di accertamento dell'handicap L.104/1992, in corso di validità).
                     
                     Ricevuta la documentazione, alla chiusura delle graduatorie ti verrà comunicato l'esito della domanda."
-       ---}
+       }
       demanded: |-
         ${MARKDOWN_DEMANDED:Buone notizie! Grazie ad un tuo familiare puoi ottenere %initiativeName%.
         
