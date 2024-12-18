@@ -234,7 +234,8 @@ notification:
         ${MARKDOWN_OK_CTA_GUID:---
         it:
           cta_1:
-            text: "Ciao, abbiamo ricevuto la tua richiesta di adesione per il **Rimborso centri estivi**!
+            text: "Ciao,
+                   abbiamo ricevuto la tua richiesta di adesione per il **Rimborso centri estivi**!
     
                    Per finalizzare l'adesione è necessario inviare entro il **28/02/2025** all'indirizzo email politichesociali@comune.guidoniamontecelio.rm.it la seguente documentazione:
         
