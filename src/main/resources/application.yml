@@ -231,24 +231,21 @@ notification:
                 action: "ioit://idpay/initiative/%initiativeId%"
         ---}
       ok.guid: |-
-        ${MARKDOWN_OK_CTA_GUID:---
         it:
           cta_1:
-            text: "Ciao,
-                   abbiamo ricevuto la tua richiesta di adesione per il **Rimborso centri estivi**! 
-                   Per finalizzare l'adesione, invia entro il **28/02/2025** a "
+            text: "Ciao, abbiamo ricevuto la tua richiesta di adesione per il **Rimborso centri estivi**! Per finalizzare l'adesione, invia entro il **28/02/2025** a "
           cta_2:
             text: "[politichesociali@comune.guidoniamontecelio.rm.it](mailto:politichesociali@comune.guidoniamontecelio.rm.it)"
             action: "mailto:politichesociali@comune.guidoniamontecelio.rm.it"
           cta_3:
-            text: "la seguente documentazione:
-                
-                    - **Attestazione ISEE 2024**
-                    - **Ricevuta o documento equivalente** da parte della struttura, in cui si evince chi ha beneficiato del servizio (nome del minore). Se questo dato non è presente, è necessaria anche una **prova del pagamento** (ad esempio la ricevuta del bonifico).
-                    - Eventuale **certificazione di disabilità** e di diagnosi funzionale rilasciata dalla ASL competente (verbale di accertamento dell'handicap L.104/1992, in corso di validità).
-                    
-                    Ricevuta la documentazione, alla chiusura delle graduatorie ti verrà comunicato l'esito della domanda."
-       ---}
+            text: |
+              la seguente documentazione:
+      
+              - **Attestazione ISEE 2024**
+              - **Ricevuta o documento equivalente** da parte della struttura, in cui si evince chi ha beneficiato del servizio (nome del minore). Se questo dato non è presente, è necessaria anche una **prova del pagamento** (ad esempio la ricevuta del bonifico).
+              - Eventuale **certificazione di disabilità** e di diagnosi funzionale rilasciata dalla ASL competente (verbale di accertamento dell'handicap L.104/1992, in corso di validità).
+      
+              Ricevuta la documentazione, alla chiusura delle graduatorie ti verrà comunicato l'esito della domanda.
       demanded: |-
         ${MARKDOWN_DEMANDED:Buone notizie! Grazie ad un tuo familiare puoi ottenere %initiativeName%.
         
