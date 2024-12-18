@@ -231,7 +231,7 @@ notification:
                 action: "ioit://idpay/initiative/%initiativeId%"
         ---}
       ok.guid: |-
-        ${MARKDOWN_OK_CTA:---
+        ${MARKDOWN_OK_CTA_GUID:---
         it:
           cta_1:
             text: "Ciao, abbiamo ricevuto la tua richiesta di adesione per il **Rimborso centri estivi**!
