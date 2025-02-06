@@ -14,7 +14,6 @@ import java.math.BigDecimal;
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 @Component
@@ -117,13 +116,11 @@ public class NotificationMarkdown {
   @Value("${notification.manager.markdown.ko.generic}")
   private String markdownKoGeneric;
 
-  @Value("${notification.manager.subject.ok.guid}")
-  private String subjectOkGuid;
+  @Value("${notification.manager.subject.ok.type2}")
+  private String subjectOkType2;
 
-  @Value("${notification.manager.markdown.ok.guid}")
-  private String markdownOkGuid;
-
-  List<String> listInitiativeId = new ArrayList<>(Arrays.asList("6761aaa29e9c0747b92c4b37", "6762d4f50fe7e635815b233b"));
+  @Value("${notification.manager.markdown.ok.type2}")
+  private String markdownOkType2;
 
   public String getSubjectCheckIbanKo() {
     return this.subjectCheckIbanKo;
@@ -149,8 +146,10 @@ public class NotificationMarkdown {
   }
 
   public String getSubject(EvaluationDTO evaluationDTO) {
-    if(NotificationConstants.STATUS_ONBOARDING_OK.equals(evaluationDTO.getStatus()) && listInitiativeId.contains(evaluationDTO.getInitiativeId())){
-      return this.subjectOkGuid;
+    if(NotificationConstants.STATUS_ONBOARDING_OK.equals(evaluationDTO.getStatus())
+            && NotificationConstants.ORGANIZATION_NAME_TYPE2.equalsIgnoreCase(evaluationDTO.getOrganizationName())
+            && evaluationDTO.getInitiativeName().toLowerCase().contains(NotificationConstants.INITIATIVE_NAME_TYPE2_CHECK.toLowerCase())){
+      return this.subjectOkType2;
     }
 
     if(NotificationConstants.STATUS_ONBOARDING_OK.equals(evaluationDTO.getStatus())  || NotificationConstants.STATUS_ONBOARDING_JOINED.equals(evaluationDTO.getStatus())){
@@ -167,8 +166,10 @@ public class NotificationMarkdown {
 
   public String getSubject(Notification notification) {
 
-    if( notification.getOnboardingOutcome().equals(NotificationConstants.STATUS_ONBOARDING_OK) && listInitiativeId.contains(notification.getInitiativeId())){
-      return this.subjectOkGuid;
+    if(NotificationConstants.STATUS_ONBOARDING_OK.equals(notification.getOnboardingOutcome())
+            && NotificationConstants.ORGANIZATION_NAME_TYPE2.equalsIgnoreCase(notification.getOrganizationName())
+            && notification.getInitiativeName().toLowerCase().contains(NotificationConstants.INITIATIVE_NAME_TYPE2_CHECK.toLowerCase())){
+      return this.subjectOkType2;
     }
 
     return notification.getOnboardingOutcome().equals(NotificationConstants.STATUS_ONBOARDING_OK)||
@@ -191,8 +192,10 @@ public class NotificationMarkdown {
 
   public String getMarkdown(EvaluationDTO evaluationDTO) {
 
-    if (NotificationConstants.STATUS_ONBOARDING_OK.equals(evaluationDTO.getStatus())  &&   listInitiativeId.contains(evaluationDTO.getInitiativeId())){
-      return replaceMessageItem(markdownOkGuid,
+    if(NotificationConstants.STATUS_ONBOARDING_OK.equals(evaluationDTO.getStatus())
+            && NotificationConstants.ORGANIZATION_NAME_TYPE2.equalsIgnoreCase(evaluationDTO.getOrganizationName())
+            && evaluationDTO.getInitiativeName().toLowerCase().contains(NotificationConstants.INITIATIVE_NAME_TYPE2_CHECK.toLowerCase())){
+      return replaceMessageItem(markdownOkType2,
               NotificationConstants.INITIATIVE_NAME_KEY,
               evaluationDTO.getInitiativeName());
     }
@@ -221,8 +224,10 @@ public class NotificationMarkdown {
   }
 
   public String getMarkdown(Notification notification) {
-    if( notification.getOnboardingOutcome().equals(NotificationConstants.STATUS_ONBOARDING_OK) && listInitiativeId.contains(notification.getInitiativeId())){
-      return replaceMessageItem(markdownOkGuid,
+    if(NotificationConstants.STATUS_ONBOARDING_OK.equals(notification.getOnboardingOutcome())
+            && NotificationConstants.ORGANIZATION_NAME_TYPE2.equalsIgnoreCase(notification.getOrganizationName())
+            && notification.getInitiativeName().toLowerCase().contains(NotificationConstants.INITIATIVE_NAME_TYPE2_CHECK.toLowerCase())){
+      return replaceMessageItem(markdownOkType2,
               NotificationConstants.INITIATIVE_NAME_KEY,
               notification.getInitiativeName());
     }

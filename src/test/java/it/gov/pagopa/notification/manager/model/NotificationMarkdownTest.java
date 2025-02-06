@@ -25,6 +25,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 class NotificationMarkdownTest {
 
   private static final String SUBJECT_OK = "Il tuo Bonus è attivo";
+  private static final String SUBJECT_OK_TYPE2 = "Abbiamo ricevuto la tua richiesta di adesione";
   private static final String SUBJECT_KO = "Non è stato possibile attivare TESTINITIATIVE01";
   private static final String SUBJECT_KO_TECH = "Abbiamo riscontrato dei problemi";
   private static final String MARKDOWN_OK = """
@@ -44,9 +45,21 @@ class NotificationMarkdownTest {
             Ti ricordiamo che per iniziare ad usufruire del bonus devi configurare almeno un metodo di pagamento.
                         
             Puoi trovare maggiori informazioni sul [sito](http://example.com/).""";
+  private static final String MARKDOWN_OK_TYPE2 = """
+                  Ciao,
+                  abbiamo ricevuto la tua richiesta di adesione per il **Rimborso centri estivi**!
+                 
+                  Per finalizzare l'adesione è necessario inviare entro il **28/02/2025** all'indirizzo email [politichesociali@comune.guidoniamontecelio.rm.it](mailto:politichesociali@comune.guidoniamontecelio.rm.it) la seguente documentazione:
+                 
+                    - **Attestazione ISEE 2024**
+                    - **Ricevuta o documento equivalente** da parte della struttura, in cui si evince chi ha beneficiato del servizio (nome del minore). Se questo dato non è presente, è necessaria anche una **prova del pagamento** (ad esempio la ricevuta del bonifico).
+                    - Eventuale **certificazione di disabilità** e di diagnosi funzionale rilasciata dalla ASL competente (verbale di accertamento dell'handicap L.104/1992, in corso di validità).
+                 
+                  Ricevuta la documentazione, alla chiusura delle graduatorie ti verrà comunicato l'esito della domanda.""";
   private static final String USER_ID = "USER_ID";
   private static final String INITIATIVE_ID = "TESTINITIATIVE01";
   private static final String INITIATIVE_NAME = "NAMETESTINITIATIVE01";
+  private static final String ORGANIZATION_NAME = "NAMETESTORGANIZATION01";
   private static final LocalDateTime TEST_DATE = LocalDateTime.now();
   private static final LocalDate TEST_DATE_ONLY_DATE = LocalDate.now();
 
@@ -57,11 +70,25 @@ class NotificationMarkdownTest {
           INITIATIVE_NAME,
           TEST_DATE_ONLY_DATE,
           INITIATIVE_ID,
+          ORGANIZATION_NAME,
           NotificationConstants.STATUS_ONBOARDING_OK,
           TEST_DATE,
           TEST_DATE,
           List.of(),
           50000L, 1L);
+  private static final EvaluationDTO EVALUATION_DTO_TYPE2 =
+          new EvaluationDTO(
+                  USER_ID,
+                  INITIATIVE_ID,
+                  "test bonus",
+                  TEST_DATE_ONLY_DATE,
+                  INITIATIVE_ID,
+                  "COMUNE DI GUIDONIA MONTECELIO",
+                  NotificationConstants.STATUS_ONBOARDING_OK,
+                  TEST_DATE,
+                  TEST_DATE,
+                  List.of(),
+                  50000L, 1L);
   private static final EvaluationDTO EVALUATION_DTO_KO_PDND =
       new EvaluationDTO(
           USER_ID,
@@ -69,6 +96,7 @@ class NotificationMarkdownTest {
           INITIATIVE_ID,
           TEST_DATE_ONLY_DATE,
           INITIATIVE_ID,
+          ORGANIZATION_NAME,
           NotificationConstants.STATUS_ONBOARDING_KO,
           TEST_DATE,
           TEST_DATE,
@@ -88,6 +116,7 @@ class NotificationMarkdownTest {
           INITIATIVE_ID,
           TEST_DATE_ONLY_DATE,
           INITIATIVE_ID,
+          ORGANIZATION_NAME,
           NotificationConstants.STATUS_ONBOARDING_KO,
           TEST_DATE,
           TEST_DATE,
@@ -107,6 +136,7 @@ class NotificationMarkdownTest {
           INITIATIVE_ID,
           TEST_DATE_ONLY_DATE,
           INITIATIVE_ID,
+          ORGANIZATION_NAME,
           NotificationConstants.STATUS_ONBOARDING_KO,
           TEST_DATE,
           TEST_DATE,
@@ -125,6 +155,12 @@ class NotificationMarkdownTest {
   void getSubject_status_ok() {
     String actual = notificationMarkdown.getSubject(EVALUATION_DTO);
     assertEquals(SUBJECT_OK, actual);
+  }
+
+  @Test
+  void getSubjectType2_status_ok() {
+    String actual = notificationMarkdown.getSubject(EVALUATION_DTO_TYPE2);
+    assertEquals(SUBJECT_OK_TYPE2, actual);
   }
 
   @Test
@@ -154,6 +190,13 @@ class NotificationMarkdownTest {
     String actual = notificationMarkdown.getMarkdown(EVALUATION_DTO);
 
     Assertions.assertEquals(expectedMarkdownOk, actual);
+  }
+
+  @Test
+  void getMarkdownType2_status_ok() {
+      String actual = notificationMarkdown.getMarkdown(EVALUATION_DTO_TYPE2);
+
+    Assertions.assertEquals(MARKDOWN_OK_TYPE2, actual);
   }
 
   @Test
@@ -372,6 +415,7 @@ class NotificationMarkdownTest {
             INITIATIVE_NAME,
             TEST_DATE_ONLY_DATE,
             "ORGANIZATIONID",
+            ORGANIZATION_NAME,
             status,
             TEST_DATE,
             TEST_DATE,

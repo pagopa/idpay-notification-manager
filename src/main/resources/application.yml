@@ -214,6 +214,21 @@ notification:
 
         Puoi trovare maggiori informazioni sul [sito](http://example.com/).}
 
+      ok.type2: |-
+        ${MARKDOWN_OK_CTA_TYPE2:Ciao,
+        abbiamo ricevuto la tua richiesta di adesione per il **Rimborso centri estivi**!
+        
+        Per finalizzare l'adesione è necessario inviare entro il **28/02/2025** all'indirizzo email [politichesociali@comune.guidoniamontecelio.rm.it](mailto:politichesociali@comune.guidoniamontecelio.rm.it) la seguente documentazione:
+        
+          - **Attestazione ISEE 2024**
+          - **Ricevuta o documento equivalente** da parte della struttura, in cui si evince chi ha beneficiato del servizio (nome del minore). Se questo dato non è presente, è necessaria anche una **prova del pagamento** (ad esempio la ricevuta del bonifico).
+          - Eventuale **certificazione di disabilità** e di diagnosi funzionale rilasciata dalla ASL competente (verbale di accertamento dell'handicap L.104/1992, in corso di validità).
+        
+        Ricevuta la documentazione, alla chiusura delle graduatorie ti verrà comunicato l'esito della domanda.}
+
+      ok.type3: |-
+        ${MARKDOWN_OK_CTA_TYPE3: }
+
       ok.refund: |-
         ${MARKDOWN_OK_REFUND:Ti è stato accreditato un rimborso di %effectiveReward% euro!
         
@@ -230,17 +245,6 @@ notification:
                 text: "Go to the bonus page"
                 action: "ioit://idpay/initiative/%initiativeId%"
         ---}
-      ok.guid: |-
-        ${MARKDOWN_OK_CTA_GUID:Ciao,
-        abbiamo ricevuto la tua richiesta di adesione per il **Rimborso centri estivi**!
-        
-        Per finalizzare l'adesione è necessario inviare entro il **28/02/2025** all'indirizzo email [politichesociali@comune.guidoniamontecelio.rm.it](mailto:politichesociali@comune.guidoniamontecelio.rm.it) la seguente documentazione:
-    
-          - **Attestazione ISEE 2024**
-          - **Ricevuta o documento equivalente** da parte della struttura, in cui si evince chi ha beneficiato del servizio (nome del minore). Se questo dato non è presente, è necessaria anche una **prova del pagamento** (ad esempio la ricevuta del bonifico).
-          - Eventuale **certificazione di disabilità** e di diagnosi funzionale rilasciata dalla ASL competente (verbale di accertamento dell'handicap L.104/1992, in corso di validità).
-        
-        Ricevuta la documentazione, alla chiusura delle graduatorie ti verrà comunicato l'esito della domanda.}
       demanded: |-
         ${MARKDOWN_DEMANDED:Buone notizie! Grazie ad un tuo familiare puoi ottenere %initiativeName%.
         
@@ -263,9 +267,10 @@ notification:
           }
     subject:
       ok: ${SUBJECT_OK:Il tuo Bonus è attivo}
+      ok.type2: ${SUBJECT_OK_TYPE2:Abbiamo ricevuto la tua richiesta di adesione}
+      ok.type3: ${SUBJECT_OK_TYPE3:}
       demanded: ${SUBJECT_DEMANDED:Attiva il bonus %initiativeName%}
       ok.refund: ${SUBJECT_OK_REFUND:Ti è stato accreditato un rimborso!}
-      ok.guid: ${SUBJECT_OK_GUID:Abbiamo ricevuto la tua richiesta di adesione}
       ko: ${SUBJECT_KO:Non è stato possibile attivare %initiativeName%}
       ko.refund: ${SUBJECT_KO_REFUND:Non è stato possibile effettuare il rimborso}
       ko.checkIban: ${SUBJECT_KO_CHECKIBAN:L'IBAN che hai inserito è errato}

@@ -22,6 +22,7 @@ public class EvaluationDTO {
   private String initiativeName;
   private LocalDate initiativeEndDate;
   private String organizationId;
+  private String organizationName;
   @NotEmpty
   private String status;
   @NotNull

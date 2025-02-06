@@ -74,6 +74,7 @@ class NotificationManagerServiceTest {
     private static final String SERVICE_ID = "SERVICE_ID";
     private static final String IBAN = "IBAN";
     private static final String INITIATIVE_NAME = "INITIATIVE_NAME";
+    private static final String ORGANIZATION_NAME = "ORGANIZATION_NAME";
     private static final String OPERATION_TYPE_DELETE_INITIATIVE = "DELETE_INITIATIVE";
     private static final int PAGE_SIZE = 100;
     private static final EvaluationDTO EVALUATION_DTO =
@@ -83,6 +84,7 @@ class NotificationManagerServiceTest {
                     INITIATIVE_ID,
                     TEST_DATE_ONLY_DATE,
                     INITIATIVE_ID,
+                    ORGANIZATION_NAME,
                     NotificationConstants.STATUS_ONBOARDING_OK,
                     TEST_DATE,
                     TEST_DATE,
@@ -286,6 +288,7 @@ class NotificationManagerServiceTest {
                 INITIATIVE_ID,
                 TEST_DATE_ONLY_DATE,
                 INITIATIVE_ID,
+                ORGANIZATION_NAME,
                 NotificationConstants.STATUS_ONBOARDING_OK,
                 TEST_DATE,
                 TEST_DATE,
@@ -354,6 +357,7 @@ class NotificationManagerServiceTest {
                         INITIATIVE_ID,
                         TEST_DATE_ONLY_DATE,
                         INITIATIVE_ID,
+                        ORGANIZATION_NAME,
                         NotificationConstants.STATUS_ONBOARDING_OK,
                         TEST_DATE,
                         TEST_DATE,
@@ -410,6 +414,7 @@ class NotificationManagerServiceTest {
                         INITIATIVE_ID,
                         TEST_DATE_ONLY_DATE,
                         INITIATIVE_ID,
+                        ORGANIZATION_NAME,
                         NotificationConstants.STATUS_ONBOARDING_OK,
                         TEST_DATE,
                         TEST_DATE,
