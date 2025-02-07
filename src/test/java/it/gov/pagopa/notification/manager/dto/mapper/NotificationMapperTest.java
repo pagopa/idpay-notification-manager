@@ -23,6 +23,7 @@ class NotificationMapperTest {
 
   private static final String USER_ID = "USER_ID";
   private static final String INITIATIVE_ID = "INITIATIVE_ID";
+  private static final String ORGANIZATION_NAME = "ORGANIZATION_NAME";
   private static final String STATUS = "ONBOARDING_OK";
   private static final LocalDate TEST_DATE = LocalDate.now();
 
@@ -33,6 +34,7 @@ class NotificationMapperTest {
           INITIATIVE_ID,
           TEST_DATE,
           INITIATIVE_ID,
+          ORGANIZATION_NAME,
           STATUS,
           TEST_DATE.atStartOfDay(),
           TEST_DATE.atStartOfDay(),
@@ -47,6 +49,7 @@ class NotificationMapperTest {
           .onboardingOutcome(STATUS)
           .operationType("ONBOARDING")
           .rejectReasons(List.of())
+          .organizationName(ORGANIZATION_NAME)
           .build();
 
   private static final Notification NOTIFICATION_QUEUE =

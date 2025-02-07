@@ -36,6 +36,8 @@ public class Notification {
 
   private String initiativeName;
 
+  private String organizationName;
+
   private String authority;
 
   private String onboardingOutcome;

@@ -22,6 +22,7 @@ public class NotificationMapper {
               .onboardingOutcome(evaluationDTO.getStatus())
               .operationType(NotificationConstants.AnyNotificationConsumer.SubTypes.ONBOARDING)
               .rejectReasons(evaluationDTO.getOnboardingRejectionReasons())
+              .organizationName(evaluationDTO.getOrganizationName())
               .build();
     }
 

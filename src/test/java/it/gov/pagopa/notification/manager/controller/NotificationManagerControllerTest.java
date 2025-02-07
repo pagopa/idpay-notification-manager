@@ -30,6 +30,7 @@ class NotificationManagerControllerTest {
 
   private static final String USER_ID = "USER_ID";
   private static final String INITIATIVE_ID = "INITIATIVE_ID";
+  private static final String ORGANIZATION_NAME = "ORGANIZATION_NAME";
 
   private static final LocalDate TEST_DATE = LocalDate.now();
   private static final EvaluationDTO EVALUATION_DTO =
@@ -39,6 +40,7 @@ class NotificationManagerControllerTest {
           INITIATIVE_ID,
           TEST_DATE,
           INITIATIVE_ID,
+          ORGANIZATION_NAME,
           NotificationConstants.STATUS_ONBOARDING_OK,
           TEST_DATE.atStartOfDay(),
           TEST_DATE.atStartOfDay(),
