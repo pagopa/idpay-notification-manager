@@ -148,7 +148,7 @@ public class NotificationMarkdown {
   public String getSubject(EvaluationDTO evaluationDTO) {
     if(NotificationConstants.STATUS_ONBOARDING_OK.equals(evaluationDTO.getStatus())
             && NotificationConstants.ORGANIZATION_NAME_TYPE2.equalsIgnoreCase(evaluationDTO.getOrganizationName())
-            && evaluationDTO.getInitiativeName().toLowerCase().contains(NotificationConstants.INITIATIVE_NAME_TYPE2_CHECK.toLowerCase())){
+            && evaluationDTO.getInitiativeName().toLowerCase().contains(NotificationConstants.INITIATIVE_NAME_TYPE2_CHECK)){
       return this.subjectOkType2;
     }
 
@@ -168,7 +168,7 @@ public class NotificationMarkdown {
 
     if(NotificationConstants.STATUS_ONBOARDING_OK.equals(notification.getOnboardingOutcome())
             && NotificationConstants.ORGANIZATION_NAME_TYPE2.equalsIgnoreCase(notification.getOrganizationName())
-            && notification.getInitiativeName().toLowerCase().contains(NotificationConstants.INITIATIVE_NAME_TYPE2_CHECK.toLowerCase())){
+            && notification.getInitiativeName().toLowerCase().contains(NotificationConstants.INITIATIVE_NAME_TYPE2_CHECK)){
       return this.subjectOkType2;
     }
 
@@ -194,7 +194,7 @@ public class NotificationMarkdown {
 
     if(NotificationConstants.STATUS_ONBOARDING_OK.equals(evaluationDTO.getStatus())
             && NotificationConstants.ORGANIZATION_NAME_TYPE2.equalsIgnoreCase(evaluationDTO.getOrganizationName())
-            && evaluationDTO.getInitiativeName().toLowerCase().contains(NotificationConstants.INITIATIVE_NAME_TYPE2_CHECK.toLowerCase())){
+            && evaluationDTO.getInitiativeName().toLowerCase().contains(NotificationConstants.INITIATIVE_NAME_TYPE2_CHECK)){
       return replaceMessageItem(markdownOkType2,
               NotificationConstants.INITIATIVE_NAME_KEY,
               evaluationDTO.getInitiativeName());
@@ -226,7 +226,7 @@ public class NotificationMarkdown {
   public String getMarkdown(Notification notification) {
     if(NotificationConstants.STATUS_ONBOARDING_OK.equals(notification.getOnboardingOutcome())
             && NotificationConstants.ORGANIZATION_NAME_TYPE2.equalsIgnoreCase(notification.getOrganizationName())
-            && notification.getInitiativeName().toLowerCase().contains(NotificationConstants.INITIATIVE_NAME_TYPE2_CHECK.toLowerCase())){
+            && notification.getInitiativeName().toLowerCase().contains(NotificationConstants.INITIATIVE_NAME_TYPE2_CHECK)){
       return replaceMessageItem(markdownOkType2,
               NotificationConstants.INITIATIVE_NAME_KEY,
               notification.getInitiativeName());
