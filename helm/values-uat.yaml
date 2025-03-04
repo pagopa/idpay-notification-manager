@@ -37,7 +37,6 @@ microservice-chart:
       -javaagent:/app/applicationinsights-agent.jar 
       -Dapplicationinsights.configuration.file=/mnt/file-config-external/appinsights-config/applicationinsights.json
   
-
   envSecret:
     aks-api-url: cstar-u-weu-uat01-aks-apiserver-url
     APPLICATIONINSIGHTS_CONNECTION_STRING: appinsights-instrumentation-key
