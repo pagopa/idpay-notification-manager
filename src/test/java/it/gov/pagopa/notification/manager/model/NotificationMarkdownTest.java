@@ -25,7 +25,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 class NotificationMarkdownTest {
 
   private static final String SUBJECT_OK = "Il tuo Bonus è attivo";
-  private static final String SUBJECT_OK_TYPE2 = "Abbiamo ricevuto la tua richiesta di adesione";
+  private static final String SUBJECT_OK_TYPE2 = "Il tuo Bonus è attivo!";
   private static final String SUBJECT_KO = "Non è stato possibile attivare TESTINITIATIVE01";
   private static final String SUBJECT_KO_TECH = "Abbiamo riscontrato dei problemi";
   private static final String MARKDOWN_OK = """
@@ -46,16 +46,10 @@ class NotificationMarkdownTest {
                         
             Puoi trovare maggiori informazioni sul [sito](http://example.com/).""";
   private static final String MARKDOWN_OK_TYPE2 = """
-                  Ciao,
-                  abbiamo ricevuto la tua richiesta di adesione per il **Rimborso centri estivi**!
+                  Buone notizie! Ai soli fini della sperimentazione, hai i requisiti per procedere con l'iniziativa.
+                  Da questo momento puoi visualizzare il bonus nella sezione Portafoglio.
                  
-                  Per finalizzare l'adesione è necessario inviare entro il **28/02/2025** all'indirizzo email [politichesociali@comune.guidoniamontecelio.rm.it](mailto:politichesociali@comune.guidoniamontecelio.rm.it) la seguente documentazione:
-                 
-                    - **Attestazione ISEE 2024**
-                    - **Ricevuta o documento equivalente** da parte della struttura, in cui si evince chi ha beneficiato del servizio (nome del minore). Se questo dato non è presente, è necessaria anche una **prova del pagamento** (ad esempio la ricevuta del bonifico).
-                    - Eventuale **certificazione di disabilità** e di diagnosi funzionale rilasciata dalla ASL competente (verbale di accertamento dell'handicap L.104/1992, in corso di validità).
-                 
-                  Ricevuta la documentazione, alla chiusura delle graduatorie ti verrà comunicato l'esito della domanda.""";
+                  Per utilizzarlo, devi prima caricare i giustificativi di spesa.""";
   private static final String USER_ID = "USER_ID";
   private static final String INITIATIVE_ID = "TESTINITIATIVE01";
   private static final String INITIATIVE_NAME = "NAMETESTINITIATIVE01";
