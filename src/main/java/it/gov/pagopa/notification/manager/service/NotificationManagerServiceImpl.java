@@ -103,6 +103,13 @@ public class NotificationManagerServiceImpl implements NotificationManagerServic
             return;
         }
 
+        if(NotificationConstants.STATUS_ONBOARDING_DEMANDED.equals(evaluationDTO.getStatus())
+                && NotificationConstants.ORGANIZATION_NAME_TYPE2.equalsIgnoreCase(evaluationDTO.getOrganizationName())
+                && evaluationDTO.getInitiativeName().toLowerCase().contains(NotificationConstants.INITIATIVE_NAME_TYPE2_CHECK)){
+            log.info("[NOTIFY] Skipping sending message for DEMANDED citizen {} of type2 familyUnit", evaluationDTO.getUserId());
+            return;
+        }
+
         Notification notification = notificationMapper.evaluationToNotification(evaluationDTO);
         InitiativeAdditionalInfoDTO ioTokens = null;
 
