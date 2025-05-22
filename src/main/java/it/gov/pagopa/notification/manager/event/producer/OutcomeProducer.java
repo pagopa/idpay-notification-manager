@@ -18,7 +18,9 @@ public class OutcomeProducer {
   }
 
   public void sendOutcome(EvaluationDTO evaluationDTO){
+
     streamBridge.send("notificationQueue-out-0", binder, evaluationDTO);
+
   }
 
 }
