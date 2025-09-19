@@ -17,6 +17,8 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import static it.gov.pagopa.notification.manager.enums.Channel.IO;
+import static it.gov.pagopa.notification.manager.enums.Channel.WEB;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @Slf4j
@@ -58,18 +60,24 @@ class NotificationMarkdownTest {
   private static final LocalDate TEST_DATE_ONLY_DATE = LocalDate.now();
 
   private static final EvaluationDTO EVALUATION_DTO =
-      new EvaluationDTO(
-          USER_ID,
-          INITIATIVE_ID,
-          INITIATIVE_NAME,
-          TEST_DATE_ONLY_DATE,
-          INITIATIVE_ID,
-          ORGANIZATION_NAME,
-          NotificationConstants.STATUS_ONBOARDING_OK,
-          TEST_DATE,
-          TEST_DATE,
-          List.of(),
-          50000L, 1L);
+          new EvaluationDTO(
+                  USER_ID,
+                  INITIATIVE_ID,
+                  INITIATIVE_NAME,
+                  TEST_DATE_ONLY_DATE,
+                  INITIATIVE_ID,
+                  ORGANIZATION_NAME,
+                  NotificationConstants.STATUS_ONBOARDING_OK,
+                  TEST_DATE,
+                  TEST_DATE,
+                  List.of(),
+                  50000L,
+                  1L,
+                  true,
+                  null,
+                  IO
+          );
+
   private static final EvaluationDTO EVALUATION_DTO_TYPE2 =
           new EvaluationDTO(
                   USER_ID,
@@ -82,66 +90,70 @@ class NotificationMarkdownTest {
                   TEST_DATE,
                   TEST_DATE,
                   List.of(),
-                  50000L, 1L);
+                  50000L,
+                  1L,
+                  true,
+                  null,
+                  IO
+          );
+
   private static final EvaluationDTO EVALUATION_DTO_KO_PDND =
-      new EvaluationDTO(
-          USER_ID,
-          INITIATIVE_ID,
-          INITIATIVE_ID,
-          TEST_DATE_ONLY_DATE,
-          INITIATIVE_ID,
-          ORGANIZATION_NAME,
-          NotificationConstants.STATUS_ONBOARDING_KO,
-          TEST_DATE,
-          TEST_DATE,
-          List.of(
-              new OnboardingRejectionReason(
-                  OnboardingRejectionReasonType.AUTOMATED_CRITERIA_FAIL,
-                  OnboardingRejectionReasonCode.AUTOMATED_CRITERIA_ISEE_FAIL,
-                  "AUTHORITY",
-                  "LABEL",
-                  "DETAIL")),
-          50000L, 1L);
+          new EvaluationDTO(
+                  USER_ID,
+                  INITIATIVE_ID,
+                  INITIATIVE_ID,
+                  TEST_DATE_ONLY_DATE,
+                  INITIATIVE_ID,
+                  ORGANIZATION_NAME,
+                  NotificationConstants.STATUS_ONBOARDING_KO,
+                  TEST_DATE,
+                  TEST_DATE,
+                  List.of(new OnboardingRejectionReason(OnboardingRejectionReasonType.AUTOMATED_CRITERIA_FAIL, OnboardingRejectionReasonCode.AUTOMATED_CRITERIA_ISEE_FAIL, "AUTHORITY", "LABEL", "DETAIL")),
+                  50000L,
+                  1L,
+                  true,
+                  null,
+                  IO
+          );
 
   private static final EvaluationDTO EVALUATION_DTO_KO_RANKING =
-      new EvaluationDTO(
-          USER_ID,
-          INITIATIVE_ID,
-          INITIATIVE_ID,
-          TEST_DATE_ONLY_DATE,
-          INITIATIVE_ID,
-          ORGANIZATION_NAME,
-          NotificationConstants.STATUS_ONBOARDING_KO,
-          TEST_DATE,
-          TEST_DATE,
-          List.of(
-              new OnboardingRejectionReason(
-                  OnboardingRejectionReasonType.OUT_OF_RANKING,
+          new EvaluationDTO(
+                  USER_ID,
+                  INITIATIVE_ID,
+                  INITIATIVE_ID,
+                  TEST_DATE_ONLY_DATE,
+                  INITIATIVE_ID,
+                  ORGANIZATION_NAME,
+                  NotificationConstants.STATUS_ONBOARDING_KO,
+                  TEST_DATE,
+                  TEST_DATE,
+                  List.of(new OnboardingRejectionReason(OnboardingRejectionReasonType.OUT_OF_RANKING, null, "AUTHORITY", "LABEL", "DETAIL")),
+                  50000L,
+                  1L,
+                  true,
                   null,
-                  "AUTHORITY",
-                  "LABEL",
-                  "DETAIL")),
-          50000L,1L);
+                  IO
+          );
 
   private static final EvaluationDTO EVALUATION_DTO_KO_TECH =
-      new EvaluationDTO(
-          USER_ID,
-          INITIATIVE_ID,
-          INITIATIVE_ID,
-          TEST_DATE_ONLY_DATE,
-          INITIATIVE_ID,
-          ORGANIZATION_NAME,
-          NotificationConstants.STATUS_ONBOARDING_KO,
-          TEST_DATE,
-          TEST_DATE,
-          List.of(
-              new OnboardingRejectionReason(
-                  OnboardingRejectionReasonType.TECHNICAL_ERROR,
+          new EvaluationDTO(
+                  USER_ID,
+                  INITIATIVE_ID,
+                  INITIATIVE_ID,
+                  TEST_DATE_ONLY_DATE,
+                  INITIATIVE_ID,
+                  ORGANIZATION_NAME,
+                  NotificationConstants.STATUS_ONBOARDING_KO,
+                  TEST_DATE,
+                  TEST_DATE,
+                  List.of(new OnboardingRejectionReason(OnboardingRejectionReasonType.TECHNICAL_ERROR, null, "AUTHORITY", "LABEL", "DETAIL")),
+                  50000L,
+                  1L,
+                  true,
                   null,
-                  "AUTHORITY",
-                  "LABEL",
-                  "DETAIL")),
-          50000L, 1L);
+                  IO
+          );
+
 
   @Autowired NotificationMarkdown notificationMarkdown;
 
@@ -415,7 +427,12 @@ class NotificationMarkdownTest {
             TEST_DATE,
             rejectionReasons,
             50000L,
-            1L);
+            1L,
+            true,
+            null,
+            IO
+    );
+
   }
 
 }

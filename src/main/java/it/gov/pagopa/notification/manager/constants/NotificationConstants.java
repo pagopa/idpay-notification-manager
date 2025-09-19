@@ -42,4 +42,10 @@ public class NotificationConstants {
       public static final String ONBOARDING = "ONBOARDING";
     }
   }
+  public static final class EmailTemplates {
+    private EmailTemplates() {}
+
+    public static final String EMAIL_ESITO_OK = "Email_BEL_EsitoOk";
+    public static final String EMAIL_ESITO_OK_PARZIALE = "Email_BEL_EsitoOkParziale";
+  }
 }

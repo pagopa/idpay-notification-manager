@@ -20,6 +20,8 @@ import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
 import java.time.LocalDate;
 import java.util.List;
 
+import static it.gov.pagopa.notification.manager.enums.Channel.IO;
+
 @ExtendWith(MockitoExtension.class)
 @WebMvcTest(
     value = {NotificationManagerController.class},
@@ -34,18 +36,24 @@ class NotificationManagerControllerTest {
 
   private static final LocalDate TEST_DATE = LocalDate.now();
   private static final EvaluationDTO EVALUATION_DTO =
-      new EvaluationDTO(
-          USER_ID,
-          INITIATIVE_ID,
-          INITIATIVE_ID,
-          TEST_DATE,
-          INITIATIVE_ID,
-          ORGANIZATION_NAME,
-          NotificationConstants.STATUS_ONBOARDING_OK,
-          TEST_DATE.atStartOfDay(),
-          TEST_DATE.atStartOfDay(),
-          List.of(),
-              50000L, 1L);
+          new EvaluationDTO(
+                  USER_ID,
+                  INITIATIVE_ID,
+                  INITIATIVE_ID,
+                  TEST_DATE,
+                  INITIATIVE_ID,
+                  ORGANIZATION_NAME,
+                  NotificationConstants.STATUS_ONBOARDING_OK,
+                  TEST_DATE.atStartOfDay(),
+                  TEST_DATE.atStartOfDay(),
+                  List.of(),
+                  50000L,
+                  1L,
+                  true,
+                  null,
+                  IO
+          );
+
 
   @MockBean NotificationManagerService notificationManagerServiceMock;
 

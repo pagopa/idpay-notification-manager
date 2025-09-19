@@ -3,6 +3,7 @@ package it.gov.pagopa.notification.manager.service;
 import feign.FeignException;
 import feign.Request;
 import feign.RequestTemplate;
+import it.gov.pagopa.notification.manager.connector.EmailNotificationConnector;
 import it.gov.pagopa.notification.manager.connector.IOBackEndRestConnector;
 import it.gov.pagopa.notification.manager.connector.PdvDecryptRestConnector;
 import it.gov.pagopa.notification.manager.connector.initiative.InitiativeRestConnector;
@@ -42,9 +43,11 @@ import java.util.List;
 import java.util.stream.Stream;
 
 import static it.gov.pagopa.notification.manager.constants.NotificationConstants.AnyNotificationConsumer.SubTypes.*;
+import static it.gov.pagopa.notification.manager.enums.Channel.IO;
+import static it.gov.pagopa.notification.manager.enums.Channel.WEB;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 @ExtendWith({SpringExtension.class, MockitoExtension.class})
 @ContextConfiguration(classes = NotificationManagerServiceImpl.class)
@@ -89,7 +92,31 @@ class NotificationManagerServiceTest {
                     TEST_DATE,
                     TEST_DATE,
                     List.of(),
-                    50000L, 1L);
+                    50000L,
+                    1L,
+                    true,
+                    null,
+                    IO
+            );
+
+    private static final EvaluationDTO EVALUATION_DTO_WEB = new EvaluationDTO(
+            TEST_TOKEN,
+            INITIATIVE_ID,
+            INITIATIVE_ID,
+            TEST_DATE_ONLY_DATE,
+            INITIATIVE_ID,
+            ORGANIZATION_NAME,
+            NotificationConstants.STATUS_ONBOARDING_OK,
+            TEST_DATE,
+            TEST_DATE,
+            List.of(),
+            50000L,
+            1L,
+            true,
+            "user@email.com",
+            WEB
+    );
+
     private static final FiscalCodeDTO FISCAL_CODE_DTO = new FiscalCodeDTO(FISCAL_CODE);
 
     private static final NotificationResource NOTIFICATION_RESOURCE = new NotificationResource();
@@ -256,6 +283,8 @@ class NotificationManagerServiceTest {
     @MockBean
     IOBackEndRestConnector ioBackEndRestConnector;
     @MockBean
+    EmailNotificationConnector emailNotificationConnector;
+    @MockBean
     NotificationManagerRepository notificationManagerRepository;
     @MockBean
     NotificationManagerRepositoryExtended notificationManagerRepositoryExtended;
@@ -276,13 +305,12 @@ class NotificationManagerServiceTest {
 
         notificationManagerService.addOutcome(EVALUATION_DTO);
 
-        Mockito.verify(outcomeProducer, Mockito.times(1)).sendOutcome(EVALUATION_DTO);
+        verify(outcomeProducer, times(1)).sendOutcome(EVALUATION_DTO);
     }
 
     @Test
-    void onboarding_ko_not_to_notify_citizen(){
-        EvaluationDTO evaluationDTO =
-        new EvaluationDTO(
+    void notify_onboardingKo_shouldSkipNotification() {
+        EvaluationDTO evaluationDTO = new EvaluationDTO(
                 TEST_TOKEN,
                 INITIATIVE_ID,
                 INITIATIVE_ID,
@@ -292,24 +320,30 @@ class NotificationManagerServiceTest {
                 NotificationConstants.STATUS_ONBOARDING_OK,
                 TEST_DATE,
                 TEST_DATE,
-                List.of(new OnboardingRejectionReason(OnboardingRejectionReason.OnboardingRejectionReasonType.FAMILY_CRITERIA_KO,
-                                OnboardingRejectionReason.OnboardingRejectionReasonCode.FAMILY_CRITERIA_FAIL, null, null, null),
-                        new OnboardingRejectionReason(OnboardingRejectionReason.OnboardingRejectionReasonType.ISEE_TYPE_KO,
-                                OnboardingRejectionReason.OnboardingRejectionReasonCode.ISEE_TYPE_FAIL, null, null, null)),
-                50000L, 1L);
+                List.of(
+                        new OnboardingRejectionReason(
+                                OnboardingRejectionReason.OnboardingRejectionReasonType.FAMILY_CRITERIA_KO,
+                                OnboardingRejectionReason.OnboardingRejectionReasonCode.FAMILY_CRITERIA_FAIL,
+                                null, null, null),
+                        new OnboardingRejectionReason(
+                                OnboardingRejectionReason.OnboardingRejectionReasonType.ISEE_TYPE_KO,
+                                OnboardingRejectionReason.OnboardingRejectionReasonCode.ISEE_TYPE_FAIL,
+                                null, null, null)
+                ),
+                50000L,
+                1L,
+                true,
+                "user@mail.com",
+                IO
+        );
 
-        try {
-            notificationManagerService.notify(evaluationDTO);
-        } catch (FeignException e) {
-            Assertions.fail();
-        }
-        Mockito.verify(notificationMapper, Mockito.times(0))
-                .evaluationToNotification(evaluationDTO);
-        Mockito.verify(initiativeRestConnector, Mockito.times(0))
-                .getIOTokens(evaluationDTO.getInitiativeId());
-        Mockito.verify(notificationManagerRepository, Mockito.times(0))
-                .save(NOTIFICATION);
+        notificationManagerService.notify(evaluationDTO);
+
+        verify(notificationMapper, times(0)).evaluationToNotification(evaluationDTO);
+        verify(initiativeRestConnector, times(0)).getIOTokens(evaluationDTO.getInitiativeId());
+        verify(notificationManagerRepository, times(0)).save(any(Notification.class));
     }
+
 
     @Test
     void notify_ok() {
@@ -362,7 +396,13 @@ class NotificationManagerServiceTest {
                         TEST_DATE,
                         TEST_DATE,
                         null,
-                        50000L, 1L);
+                        50000L,
+                        1L,
+                        true,
+                        null,
+                        IO
+                );
+
         Mockito.when(pdvDecryptRestConnector.getPii(TEST_TOKEN)).thenReturn(FISCAL_CODE_RESOURCE);
         Mockito.when(ioBackEndRestConnector.getProfile(FISCAL_CODE_DTO, TOKEN))
                 .thenReturn(PROFILE_RESOURCE);
@@ -401,7 +441,7 @@ class NotificationManagerServiceTest {
             assertEquals(HttpStatus.BAD_REQUEST.value(), e.status());
         }
 
-        Mockito.verify(notificationManagerRepository, Mockito.times(1))
+        verify(notificationManagerRepository, times(1))
                 .save(Mockito.any(Notification.class));
     }
 
@@ -418,11 +458,29 @@ class NotificationManagerServiceTest {
                         NotificationConstants.STATUS_ONBOARDING_OK,
                         TEST_DATE,
                         TEST_DATE,
-                        List.of(new OnboardingRejectionReason(OnboardingRejectionReason.OnboardingRejectionReasonType.AUTOMATED_CRITERIA_FAIL,
-                                        OnboardingRejectionReason.OnboardingRejectionReasonCode.AUTOMATED_CRITERIA_ISEE_FAIL, null, null, null),
-                                new OnboardingRejectionReason(OnboardingRejectionReason.OnboardingRejectionReasonType.ISEE_TYPE_KO,
-                                        OnboardingRejectionReason.OnboardingRejectionReasonCode.ISEE_TYPE_FAIL, null, null, null)),
-                        50000L, 1L);
+                        List.of(
+                                new OnboardingRejectionReason(
+                                        OnboardingRejectionReason.OnboardingRejectionReasonType.AUTOMATED_CRITERIA_FAIL,
+                                        OnboardingRejectionReason.OnboardingRejectionReasonCode.AUTOMATED_CRITERIA_ISEE_FAIL,
+                                        null,
+                                        null,
+                                        null
+                                ),
+                                new OnboardingRejectionReason(
+                                        OnboardingRejectionReason.OnboardingRejectionReasonType.ISEE_TYPE_KO,
+                                        OnboardingRejectionReason.OnboardingRejectionReasonCode.ISEE_TYPE_FAIL,
+                                        null,
+                                        null,
+                                        null
+                                )
+                        ),
+                        50000L,
+                        1L,
+                        true,
+                        null,
+                        IO
+                );
+
 
         Request request =
                 Request.create(Request.HttpMethod.GET, "url", new HashMap<>(), null, new RequestTemplate());
@@ -435,7 +493,7 @@ class NotificationManagerServiceTest {
                 .thenReturn(NOTIFICATION);
 
         notificationManagerService.notify(evaluationDTO);
-        Mockito.verify(notificationManagerRepository, Mockito.times(1))
+        verify(notificationManagerRepository, times(1))
                 .save(Mockito.any(Notification.class));
     }
 
@@ -473,13 +531,13 @@ class NotificationManagerServiceTest {
 
         notificationManagerService.notify(EVALUATION_DTO);
 
-        Mockito.verify(notificationManagerRepository, Mockito.times(1))
+        verify(notificationManagerRepository, times(1))
                 .save(Mockito.any(Notification.class));
     }
 
     @Test
     void notify_ko_no_cf() {
-        Mockito.when(initiativeRestConnector.getIOTokens(EVALUATION_DTO.getInitiativeId()))
+        Mockito.when(initiativeRestConnector.getIOTokens(EVALUATION_DTO_WEB.getInitiativeId()))
                 .thenReturn(INITIATIVE_ADDITIONAL_INFO_DTO);
 
         Request request =
@@ -493,7 +551,7 @@ class NotificationManagerServiceTest {
 
         notificationManagerService.notify(EVALUATION_DTO);
 
-        Mockito.verify(notificationManagerRepository, Mockito.times(1))
+        verify(notificationManagerRepository, times(1))
                 .save(Mockito.any(Notification.class));
     }
 
@@ -530,7 +588,7 @@ class NotificationManagerServiceTest {
             Assertions.fail();
         }
 
-        Mockito.verify(notificationManagerRepository, Mockito.times(1))
+        verify(notificationManagerRepository, times(1))
                 .save(NOTIFICATION);
     }
 
@@ -546,7 +604,7 @@ class NotificationManagerServiceTest {
         } catch (FeignException e) {
             Assertions.fail();
         }
-        Mockito.verify(notificationManagerRepository, Mockito.times(0))
+        verify(notificationManagerRepository, times(0))
                 .save(any());
     }
 
@@ -583,7 +641,7 @@ class NotificationManagerServiceTest {
             assertEquals(HttpStatus.BAD_REQUEST.value(), e.status());
         }
 
-        Mockito.verify(notificationManagerRepository, Mockito.times(1))
+        verify(notificationManagerRepository, times(1))
                 .save(Mockito.any(Notification.class));
     }
 
@@ -620,7 +678,7 @@ class NotificationManagerServiceTest {
             Assertions.fail();
         }
 
-        Mockito.verify(notificationManagerRepository, Mockito.times(1))
+        verify(notificationManagerRepository, times(1))
                 .save(NOTIFICATION);
     }
 
@@ -639,7 +697,7 @@ class NotificationManagerServiceTest {
                 .thenReturn(NOTIFICATION);
 
         notificationManagerService.sendNotificationFromOperationType(NOTIFICATION_IBAN_QUEUE_DTO);
-        Mockito.verify(notificationManagerRepository, Mockito.times(1))
+        verify(notificationManagerRepository, times(1))
                 .save(Mockito.any(Notification.class));
     }
 
@@ -658,7 +716,7 @@ class NotificationManagerServiceTest {
                 .thenReturn(NOTIFICATION);
 
         notificationManagerService.sendNotificationFromOperationType(NOTIFICATION_CITIZEN_ON_QUEUE_DTO);
-        Mockito.verify(notificationManagerRepository, Mockito.times(1))
+        verify(notificationManagerRepository, times(1))
                 .save(Mockito.any(Notification.class));
     }
 
@@ -679,7 +737,7 @@ class NotificationManagerServiceTest {
 
         notificationManagerService.sendNotificationFromOperationType(NOTIFICATION_IBAN_QUEUE_DTO);
 
-        Mockito.verify(notificationManagerRepository, Mockito.times(1))
+        verify(notificationManagerRepository, times(1))
                 .save(Mockito.any(Notification.class));
     }
 
@@ -700,7 +758,7 @@ class NotificationManagerServiceTest {
 
         notificationManagerService.sendNotificationFromOperationType(NOTIFICATION_CITIZEN_ON_QUEUE_DTO);
 
-        Mockito.verify(notificationManagerRepository, Mockito.times(1))
+        verify(notificationManagerRepository, times(1))
                 .save(Mockito.any(Notification.class));
     }
 
@@ -718,7 +776,7 @@ class NotificationManagerServiceTest {
 
         notificationManagerService.sendNotificationFromOperationType(NOTIFICATION_IBAN_QUEUE_DTO);
 
-        Mockito.verify(notificationManagerRepository, Mockito.times(1))
+        verify(notificationManagerRepository, times(1))
                 .save(Mockito.any(Notification.class));
     }
 
@@ -736,7 +794,7 @@ class NotificationManagerServiceTest {
 
         notificationManagerService.sendNotificationFromOperationType(NOTIFICATION_CITIZEN_ON_QUEUE_DTO);
 
-        Mockito.verify(notificationManagerRepository, Mockito.times(1))
+        verify(notificationManagerRepository, times(1))
                 .save(Mockito.any(Notification.class));
     }
 
@@ -755,7 +813,7 @@ class NotificationManagerServiceTest {
 
         notificationManagerService.sendNotificationFromOperationType(NOTIFICATION_IBAN_QUEUE_DTO);
 
-        Mockito.verify(notificationManagerRepository, Mockito.times(1))
+        verify(notificationManagerRepository, times(1))
                 .save(Mockito.any(Notification.class));
     }
 
@@ -774,7 +832,7 @@ class NotificationManagerServiceTest {
 
         notificationManagerService.sendNotificationFromOperationType(NOTIFICATION_CITIZEN_ON_QUEUE_DTO);
 
-        Mockito.verify(notificationManagerRepository, Mockito.times(1))
+        verify(notificationManagerRepository, times(1))
                 .save(Mockito.any(Notification.class));
     }
 
@@ -796,7 +854,7 @@ class NotificationManagerServiceTest {
             Assertions.fail();
         }
 
-        Mockito.verify(notificationManagerRepository, Mockito.times(1))
+        verify(notificationManagerRepository, times(1))
                 .save(NOTIFICATION);
     }
 
@@ -852,7 +910,7 @@ class NotificationManagerServiceTest {
             Assertions.fail();
         }
 
-        Mockito.verify(notificationManagerRepository, Mockito.times(1))
+        verify(notificationManagerRepository, times(1))
                 .save(NOTIFICATION);
     }
 
@@ -902,7 +960,7 @@ class NotificationManagerServiceTest {
             Assertions.fail();
         }
 
-        Mockito.verify(notificationManagerRepository, Mockito.times(6))
+        verify(notificationManagerRepository, times(6))
                 .save(Mockito.any(Notification.class));
     }
 
@@ -923,7 +981,7 @@ class NotificationManagerServiceTest {
             Assertions.fail();
         }
 
-        Mockito.verify(notificationManagerRepository, Mockito.times(0))
+        verify(notificationManagerRepository, times(0))
                 .save(Mockito.any(Notification.class));
 
     }
@@ -958,7 +1016,7 @@ class NotificationManagerServiceTest {
             assertEquals(HttpStatus.BAD_REQUEST.value(), e.status());
         }
 
-        Mockito.verify(notificationManagerRepository, Mockito.times(1))
+        verify(notificationManagerRepository, times(1))
                 .save(Mockito.any(Notification.class));
     }
 
@@ -973,7 +1031,7 @@ class NotificationManagerServiceTest {
                 .getIOTokens(EVALUATION_DTO.getInitiativeId());
 
         notificationManagerService.notify(KO_NOTIFICATION_FIRST_RETRY);
-        Mockito.verify(notificationManagerRepository, Mockito.times(1))
+        verify(notificationManagerRepository, times(1))
                 .save(Mockito.any(Notification.class));
     }
 
@@ -991,7 +1049,7 @@ class NotificationManagerServiceTest {
 
         notificationManagerService.notify(KO_NOTIFICATION_FIRST_RETRY);
 
-        Mockito.verify(notificationManagerRepository, Mockito.times(1))
+        verify(notificationManagerRepository, times(1))
                 .save(Mockito.any(Notification.class));
     }
 
@@ -1006,7 +1064,7 @@ class NotificationManagerServiceTest {
 
         notificationManagerService.notify(KO_NOTIFICATION_N_RETRY);
 
-        Mockito.verify(notificationManagerRepository, Mockito.times(1))
+        verify(notificationManagerRepository, times(1))
                 .save(Mockito.any(Notification.class));
     }
 
@@ -1023,7 +1081,7 @@ class NotificationManagerServiceTest {
 
         notificationManagerService.notify(KO_NOTIFICATION_FIRST_RETRY);
 
-        Mockito.verify(notificationManagerRepository, Mockito.times(1))
+        verify(notificationManagerRepository, times(1))
                 .save(Mockito.any(Notification.class));
     }
 
@@ -1070,7 +1128,7 @@ class NotificationManagerServiceTest {
             Assertions.fail();
         }
 
-        Mockito.verify(notificationManagerRepository, Mockito.times(1)).save(NOTIFICATION_SUSPENSION);
+        verify(notificationManagerRepository, times(1)).save(NOTIFICATION_SUSPENSION);
     }
 
     @Test
@@ -1096,7 +1154,7 @@ class NotificationManagerServiceTest {
             Assertions.fail();
         }
 
-        Mockito.verify(notificationManagerRepository, Mockito.times(1)).save(NOTIFICATION_READMISSION);
+        verify(notificationManagerRepository, times(1)).save(NOTIFICATION_READMISSION);
     }
 
     @ParameterizedTest
@@ -1132,7 +1190,7 @@ class NotificationManagerServiceTest {
 
 
         // Then
-        Mockito.verify(notificationManagerRepositoryExtended, Mockito.times(times)).deletePaged(queueCommandOperationDTO.getEntityId(), PAGE_SIZE);
+        verify(notificationManagerRepositoryExtended, times(times)).deletePaged(queueCommandOperationDTO.getEntityId(), PAGE_SIZE);
     }
 
     private static Stream<Arguments> operationTypeAndInvocationTimes() {

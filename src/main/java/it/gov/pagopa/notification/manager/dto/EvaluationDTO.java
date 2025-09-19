@@ -1,5 +1,6 @@
 package it.gov.pagopa.notification.manager.dto;
 
+import it.gov.pagopa.notification.manager.enums.Channel;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
@@ -31,4 +32,8 @@ public class EvaluationDTO {
   private List<OnboardingRejectionReason> onboardingRejectionReasons;
   private Long beneficiaryBudgetCents;
   private Long rankingValue;
+  private Boolean verifyIsee;
+  private String userMail;
+  private Channel channel;
+
 }
