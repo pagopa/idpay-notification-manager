@@ -29,6 +29,7 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
@@ -170,14 +171,15 @@ public class NotificationManagerServiceImpl implements NotificationManagerServic
 
     private void processWebNotification(EvaluationDTO evaluationDTO, long startTime) {
         try {
-            String template = (!Boolean.TRUE.equals(evaluationDTO.getVerifyIsee() || evaluationDTO.getBeneficiaryBudgetCents() > 100)
-                    ? EMAIL_ESITO_OK
-                    : EMAIL_ESITO_OK_PARZIALE);
+            boolean isVerifyIsee = Boolean.TRUE.equals(evaluationDTO.getVerifyIsee());
+            boolean isBudgetAboveThreshold = evaluationDTO.getBeneficiaryBudgetCents() != null && evaluationDTO.getBeneficiaryBudgetCents() > 100;
 
-            Map<String, String> templateValues = Map.of(
-                    "userId", evaluationDTO.getUserId(),
-                    "initiativeId", evaluationDTO.getInitiativeId()
-            );
+            String template = (!isVerifyIsee && !isBudgetAboveThreshold ? EMAIL_ESITO_OK : EMAIL_ESITO_OK_PARZIALE);
+
+
+            Map<String, String> templateValues = new HashMap<>();
+            templateValues.put("userId", evaluationDTO.getUserId());
+            templateValues.put("initiativeId", evaluationDTO.getInitiativeId());
 
             if (evaluationDTO.getBeneficiaryBudgetCents() != null) {
                 long amount = evaluationDTO.getBeneficiaryBudgetCents() / 100;

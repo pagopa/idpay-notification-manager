@@ -13,6 +13,7 @@ import it.gov.pagopa.notification.manager.dto.event.*;
 import it.gov.pagopa.notification.manager.dto.initiative.InitiativeAdditionalInfoDTO;
 import it.gov.pagopa.notification.manager.dto.mapper.NotificationDTOMapper;
 import it.gov.pagopa.notification.manager.dto.mapper.NotificationMapper;
+import it.gov.pagopa.notification.manager.enums.Channel;
 import it.gov.pagopa.notification.manager.event.producer.OutcomeProducer;
 import it.gov.pagopa.notification.manager.model.Notification;
 import it.gov.pagopa.notification.manager.model.NotificationMarkdown;
@@ -43,6 +44,8 @@ import java.util.List;
 import java.util.stream.Stream;
 
 import static it.gov.pagopa.notification.manager.constants.NotificationConstants.AnyNotificationConsumer.SubTypes.*;
+import static it.gov.pagopa.notification.manager.constants.NotificationConstants.EmailTemplates.EMAIL_ESITO_OK;
+import static it.gov.pagopa.notification.manager.constants.NotificationConstants.EmailTemplates.EMAIL_ESITO_OK_PARZIALE;
 import static it.gov.pagopa.notification.manager.enums.Channel.IO;
 import static it.gov.pagopa.notification.manager.enums.Channel.WEB;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -380,6 +383,260 @@ class NotificationManagerServiceTest {
 
         Mockito.verify(notificationManagerRepository, Mockito.times(1))
                 .save(NOTIFICATION);
+    }
+
+    @Test
+    void notify_appIo_ioTokensNull_triggersNotificationKO() {
+        EvaluationDTO evaluationDTO = new EvaluationDTO(
+                TEST_TOKEN,
+                INITIATIVE_ID,
+                INITIATIVE_ID,
+                TEST_DATE_ONLY_DATE,
+                INITIATIVE_ID,
+                ORGANIZATION_NAME,
+                NotificationConstants.STATUS_ONBOARDING_OK,
+                TEST_DATE,
+                TEST_DATE,
+                List.of(),
+                50000L,
+                1L,
+                true,
+                null,
+                IO
+        );
+
+        Notification notification = Notification.builder()
+                .notificationDate(LocalDateTime.now())
+                .initiativeId(evaluationDTO.getInitiativeId())
+                .userId(evaluationDTO.getUserId())
+                .onboardingOutcome(evaluationDTO.getStatus())
+                .rejectReasons(evaluationDTO.getOnboardingRejectionReasons())
+                .build();
+        Mockito.when(notificationMapper.evaluationToNotification(evaluationDTO)).thenReturn(notification);
+
+        Mockito.when(initiativeRestConnector.getIOTokens(evaluationDTO.getInitiativeId())).thenReturn(null);
+
+        notificationManagerService.notify(evaluationDTO);
+
+        verify(notificationManagerRepository, times(1)).save(Mockito.argThat(n ->
+                n.getNotificationStatus() != null &&
+                        n.getNotificationStatus().equals(NotificationConstants.NOTIFICATION_STATUS_KO)
+        ));
+    }
+
+    @Test
+    void notify_unsupportedChannel_logsWarning() {
+        EvaluationDTO evaluationDTO = Mockito.mock(EvaluationDTO.class);
+
+        Mockito.when(evaluationDTO.getUserId()).thenReturn("user@email.com");
+
+        Channel fakeChannel = Mockito.mock(Channel.class);
+        Mockito.when(fakeChannel.isAppIo()).thenReturn(false);
+        Mockito.when(fakeChannel.isWeb()).thenReturn(false);
+
+        Mockito.when(evaluationDTO.getChannel()).thenReturn(fakeChannel);
+
+        Assertions.assertDoesNotThrow(() -> notificationManagerService.notify(evaluationDTO));
+    }
+
+    @Test
+    void notify_web_ok_templateEsitoOk() {
+        EvaluationDTO evaluationDTO = EVALUATION_DTO_WEB;
+
+        Notification notification = Notification.builder()
+                .notificationDate(LocalDateTime.now())
+                .initiativeId(evaluationDTO.getInitiativeId())
+                .userId(evaluationDTO.getUserId())
+                .onboardingOutcome(evaluationDTO.getStatus())
+                .rejectReasons(evaluationDTO.getOnboardingRejectionReasons())
+                .build();
+
+        Mockito.when(notificationMapper.evaluationToNotification(evaluationDTO))
+                .thenReturn(notification);
+
+        Mockito.doAnswer(invocation -> null)
+                .when(emailNotificationConnector)
+                .sendEmail(Mockito.any(EmailMessageDTO.class));
+
+        notificationManagerService.notify(evaluationDTO);
+
+        Mockito.verify(emailNotificationConnector, Mockito.times(1))
+                .sendEmail(Mockito.any(EmailMessageDTO.class));
+    }
+
+    @Test
+    void notify_web_ok_templateEsitoOk_branch() {
+        EvaluationDTO evaluationDTO = new EvaluationDTO(
+                TEST_TOKEN,
+                INITIATIVE_ID,
+                INITIATIVE_ID,
+                TEST_DATE_ONLY_DATE,
+                INITIATIVE_ID,
+                ORGANIZATION_NAME,
+                NotificationConstants.STATUS_ONBOARDING_OK,
+                TEST_DATE,
+                TEST_DATE,
+                List.of(),
+                50L,
+                1L,
+                false,
+                "user@email.com",
+                WEB
+        );
+
+        Notification notification = Notification.builder()
+                .notificationDate(LocalDateTime.now())
+                .initiativeId(evaluationDTO.getInitiativeId())
+                .userId(evaluationDTO.getUserId())
+                .onboardingOutcome(evaluationDTO.getStatus())
+                .rejectReasons(evaluationDTO.getOnboardingRejectionReasons())
+                .build();
+
+        Mockito.when(notificationMapper.evaluationToNotification(evaluationDTO))
+                .thenReturn(notification);
+
+        Mockito.doAnswer(invocation -> null)
+                .when(emailNotificationConnector)
+                .sendEmail(Mockito.any(EmailMessageDTO.class));
+
+        notificationManagerService.notify(evaluationDTO);
+
+        Mockito.verify(emailNotificationConnector, Mockito.times(1))
+                .sendEmail(Mockito.argThat(email ->
+                        EMAIL_ESITO_OK.equals(email.getTemplateName())
+                ));
+    }
+
+    @Test
+    void notify_web_withNullBeneficiaryBudget() {
+        EvaluationDTO evaluationDTO = new EvaluationDTO(
+                TEST_TOKEN,
+                INITIATIVE_ID,
+                INITIATIVE_ID,
+                TEST_DATE_ONLY_DATE,
+                INITIATIVE_ID,
+                ORGANIZATION_NAME,
+                NotificationConstants.STATUS_ONBOARDING_OK,
+                TEST_DATE,
+                TEST_DATE,
+                List.of(),
+                null,
+                1L,
+                false,
+                "user@email.com",
+                WEB
+        );
+
+        Mockito.when(notificationMapper.evaluationToNotification(evaluationDTO))
+                .thenReturn(Notification.builder().build());
+
+        Mockito.doAnswer(invocation -> null)
+                .when(emailNotificationConnector)
+                .sendEmail(Mockito.any(EmailMessageDTO.class));
+
+        notificationManagerService.notify(evaluationDTO);
+
+        Mockito.verify(emailNotificationConnector, Mockito.times(1))
+                .sendEmail(Mockito.argThat(email ->
+                        !email.getTemplateValues().containsKey("amount")
+                ));
+    }
+
+
+    @Test
+    void notify_web_ok_templateEsitoOkParziale() {
+        EvaluationDTO evaluationDTO = new EvaluationDTO(
+                TEST_TOKEN,
+                INITIATIVE_ID,
+                INITIATIVE_ID,
+                TEST_DATE_ONLY_DATE,
+                INITIATIVE_ID,
+                ORGANIZATION_NAME,
+                NotificationConstants.STATUS_ONBOARDING_OK,
+                TEST_DATE,
+                TEST_DATE,
+                List.of(),
+                50000L,
+                1L,
+                false,
+                "user@email.com",
+                WEB
+        );
+
+        Notification notification = Notification.builder()
+                .notificationDate(LocalDateTime.now())
+                .initiativeId(evaluationDTO.getInitiativeId())
+                .userId(evaluationDTO.getUserId())
+                .onboardingOutcome(evaluationDTO.getStatus())
+                .rejectReasons(evaluationDTO.getOnboardingRejectionReasons())
+                .build();
+
+        Mockito.when(notificationMapper.evaluationToNotification(evaluationDTO))
+                .thenReturn(notification);
+
+        Mockito.doAnswer(invocation -> null)
+                .when(emailNotificationConnector)
+                .sendEmail(Mockito.any(EmailMessageDTO.class));
+
+        notificationManagerService.notify(evaluationDTO);
+
+        Mockito.verify(emailNotificationConnector, Mockito.times(1))
+                .sendEmail(Mockito.argThat(email ->
+                        EMAIL_ESITO_OK_PARZIALE.equals(email.getTemplateName())
+                ));
+    }
+
+    @Test
+    void notify_web_withAmountField() {
+        EvaluationDTO evaluationDTO = new EvaluationDTO(
+                TEST_TOKEN,
+                INITIATIVE_ID,
+                INITIATIVE_ID,
+                TEST_DATE_ONLY_DATE,
+                INITIATIVE_ID,
+                ORGANIZATION_NAME,
+                NotificationConstants.STATUS_ONBOARDING_OK,
+                TEST_DATE,
+                TEST_DATE,
+                List.of(),
+                150L,
+                1L,
+                true,
+                "user@email.com",
+                WEB
+        );
+
+        Mockito.when(notificationMapper.evaluationToNotification(evaluationDTO))
+                .thenReturn(Notification.builder().build());
+
+        Mockito.doAnswer(invocation -> null)
+                .when(emailNotificationConnector)
+                .sendEmail(Mockito.any(EmailMessageDTO.class));
+
+        notificationManagerService.notify(evaluationDTO);
+
+        Mockito.verify(emailNotificationConnector, Mockito.times(1))
+                .sendEmail(Mockito.argThat(email ->
+                        email.getTemplateValues().containsKey("amount") &&
+                                email.getTemplateValues().get("amount").equals("1")
+                ));
+    }
+
+    @Test
+    void notify_web_emailFails_logsError() {
+        EvaluationDTO evaluationDTO = EVALUATION_DTO_WEB;
+
+        Mockito.when(notificationMapper.evaluationToNotification(evaluationDTO))
+                .thenReturn(Notification.builder().build());
+
+        Mockito.doThrow(new RuntimeException("Boom"))
+                .when(emailNotificationConnector)
+                .sendEmail(Mockito.any(EmailMessageDTO.class));
+
+        notificationManagerService.notify(evaluationDTO);
+
+        Mockito.verify(emailNotificationConnector, Mockito.times(1))
+                .sendEmail(Mockito.any(EmailMessageDTO.class));
     }
 
     @Test
