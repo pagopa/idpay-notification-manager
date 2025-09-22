@@ -24,7 +24,7 @@ microservice-chart:
     triggers:
       - type: cpu
         metadata:
-          type: Utilization # Allowed types are 'Utilization' or 'AverageValue'
+          type: Utilization #  Allowed types are 'Utilization' or 'AverageValue'
           value: "70"
       
   envConfig:

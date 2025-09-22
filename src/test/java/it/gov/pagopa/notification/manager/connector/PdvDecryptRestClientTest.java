@@ -32,8 +32,11 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
       HttpMessageConvertersAutoConfiguration.class
     })
 @TestPropertySource(
-    locations = "classpath:application.yml",
-    properties = "spring.application.name=pdv-ms-tokenizer-integration-rest")
+        locations = "classpath:application.yml",
+        properties = {
+                "spring.application.name=pdv-ms-tokenizer-integration-rest",
+                "rest-client.notification.email.base-url=http://localhost:${wiremock.server.port}"
+        })
 class PdvDecryptRestClientTest {
 
   private static final String FISCAL_CODE = "AAAAAA00A00A000A";
