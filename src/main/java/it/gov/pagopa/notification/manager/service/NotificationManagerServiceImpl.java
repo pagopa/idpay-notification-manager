@@ -39,8 +39,8 @@ import java.util.concurrent.Future;
 import java.util.stream.IntStream;
 
 import static it.gov.pagopa.notification.manager.constants.NotificationConstants.AnyNotificationConsumer.SubTypes.*;
-import static it.gov.pagopa.notification.manager.constants.NotificationConstants.EmailTemplates.EMAIL_ESITO_OK;
-import static it.gov.pagopa.notification.manager.constants.NotificationConstants.EmailTemplates.EMAIL_ESITO_OK_PARZIALE;
+import static it.gov.pagopa.notification.manager.constants.NotificationConstants.EmailTemplates.EMAIL_OUTCOME_OK;
+import static it.gov.pagopa.notification.manager.constants.NotificationConstants.EmailTemplates.EMAIL_OUTCOME_PARTIAL;
 
 @Service
 @Slf4j
@@ -176,7 +176,7 @@ public class NotificationManagerServiceImpl implements NotificationManagerServic
             boolean isVerifyIsee = Boolean.TRUE.equals(evaluationDTO.getVerifyIsee());
             boolean isBudgetAboveThreshold = evaluationDTO.getBeneficiaryBudgetCents() != null && evaluationDTO.getBeneficiaryBudgetCents() > 100;
 
-            String template = (!isVerifyIsee && !isBudgetAboveThreshold ? EMAIL_ESITO_OK : EMAIL_ESITO_OK_PARZIALE);
+            String template = (!isVerifyIsee && !isBudgetAboveThreshold ? EMAIL_OUTCOME_OK : EMAIL_OUTCOME_PARTIAL);
 
 
             Map<String, String> templateValues = new HashMap<>();
@@ -188,7 +188,7 @@ public class NotificationManagerServiceImpl implements NotificationManagerServic
                 templateValues.put("amount", String.valueOf(amount));
             }
 
-            String subject = EMAIL_ESITO_OK.equals(template) ? subjectOk : subjectPartial;
+            String subject = EMAIL_OUTCOME_OK.equals(template) ? subjectOk : subjectPartial;
 
             EmailMessageDTO emailRequest = EmailMessageDTO.builder()
                     .templateName(template)
