@@ -618,7 +618,7 @@ class NotificationManagerServiceTest {
         Mockito.verify(emailNotificationConnector, Mockito.times(1))
                 .sendEmail(Mockito.argThat(email ->
                         email.getTemplateValues().containsKey("amount") &&
-                                email.getTemplateValues().get("amount").equals("1")
+                                email.getTemplateValues().get("amount").equals("200")
                 ));
     }
 
