@@ -77,7 +77,7 @@ class EmailNotificationFeignClientTest {
             TestPropertySourceUtils.addInlinedPropertiesToEnvironment(
                     applicationContext,
                     String.format(
-                            "rest-client.notification.email.base-url=http://%s:%d",
+                            "rest-client.notification.email-notification.service.base-url=http://%s:%d",
                             wireMockServer.getOptions().bindAddress(),
                             wireMockServer.port()
                     )
