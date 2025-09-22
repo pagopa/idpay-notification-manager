@@ -173,10 +173,9 @@ public class NotificationManagerServiceImpl implements NotificationManagerServic
 
     private void processWebNotification(EvaluationDTO evaluationDTO, long startTime) {
         try {
-            boolean isVerifyIsee = Boolean.TRUE.equals(evaluationDTO.getVerifyIsee());
-            boolean isBudgetAboveThreshold = evaluationDTO.getBeneficiaryBudgetCents() != null && evaluationDTO.getBeneficiaryBudgetCents() > 100;
+            boolean isBudgetAboveThreshold = evaluationDTO.getBeneficiaryBudgetCents() != null && evaluationDTO.getBeneficiaryBudgetCents() == 10000;
 
-            String template = (!isVerifyIsee && !isBudgetAboveThreshold ? EMAIL_OUTCOME_OK : EMAIL_OUTCOME_PARTIAL);
+            String template = (Boolean.TRUE.equals(evaluationDTO.getVerifyIsee()) && isBudgetAboveThreshold ? EMAIL_OUTCOME_PARTIAL: EMAIL_OUTCOME_OK);
 
 
             Map<String, String> templateValues = new HashMap<>();

@@ -556,9 +556,9 @@ class NotificationManagerServiceTest {
                 TEST_DATE,
                 TEST_DATE,
                 List.of(),
-                50000L,
+                10000L,
                 1L,
-                false,
+                true,
                 "user@email.com",
                 WEB
         );
@@ -599,7 +599,7 @@ class NotificationManagerServiceTest {
                 TEST_DATE,
                 TEST_DATE,
                 List.of(),
-                150L,
+                20000L,
                 1L,
                 true,
                 "user@email.com",
@@ -618,7 +618,7 @@ class NotificationManagerServiceTest {
         Mockito.verify(emailNotificationConnector, Mockito.times(1))
                 .sendEmail(Mockito.argThat(email ->
                         email.getTemplateValues().containsKey("amount") &&
-                                email.getTemplateValues().get("amount").equals("1")
+                                email.getTemplateValues().get("amount").equals("200")
                 ));
     }
 
