@@ -27,8 +27,8 @@ rest-client:
         name: notificationClient
         base-url: ${NOTIFICATION_MS_BASE_URL:https://api-io.dev.cstar.pagopa.it/idpay-itn/mock/api/privacynotice/v2}
       template:
-        ok: Email_RDB_EsitoProdottiOK
-        rejected: Email_RDB_EsclusioneProdotti
+        ok: Email_BEL_EsitoOk
+        rejected: Email_BEL_EsitoOkParziale
       subject:
         ok: ${SUBJECT_BEL_OK:Hai ottenuto il bonus!}
         partial:  ${SUBJECT_BEL_OK_PARTIAL:Hai ottenuto il bonus!}

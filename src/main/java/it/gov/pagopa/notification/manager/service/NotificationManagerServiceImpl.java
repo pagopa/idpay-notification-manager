@@ -63,8 +63,10 @@ public class NotificationManagerServiceImpl implements NotificationManagerServic
     private Long timeToLive;
     @Value("${notification.manager.recover.parallelism}")
     private int parallelism;
-    @Value("${app.email.notification.no-reply.subject-prefix}")
-    private String noReplySubjectPrefix;
+    @Value("${rest-client.notification.email-notification.subject.ok}")
+    private String subjectOk;
+    @Value("${rest-client.notification.email-notification.subject.partial}")
+    private String subjectPartial;
 
 
     private ExecutorService executorService;
@@ -186,12 +188,14 @@ public class NotificationManagerServiceImpl implements NotificationManagerServic
                 templateValues.put("amount", String.valueOf(amount));
             }
 
+            String subject = EMAIL_ESITO_OK.equals(template) ? subjectOk : subjectPartial;
+
             EmailMessageDTO emailRequest = EmailMessageDTO.builder()
                     .templateName(template)
                     .recipientEmail(evaluationDTO.getUserMail())
                     .senderEmail(null)
                     .templateValues(templateValues)
-                    .subject(noReplySubjectPrefix + " " + template)
+                    .subject(subject)
                     .content(null)
                     .build();
 
