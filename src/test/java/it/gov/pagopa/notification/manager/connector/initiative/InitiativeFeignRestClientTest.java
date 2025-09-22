@@ -31,10 +31,12 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
       HttpMessageConvertersAutoConfiguration.class
     })
 @TestPropertySource(
-    locations = "classpath:application.yml",
-    properties = {
-      "spring.application.name=idpay-notification-manager-integration-rest"
-    })
+        locations = "classpath:application.yml",
+        properties = {
+                "spring.application.name=idpay-notification-manager-integration-rest",
+                "rest-client.notification.email.base-url=http://dummy",
+                "rest-client.notification.email.notify.url=/dummy"
+        })
 class InitiativeFeignRestClientTest {
   private static final String INITIATIVE_ID = "INITIATIVE_ID";
 
