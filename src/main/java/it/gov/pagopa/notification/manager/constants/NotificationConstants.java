@@ -45,7 +45,7 @@ public class NotificationConstants {
   public static final class EmailTemplates {
     private EmailTemplates() {}
 
-    public static final String EMAIL_ESITO_OK = "Email_BEL_EsitoOk";
-    public static final String EMAIL_ESITO_OK_PARZIALE = "Email_BEL_EsitoOkParziale";
+    public static final String EMAIL_OUTCOME_OK = "Email_BEL_EsitoOk";
+    public static final String EMAIL_OUTCOME_PARTIAL = "Email_BEL_EsitoParziale";
   }
 }

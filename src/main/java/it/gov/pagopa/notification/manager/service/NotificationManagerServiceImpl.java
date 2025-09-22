@@ -39,8 +39,8 @@ import java.util.concurrent.Future;
 import java.util.stream.IntStream;
 
 import static it.gov.pagopa.notification.manager.constants.NotificationConstants.AnyNotificationConsumer.SubTypes.*;
-import static it.gov.pagopa.notification.manager.constants.NotificationConstants.EmailTemplates.EMAIL_ESITO_OK;
-import static it.gov.pagopa.notification.manager.constants.NotificationConstants.EmailTemplates.EMAIL_ESITO_OK_PARZIALE;
+import static it.gov.pagopa.notification.manager.constants.NotificationConstants.EmailTemplates.EMAIL_OUTCOME_OK;
+import static it.gov.pagopa.notification.manager.constants.NotificationConstants.EmailTemplates.EMAIL_OUTCOME_PARTIAL;
 
 @Service
 @Slf4j
@@ -63,8 +63,10 @@ public class NotificationManagerServiceImpl implements NotificationManagerServic
     private Long timeToLive;
     @Value("${notification.manager.recover.parallelism}")
     private int parallelism;
-    @Value("${app.email.notification.no-reply.subject-prefix}")
-    private String noReplySubjectPrefix;
+    @Value("${rest-client.notification.email-notification.subject.ok}")
+    private String subjectOk;
+    @Value("${rest-client.notification.email-notification.subject.partial}")
+    private String subjectPartial;
 
 
     private ExecutorService executorService;
@@ -174,7 +176,7 @@ public class NotificationManagerServiceImpl implements NotificationManagerServic
             boolean isVerifyIsee = Boolean.TRUE.equals(evaluationDTO.getVerifyIsee());
             boolean isBudgetAboveThreshold = evaluationDTO.getBeneficiaryBudgetCents() != null && evaluationDTO.getBeneficiaryBudgetCents() > 100;
 
-            String template = (!isVerifyIsee && !isBudgetAboveThreshold ? EMAIL_ESITO_OK : EMAIL_ESITO_OK_PARZIALE);
+            String template = (!isVerifyIsee && !isBudgetAboveThreshold ? EMAIL_OUTCOME_OK : EMAIL_OUTCOME_PARTIAL);
 
 
             Map<String, String> templateValues = new HashMap<>();
@@ -186,12 +188,14 @@ public class NotificationManagerServiceImpl implements NotificationManagerServic
                 templateValues.put("amount", String.valueOf(amount));
             }
 
+            String subject = EMAIL_OUTCOME_OK.equals(template) ? subjectOk : subjectPartial;
+
             EmailMessageDTO emailRequest = EmailMessageDTO.builder()
                     .templateName(template)
                     .recipientEmail(evaluationDTO.getUserMail())
                     .senderEmail(null)
                     .templateValues(templateValues)
-                    .subject(noReplySubjectPrefix + " " + template)
+                    .subject(subject)
                     .content(null)
                     .build();
 

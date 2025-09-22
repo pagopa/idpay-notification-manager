@@ -44,8 +44,8 @@ import java.util.List;
 import java.util.stream.Stream;
 
 import static it.gov.pagopa.notification.manager.constants.NotificationConstants.AnyNotificationConsumer.SubTypes.*;
-import static it.gov.pagopa.notification.manager.constants.NotificationConstants.EmailTemplates.EMAIL_ESITO_OK;
-import static it.gov.pagopa.notification.manager.constants.NotificationConstants.EmailTemplates.EMAIL_ESITO_OK_PARZIALE;
+import static it.gov.pagopa.notification.manager.constants.NotificationConstants.EmailTemplates.EMAIL_OUTCOME_OK;
+import static it.gov.pagopa.notification.manager.constants.NotificationConstants.EmailTemplates.EMAIL_OUTCOME_PARTIAL;
 import static it.gov.pagopa.notification.manager.enums.Channel.IO;
 import static it.gov.pagopa.notification.manager.enums.Channel.WEB;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -503,7 +503,7 @@ class NotificationManagerServiceTest {
 
         Mockito.verify(emailNotificationConnector, Mockito.times(1))
                 .sendEmail(Mockito.argThat(email ->
-                        EMAIL_ESITO_OK.equals(email.getTemplateName())
+                        EMAIL_OUTCOME_OK.equals(email.getTemplateName())
                 ));
     }
 
@@ -582,7 +582,7 @@ class NotificationManagerServiceTest {
 
         Mockito.verify(emailNotificationConnector, Mockito.times(1))
                 .sendEmail(Mockito.argThat(email ->
-                        EMAIL_ESITO_OK_PARZIALE.equals(email.getTemplateName())
+                        EMAIL_OUTCOME_PARTIAL.equals(email.getTemplateName())
                 ));
     }
 
