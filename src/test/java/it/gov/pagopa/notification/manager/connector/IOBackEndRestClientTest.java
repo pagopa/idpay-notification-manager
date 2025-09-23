@@ -31,13 +31,17 @@ import static org.junit.jupiter.api.Assertions.*;
       HttpMessageConvertersAutoConfiguration.class
     })
 @TestPropertySource(
-    locations = "classpath:application.yml",
-    properties = {
-      "spring.application.name=idpay-notification-manager-integration-rest",
-      "rest-client.notification.backend-io.notify.url=/api/v1/messages",
-      "rest-client.notification.backend-io.profile.url=/api/v1/profiles",
-      "rest-client.notification.backend-io.service.url=/api/v1/services"
-    })
+        locations = "classpath:application.yml",
+        properties = {
+                "spring.application.name=idpay-notification-manager-integration-rest",
+                "spring.main.web-application-type=none",
+                "rest-client.notification.backend-io.base-url=http://localhost:${wiremock.server.port}",
+                "rest-client.notification.backend-io.notify.url=/api/v1/messages",
+                "rest-client.notification.backend-io.profile.url=/api/v1/profiles",
+                "rest-client.notification.backend-io.service.url=/api/v1/services",
+                "rest-client.notification.email.base-url=http://localhost:${wiremock.server.port}"
+        })
+
 class IOBackEndRestClientTest {
 
   private static final String FISCAL_CODE = "AAAAAA00A00A000A";
