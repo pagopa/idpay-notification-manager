@@ -7,6 +7,7 @@ public class NotificationConstants {
   public static final String STATUS_ONBOARDING_DEMANDED = "DEMANDED";
   public static final String INITIATIVE_NAME_KEY = "initiativeName";
   public static final String INITIATIVE_ID_KEY = "initiativeId";
+  public static final String REWARD_AMOUNT_KEY = "rewardAmount";
   public static final String MARKDOWN_TAG = "%";
   public static final String MARKDOWN_NA = "N.A.";
   public static final String STATUS_ONBOARDING_KO = "ONBOARDING_KO";

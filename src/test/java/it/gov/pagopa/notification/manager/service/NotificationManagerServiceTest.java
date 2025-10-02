@@ -19,6 +19,8 @@ import it.gov.pagopa.notification.manager.model.Notification;
 import it.gov.pagopa.notification.manager.model.NotificationMarkdown;
 import it.gov.pagopa.notification.manager.repository.NotificationManagerRepository;
 import it.gov.pagopa.notification.manager.repository.NotificationManagerRepositoryExtended;
+import it.gov.pagopa.notification.manager.service.onboarding.OnboardingIoNotification;
+import it.gov.pagopa.notification.manager.service.onboarding.OnboardingWebNotification;
 import it.gov.pagopa.notification.manager.utils.AuditUtilities;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -99,7 +101,9 @@ class NotificationManagerServiceTest {
                     1L,
                     true,
                     null,
-                    IO
+                    IO,
+                    null,
+                    null
             );
 
     private static final EvaluationDTO EVALUATION_DTO_WEB = new EvaluationDTO(
@@ -117,7 +121,9 @@ class NotificationManagerServiceTest {
             1L,
             true,
             "user@email.com",
-            WEB
+            WEB,
+            null,
+            null
     );
 
     private static final FiscalCodeDTO FISCAL_CODE_DTO = new FiscalCodeDTO(FISCAL_CODE);
@@ -301,6 +307,10 @@ class NotificationManagerServiceTest {
     NotificationMarkdown notificationMarkdown;
     @MockBean
     AuditUtilities auditUtilities;
+    @MockBean
+    OnboardingIoNotification onboardingIoNotification;
+    @MockBean
+    OnboardingWebNotification onboardingWebNotification;
 
     @Test
     void sendToQueue() {
@@ -337,7 +347,9 @@ class NotificationManagerServiceTest {
                 1L,
                 true,
                 "user@mail.com",
-                IO
+                IO,
+                null,
+                null
         );
 
         notificationManagerService.notify(evaluationDTO);
@@ -402,7 +414,9 @@ class NotificationManagerServiceTest {
                 1L,
                 true,
                 null,
-                IO
+                IO,
+                null,
+                null
         );
 
         Notification notification = Notification.builder()
@@ -440,206 +454,6 @@ class NotificationManagerServiceTest {
     }
 
     @Test
-    void notify_web_ok_templateEsitoOk() {
-        EvaluationDTO evaluationDTO = EVALUATION_DTO_WEB;
-
-        Notification notification = Notification.builder()
-                .notificationDate(LocalDateTime.now())
-                .initiativeId(evaluationDTO.getInitiativeId())
-                .userId(evaluationDTO.getUserId())
-                .onboardingOutcome(evaluationDTO.getStatus())
-                .rejectReasons(evaluationDTO.getOnboardingRejectionReasons())
-                .build();
-
-        Mockito.when(notificationMapper.evaluationToNotification(evaluationDTO))
-                .thenReturn(notification);
-
-        Mockito.doAnswer(invocation -> null)
-                .when(emailNotificationConnector)
-                .sendEmail(Mockito.any(EmailMessageDTO.class));
-
-        notificationManagerService.notify(evaluationDTO);
-
-        Mockito.verify(emailNotificationConnector, Mockito.times(1))
-                .sendEmail(Mockito.any(EmailMessageDTO.class));
-    }
-
-    @Test
-    void notify_web_ok_templateEsitoOk_branch() {
-        EvaluationDTO evaluationDTO = new EvaluationDTO(
-                TEST_TOKEN,
-                INITIATIVE_ID,
-                INITIATIVE_ID,
-                TEST_DATE_ONLY_DATE,
-                INITIATIVE_ID,
-                ORGANIZATION_NAME,
-                NotificationConstants.STATUS_ONBOARDING_OK,
-                TEST_DATE,
-                TEST_DATE,
-                List.of(),
-                50L,
-                1L,
-                false,
-                "user@email.com",
-                WEB
-        );
-
-        Notification notification = Notification.builder()
-                .notificationDate(LocalDateTime.now())
-                .initiativeId(evaluationDTO.getInitiativeId())
-                .userId(evaluationDTO.getUserId())
-                .onboardingOutcome(evaluationDTO.getStatus())
-                .rejectReasons(evaluationDTO.getOnboardingRejectionReasons())
-                .build();
-
-        Mockito.when(notificationMapper.evaluationToNotification(evaluationDTO))
-                .thenReturn(notification);
-
-        Mockito.doAnswer(invocation -> null)
-                .when(emailNotificationConnector)
-                .sendEmail(Mockito.any(EmailMessageDTO.class));
-
-        notificationManagerService.notify(evaluationDTO);
-
-        Mockito.verify(emailNotificationConnector, Mockito.times(1))
-                .sendEmail(Mockito.argThat(email ->
-                        EMAIL_OUTCOME_OK.equals(email.getTemplateName())
-                ));
-    }
-
-    @Test
-    void notify_web_withNullBeneficiaryBudget() {
-        EvaluationDTO evaluationDTO = new EvaluationDTO(
-                TEST_TOKEN,
-                INITIATIVE_ID,
-                INITIATIVE_ID,
-                TEST_DATE_ONLY_DATE,
-                INITIATIVE_ID,
-                ORGANIZATION_NAME,
-                NotificationConstants.STATUS_ONBOARDING_OK,
-                TEST_DATE,
-                TEST_DATE,
-                List.of(),
-                null,
-                1L,
-                false,
-                "user@email.com",
-                WEB
-        );
-
-        Mockito.when(notificationMapper.evaluationToNotification(evaluationDTO))
-                .thenReturn(Notification.builder().build());
-
-        Mockito.doAnswer(invocation -> null)
-                .when(emailNotificationConnector)
-                .sendEmail(Mockito.any(EmailMessageDTO.class));
-
-        notificationManagerService.notify(evaluationDTO);
-
-        Mockito.verify(emailNotificationConnector, Mockito.times(1))
-                .sendEmail(Mockito.argThat(email ->
-                        !email.getTemplateValues().containsKey("amount")
-                ));
-    }
-
-
-    @Test
-    void notify_web_ok_templateEsitoOkParziale() {
-        EvaluationDTO evaluationDTO = new EvaluationDTO(
-                TEST_TOKEN,
-                INITIATIVE_ID,
-                INITIATIVE_ID,
-                TEST_DATE_ONLY_DATE,
-                INITIATIVE_ID,
-                ORGANIZATION_NAME,
-                NotificationConstants.STATUS_ONBOARDING_OK,
-                TEST_DATE,
-                TEST_DATE,
-                List.of(),
-                10000L,
-                1L,
-                true,
-                "user@email.com",
-                WEB
-        );
-
-        Notification notification = Notification.builder()
-                .notificationDate(LocalDateTime.now())
-                .initiativeId(evaluationDTO.getInitiativeId())
-                .userId(evaluationDTO.getUserId())
-                .onboardingOutcome(evaluationDTO.getStatus())
-                .rejectReasons(evaluationDTO.getOnboardingRejectionReasons())
-                .build();
-
-        Mockito.when(notificationMapper.evaluationToNotification(evaluationDTO))
-                .thenReturn(notification);
-
-        Mockito.doAnswer(invocation -> null)
-                .when(emailNotificationConnector)
-                .sendEmail(Mockito.any(EmailMessageDTO.class));
-
-        notificationManagerService.notify(evaluationDTO);
-
-        Mockito.verify(emailNotificationConnector, Mockito.times(1))
-                .sendEmail(Mockito.argThat(email ->
-                        EMAIL_OUTCOME_PARTIAL.equals(email.getTemplateName())
-                ));
-    }
-
-    @Test
-    void notify_web_withAmountField() {
-        EvaluationDTO evaluationDTO = new EvaluationDTO(
-                TEST_TOKEN,
-                INITIATIVE_ID,
-                INITIATIVE_ID,
-                TEST_DATE_ONLY_DATE,
-                INITIATIVE_ID,
-                ORGANIZATION_NAME,
-                NotificationConstants.STATUS_ONBOARDING_OK,
-                TEST_DATE,
-                TEST_DATE,
-                List.of(),
-                20000L,
-                1L,
-                true,
-                "user@email.com",
-                WEB
-        );
-
-        Mockito.when(notificationMapper.evaluationToNotification(evaluationDTO))
-                .thenReturn(Notification.builder().build());
-
-        Mockito.doAnswer(invocation -> null)
-                .when(emailNotificationConnector)
-                .sendEmail(Mockito.any(EmailMessageDTO.class));
-
-        notificationManagerService.notify(evaluationDTO);
-
-        Mockito.verify(emailNotificationConnector, Mockito.times(1))
-                .sendEmail(Mockito.argThat(email ->
-                        email.getTemplateValues().containsKey("amount") &&
-                                email.getTemplateValues().get("amount").equals("200")
-                ));
-    }
-
-    @Test
-    void notify_web_emailFails_logsError() {
-        EvaluationDTO evaluationDTO = EVALUATION_DTO_WEB;
-
-        Mockito.when(notificationMapper.evaluationToNotification(evaluationDTO))
-                .thenReturn(Notification.builder().build());
-
-        Mockito.doThrow(new RuntimeException("Boom"))
-                .when(emailNotificationConnector)
-                .sendEmail(Mockito.any(EmailMessageDTO.class));
-
-        notificationManagerService.notify(evaluationDTO);
-
-        Mockito.verify(emailNotificationConnector, Mockito.times(1))
-                .sendEmail(Mockito.any(EmailMessageDTO.class));
-    }
-
-    @Test
     void notify_ko() {
         EvaluationDTO evaluationDTO =
                 new EvaluationDTO(
@@ -657,7 +471,9 @@ class NotificationManagerServiceTest {
                         1L,
                         true,
                         null,
-                        IO
+                        IO,
+                        null,
+                        null
                 );
 
         Mockito.when(pdvDecryptRestConnector.getPii(TEST_TOKEN)).thenReturn(FISCAL_CODE_RESOURCE);
@@ -735,7 +551,9 @@ class NotificationManagerServiceTest {
                         1L,
                         true,
                         null,
-                        IO
+                        IO,
+                        null,
+                        null
                 );
 
 

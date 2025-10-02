@@ -34,7 +34,7 @@ class NotificationMarkdownTest {
             ---
             it:
                 cta_1:\s
-                    text: "Vai all'iniziativa"
+                    text: "Vai al bonus"
                     action: "ioit://idpay/initiative/%s"
             en:
                 cta_1:\s
@@ -75,7 +75,9 @@ class NotificationMarkdownTest {
                   1L,
                   true,
                   null,
-                  IO
+                  IO,
+                  null,
+                  null
           );
 
   private static final EvaluationDTO EVALUATION_DTO_TYPE2 =
@@ -94,7 +96,9 @@ class NotificationMarkdownTest {
                   1L,
                   true,
                   null,
-                  IO
+                  IO,
+                  null,
+                  null
           );
 
   private static final EvaluationDTO EVALUATION_DTO_KO_PDND =
@@ -113,7 +117,9 @@ class NotificationMarkdownTest {
                   1L,
                   true,
                   null,
-                  IO
+                  IO,
+                  null,
+                  null
           );
 
   private static final EvaluationDTO EVALUATION_DTO_KO_RANKING =
@@ -132,7 +138,9 @@ class NotificationMarkdownTest {
                   1L,
                   true,
                   null,
-                  IO
+                  IO,
+                  null,
+                  null
           );
 
   private static final EvaluationDTO EVALUATION_DTO_KO_TECH =
@@ -151,7 +159,9 @@ class NotificationMarkdownTest {
                   1L,
                   true,
                   null,
-                  IO
+                  IO,
+                  null,
+                  null
           );
 
 
@@ -430,7 +440,9 @@ class NotificationMarkdownTest {
             1L,
             true,
             null,
-            IO
+            IO,
+            null,
+            null
     );
 
   }

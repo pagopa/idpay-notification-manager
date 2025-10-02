@@ -16,6 +16,8 @@ import it.gov.pagopa.notification.manager.model.Notification;
 import it.gov.pagopa.notification.manager.model.NotificationMarkdown;
 import it.gov.pagopa.notification.manager.repository.NotificationManagerRepository;
 import it.gov.pagopa.notification.manager.repository.NotificationManagerRepositoryExtended;
+import it.gov.pagopa.notification.manager.service.onboarding.OnboardingIoNotification;
+import it.gov.pagopa.notification.manager.service.onboarding.OnboardingWebNotification;
 import it.gov.pagopa.notification.manager.utils.AuditUtilities;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
@@ -29,9 +31,7 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -39,8 +39,6 @@ import java.util.concurrent.Future;
 import java.util.stream.IntStream;
 
 import static it.gov.pagopa.notification.manager.constants.NotificationConstants.AnyNotificationConsumer.SubTypes.*;
-import static it.gov.pagopa.notification.manager.constants.NotificationConstants.EmailTemplates.EMAIL_OUTCOME_OK;
-import static it.gov.pagopa.notification.manager.constants.NotificationConstants.EmailTemplates.EMAIL_OUTCOME_PARTIAL;
 
 @Service
 @Slf4j
@@ -59,6 +57,8 @@ public class NotificationManagerServiceImpl implements NotificationManagerServic
     private final NotificationMapper notificationMapper;
     private final NotificationMarkdown notificationMarkdown;
     private final AuditUtilities auditUtilities;
+    private final OnboardingIoNotification onboardingIoNotification;
+    private final OnboardingWebNotification onboardingWebNotification;
     @Value("${rest-client.notification.backend-io.ttl}")
     private Long timeToLive;
     @Value("${notification.manager.recover.parallelism}")
@@ -72,7 +72,7 @@ public class NotificationManagerServiceImpl implements NotificationManagerServic
     private ExecutorService executorService;
 
     public NotificationManagerServiceImpl(@Value("${app.delete.paginationSize:100}") int pageSize,
-                                          @Value("${app.delete.delayTime:1000}") long delay, OutcomeProducer outcomeProducer, InitiativeRestConnector initiativeRestConnector, IOBackEndRestConnector ioBackEndRestConnector, NotificationManagerRepository notificationManagerRepository, NotificationManagerRepositoryExtended notificationManagerRepositoryExtended, NotificationDTOMapper notificationDTOMapper, PdvDecryptRestConnector pdvDecryptRestConnector, NotificationMapper notificationMapper, NotificationMarkdown notificationMarkdown, AuditUtilities auditUtilities, EmailNotificationConnector emailNotificationConnector) {
+                                          @Value("${app.delete.delayTime:1000}") long delay, OutcomeProducer outcomeProducer, InitiativeRestConnector initiativeRestConnector, IOBackEndRestConnector ioBackEndRestConnector, NotificationManagerRepository notificationManagerRepository, NotificationManagerRepositoryExtended notificationManagerRepositoryExtended, NotificationDTOMapper notificationDTOMapper, PdvDecryptRestConnector pdvDecryptRestConnector, NotificationMapper notificationMapper, NotificationMarkdown notificationMarkdown, AuditUtilities auditUtilities, EmailNotificationConnector emailNotificationConnector, OnboardingIoNotification onboardingIoNotification, OnboardingWebNotification onboardingWebNotification) {
         this.pageSize = pageSize;
         this.delay = delay;
         this.outcomeProducer = outcomeProducer;
@@ -86,6 +86,8 @@ public class NotificationManagerServiceImpl implements NotificationManagerServic
         this.notificationMarkdown = notificationMarkdown;
         this.auditUtilities = auditUtilities;
         this.emailNotificationConnector = emailNotificationConnector;
+        this.onboardingIoNotification = onboardingIoNotification;
+        this.onboardingWebNotification = onboardingWebNotification;
     }
 
     @PostConstruct
@@ -116,7 +118,7 @@ public class NotificationManagerServiceImpl implements NotificationManagerServic
         if (evaluationDTO.getChannel().isAppIo()) {
             processAppIoNotification(evaluationDTO, startTime);
         } else if (evaluationDTO.getChannel().isWeb()) {
-            processWebNotification(evaluationDTO, startTime);
+            onboardingWebNotification.processNotification(evaluationDTO);
         } else {
             log.warn("[NOTIFY] Unsupported channel {} for user {}", evaluationDTO.getChannel(), evaluationDTO.getUserId());
         }
@@ -156,11 +158,9 @@ public class NotificationManagerServiceImpl implements NotificationManagerServic
             return;
         }
 
-        String subject = notificationMarkdown.getSubject(evaluationDTO);
-        String markdown = notificationMarkdown.getMarkdown(evaluationDTO);
-
-        NotificationDTO notificationDTO = notificationDTOMapper.map(fiscalCode, timeToLive, subject, markdown);
-        String notificationId = sendNotification(notificationDTO, ioTokens.getPrimaryKey());
+        evaluationDTO.setIoToken(ioTokens.getPrimaryKey());
+        evaluationDTO.setFiscalCode(fiscalCode);
+        String notificationId = onboardingIoNotification.processNotification(evaluationDTO);
 
         if (notificationId == null) {
             notificationKO(notification, startTime);
@@ -169,41 +169,6 @@ public class NotificationManagerServiceImpl implements NotificationManagerServic
 
         notificationSent(notification, notificationId);
         performanceLog(startTime);
-    }
-
-    private void processWebNotification(EvaluationDTO evaluationDTO, long startTime) {
-        try {
-            boolean isBudgetAboveThreshold = evaluationDTO.getBeneficiaryBudgetCents() != null && evaluationDTO.getBeneficiaryBudgetCents() == 10000;
-
-            String template = (Boolean.TRUE.equals(evaluationDTO.getVerifyIsee()) && isBudgetAboveThreshold ? EMAIL_OUTCOME_PARTIAL: EMAIL_OUTCOME_OK);
-
-
-            Map<String, String> templateValues = new HashMap<>();
-            templateValues.put("userId", evaluationDTO.getUserId());
-            templateValues.put("initiativeId", evaluationDTO.getInitiativeId());
-
-            if (evaluationDTO.getBeneficiaryBudgetCents() != null) {
-                long amount = evaluationDTO.getBeneficiaryBudgetCents() / 100;
-                templateValues.put("amount", String.valueOf(amount));
-            }
-
-            String subject = EMAIL_OUTCOME_OK.equals(template) ? subjectOk : subjectPartial;
-
-            EmailMessageDTO emailRequest = EmailMessageDTO.builder()
-                    .templateName(template)
-                    .recipientEmail(evaluationDTO.getUserMail())
-                    .senderEmail(null)
-                    .templateValues(templateValues)
-                    .subject(subject)
-                    .content(null)
-                    .build();
-
-            emailNotificationConnector.sendEmail(emailRequest);
-            performanceLog(startTime);
-
-        } catch (Exception e) {
-            log.error("[NOTIFY] Failed to send email notification for user {}", evaluationDTO.getUserId(), e);
-        }
     }
 
     @Override

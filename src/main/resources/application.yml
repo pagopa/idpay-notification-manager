@@ -223,6 +223,34 @@ notification:
             ${MARKDOWN_DOUBLE_NEW_LINE:
 
             }
+      ok.bel: |-
+        ${MARKDOWN_OK_BEL:Buone notizie! Hai ottenuto il %initiativeName% da %rewardAmount%€. sarà valido per i prossimi 10 giorni.
+
+        È disponibile ora nella sezione Portafoglio, dove troverai i dettagli dell'importo e la validità.
+
+        Cosa puoi fare?
+
+        Puoi usarlo per ottenere uno sconto del 30% sul prezzo d'acquisto di un elettrodomestico nuovo ad alta efficienza, fino ad un massimo di %rewardAmount%€,
+
+        Cosa fare?
+
+        Per avere più informazioni su come e dove usare il bonus, [leggi i dettagli](http://example.com/). 
+
+        Importante: ricorda che puoi usare il bonus solo se hai un vecchio elettrodomestico da smaltire. Concorda con il venditore quando e come consegnarlo, ma non smaltirlo autonomamente in discarica.}
+      ok.partial.bel: |-
+        ${MARKDOWN_OK_PARTIAL:Buone notizie! Hai ottenuto il %initiativeName% da %rewardAmount%€. sarà valido per i prossimi 10 giorni.
+
+        È disponibile ora nella sezione Portafoglio, dove troverai i dettagli dell'importo e la validità.
+
+        Cosa puoi fare?
+
+        Puoi usarlo per ottenere uno sconto del 30% sul prezzo d'acquisto di un elettrodomestico nuovo ad alta efficienza, fino ad un massimo di 200€,
+
+        Cosa fare?
+
+        Per avere più informazioni su come e dove usare il bonus, [leggi i dettagli](http://example.com/).
+
+        Importante: puoi usare il bonus solo se hai un vecchio elettrodomestico da smaltire. Concorda con il venditore quando e come consegnarlo, ma non smaltirlo autonomamente in discarica.}
       ok: |-
         ${MARKDOWN_OK:Buone notizie! Hai ottenuto %initiativeName%. Da questo momento puoi visualizzare il bonus nella sezione Portafoglio dell'app IO.
 
@@ -248,7 +276,7 @@ notification:
         ${MARKDOWN_OK_CTA:---
         it:
             cta_1: 
-                text: "Vai all'iniziativa"
+                text: "Vai al bonus"
                 action: "ioit://idpay/initiative/%initiativeId%"
         en:
             cta_1: 
@@ -277,6 +305,8 @@ notification:
           }
     subject:
       ok: ${SUBJECT_OK:Il tuo Bonus è attivo}
+      ok.bel: ${SUBJECT_OK_BEL:Hai ottenuto il bonus!}
+      ok.partial.bel: ${SUBJECT_OK_PARTIAL_BEL:Hai ottenuto il bonus!}
       ok.type2: ${SUBJECT_OK_TYPE2:Il tuo Bonus è attivo!}
       ok.type3: ${SUBJECT_OK_TYPE3:}
       demanded: ${SUBJECT_DEMANDED:Attiva il bonus %initiativeName%}
