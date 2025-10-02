@@ -114,17 +114,10 @@ class OnboardingWebNotificationTest {
         evaluationDTO.setVerifyIsee(false);
         evaluationDTO.setBeneficiaryBudgetCents(null);
 
-        EmailNotificationProperties.Subject subjectMock = Mockito.mock(EmailNotificationProperties.Subject.class);
-        Mockito.when(emailNotificationPropertiesMock.getSubject()).thenReturn(subjectMock);
-
-        Mockito.when(subjectMock.getOk()).thenReturn("TEST_OK");
-
         onboardingWebNotification.processNotification(evaluationDTO);
 
-        Mockito.verify(emailNotificationConnectorMock, Mockito.times(1))
-                .sendEmail(Mockito.argThat(email ->
-                        !email.getTemplateValues().containsKey("amount")
-                ));
+        Mockito.verify(emailNotificationConnectorMock, Mockito.never())
+                .sendEmail(Mockito.any());
     }
 
     @Test

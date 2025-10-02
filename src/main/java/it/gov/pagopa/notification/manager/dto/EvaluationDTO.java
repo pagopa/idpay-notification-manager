@@ -36,6 +36,7 @@ public class EvaluationDTO {
   private String userMail;
   private Channel channel;
 
+  // Info filled during processing
   private String fiscalCode;
   private String ioToken;
 }

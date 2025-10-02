@@ -27,7 +27,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 class NotificationMarkdownTest {
 
   private static final String SUBJECT_OK = "Il tuo Bonus è attivo";
-  private static final String SUBJECT_OK_TYPE2 = "Il tuo Bonus è attivo!";
   private static final String SUBJECT_KO = "Non è stato possibile attivare TESTINITIATIVE01";
   private static final String SUBJECT_KO_TECH = "Abbiamo riscontrato dei problemi";
   private static final String MARKDOWN_OK = """
@@ -47,11 +46,6 @@ class NotificationMarkdownTest {
             Ti ricordiamo che per iniziare ad usufruire del bonus devi configurare almeno un metodo di pagamento.
                         
             Puoi trovare maggiori informazioni sul [sito](http://example.com/).""";
-  private static final String MARKDOWN_OK_TYPE2 = """
-                  Buone notizie! Ai soli fini della sperimentazione, hai i requisiti per procedere con l'iniziativa.
-                  Da questo momento puoi visualizzare il bonus nella sezione Portafoglio.
-                 
-                  Per utilizzarlo, devi prima caricare i giustificativi di spesa.""";
   private static final String USER_ID = "USER_ID";
   private static final String INITIATIVE_ID = "TESTINITIATIVE01";
   private static final String INITIATIVE_NAME = "NAMETESTINITIATIVE01";
@@ -67,27 +61,6 @@ class NotificationMarkdownTest {
                   TEST_DATE_ONLY_DATE,
                   INITIATIVE_ID,
                   ORGANIZATION_NAME,
-                  NotificationConstants.STATUS_ONBOARDING_OK,
-                  TEST_DATE,
-                  TEST_DATE,
-                  List.of(),
-                  50000L,
-                  1L,
-                  true,
-                  null,
-                  IO,
-                  null,
-                  null
-          );
-
-  private static final EvaluationDTO EVALUATION_DTO_TYPE2 =
-          new EvaluationDTO(
-                  USER_ID,
-                  INITIATIVE_ID,
-                  "test bonus",
-                  TEST_DATE_ONLY_DATE,
-                  INITIATIVE_ID,
-                  "COMUNE DI GUIDONIA MONTECELIO",
                   NotificationConstants.STATUS_ONBOARDING_OK,
                   TEST_DATE,
                   TEST_DATE,
@@ -174,12 +147,6 @@ class NotificationMarkdownTest {
   }
 
   @Test
-  void getSubjectType2_status_ok() {
-    String actual = notificationMarkdown.getSubject(EVALUATION_DTO_TYPE2);
-    assertEquals(SUBJECT_OK_TYPE2, actual);
-  }
-
-  @Test
   void getSubject_status_ko_pdnd() {
     String actual = notificationMarkdown.getSubject(EVALUATION_DTO_KO_PDND);
     assertEquals(SUBJECT_KO, actual);
@@ -206,13 +173,6 @@ class NotificationMarkdownTest {
     String actual = notificationMarkdown.getMarkdown(EVALUATION_DTO);
 
     Assertions.assertEquals(expectedMarkdownOk, actual);
-  }
-
-  @Test
-  void getMarkdownType2_status_ok() {
-      String actual = notificationMarkdown.getMarkdown(EVALUATION_DTO_TYPE2);
-
-    Assertions.assertEquals(MARKDOWN_OK_TYPE2, actual);
   }
 
   @Test

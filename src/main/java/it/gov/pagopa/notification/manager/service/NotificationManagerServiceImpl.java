@@ -1,7 +1,6 @@
 package it.gov.pagopa.notification.manager.service;
 
 import feign.FeignException;
-import it.gov.pagopa.notification.manager.connector.EmailNotificationConnector;
 import it.gov.pagopa.notification.manager.connector.IOBackEndRestConnector;
 import it.gov.pagopa.notification.manager.connector.PdvDecryptRestConnector;
 import it.gov.pagopa.notification.manager.connector.initiative.InitiativeRestConnector;
@@ -49,7 +48,6 @@ public class NotificationManagerServiceImpl implements NotificationManagerServic
     private final OutcomeProducer outcomeProducer;
     private final InitiativeRestConnector initiativeRestConnector;
     private final IOBackEndRestConnector ioBackEndRestConnector;
-    private final EmailNotificationConnector emailNotificationConnector;
     private final NotificationManagerRepository notificationManagerRepository;
     private final NotificationManagerRepositoryExtended notificationManagerRepositoryExtended;
     private final NotificationDTOMapper notificationDTOMapper;
@@ -63,16 +61,11 @@ public class NotificationManagerServiceImpl implements NotificationManagerServic
     private Long timeToLive;
     @Value("${notification.manager.recover.parallelism}")
     private int parallelism;
-    @Value("${rest-client.notification.email-notification.subject.ok}")
-    private String subjectOk;
-    @Value("${rest-client.notification.email-notification.subject.partial}")
-    private String subjectPartial;
-
 
     private ExecutorService executorService;
 
     public NotificationManagerServiceImpl(@Value("${app.delete.paginationSize:100}") int pageSize,
-                                          @Value("${app.delete.delayTime:1000}") long delay, OutcomeProducer outcomeProducer, InitiativeRestConnector initiativeRestConnector, IOBackEndRestConnector ioBackEndRestConnector, NotificationManagerRepository notificationManagerRepository, NotificationManagerRepositoryExtended notificationManagerRepositoryExtended, NotificationDTOMapper notificationDTOMapper, PdvDecryptRestConnector pdvDecryptRestConnector, NotificationMapper notificationMapper, NotificationMarkdown notificationMarkdown, AuditUtilities auditUtilities, EmailNotificationConnector emailNotificationConnector, OnboardingIoNotification onboardingIoNotification, OnboardingWebNotification onboardingWebNotification) {
+                                          @Value("${app.delete.delayTime:1000}") long delay, OutcomeProducer outcomeProducer, InitiativeRestConnector initiativeRestConnector, IOBackEndRestConnector ioBackEndRestConnector, NotificationManagerRepository notificationManagerRepository, NotificationManagerRepositoryExtended notificationManagerRepositoryExtended, NotificationDTOMapper notificationDTOMapper, PdvDecryptRestConnector pdvDecryptRestConnector, NotificationMapper notificationMapper, NotificationMarkdown notificationMarkdown, AuditUtilities auditUtilities, OnboardingIoNotification onboardingIoNotification, OnboardingWebNotification onboardingWebNotification) {
         this.pageSize = pageSize;
         this.delay = delay;
         this.outcomeProducer = outcomeProducer;
@@ -85,7 +78,6 @@ public class NotificationManagerServiceImpl implements NotificationManagerServic
         this.notificationMapper = notificationMapper;
         this.notificationMarkdown = notificationMarkdown;
         this.auditUtilities = auditUtilities;
-        this.emailNotificationConnector = emailNotificationConnector;
         this.onboardingIoNotification = onboardingIoNotification;
         this.onboardingWebNotification = onboardingWebNotification;
     }
@@ -129,9 +121,7 @@ public class NotificationManagerServiceImpl implements NotificationManagerServic
                 evaluationDTO.getOnboardingRejectionReasons().stream()
                         .anyMatch(r -> r.getType() == OnboardingRejectionReason.OnboardingRejectionReasonType.FAMILY_CRITERIA_KO);
 
-        boolean isDemandedType2 = NotificationConstants.STATUS_ONBOARDING_DEMANDED.equals(evaluationDTO.getStatus()) &&
-                NotificationConstants.ORGANIZATION_NAME_TYPE2.equalsIgnoreCase(evaluationDTO.getOrganizationName()) &&
-                evaluationDTO.getInitiativeName().toLowerCase().contains(NotificationConstants.INITIATIVE_NAME_TYPE2_CHECK);
+        boolean isDemandedType2 = NotificationConstants.STATUS_ONBOARDING_DEMANDED.equals(evaluationDTO.getStatus());
 
         return hasFamilyCriteriaKo || isDemandedType2;
     }
