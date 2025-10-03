@@ -32,6 +32,10 @@ rest-client:
       subject:
         ok: ${SUBJECT_BEL_OK:Hai ottenuto il bonus!}
         partial:  ${SUBJECT_BEL_OK_PARTIAL:Hai ottenuto il bonus!}
+        ok-threeDayReminder: ${SUBJECT_OK_THREE_DAY_REMINDER:Il tuo bonus scade tra 3 giorni!}
+        ko-familyUnit: ${SUBJECT_KO_FAMILY_UNIT:Il bonus è stato già richiesto}
+        ko-thanks: "${SUBJECT_OK_THANKS:\"Bonus Elettrodomestici: tutti i fondi sono stati assegnati\"}"
+        ko-genericError: ${SUBJECT_KO_GENERIC_ERROR:Non è stato possibile assegnarti il bonus}
       place-holder:
         ok: productFileName
         partial: productFileName

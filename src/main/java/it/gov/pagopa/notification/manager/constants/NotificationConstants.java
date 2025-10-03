@@ -46,5 +46,9 @@ public class NotificationConstants {
 
     public static final String EMAIL_OUTCOME_OK = "Email_BEL_EsitoOk";
     public static final String EMAIL_OUTCOME_PARTIAL = "Email_BEL_EsitoParziale";
+    public static final String EMAIL_OUTCOME_THANKS = "Email_BEL_Thanks";
+    public static final String EMAIL_OUTCOME_THREE_DAY_REMINDER = "Email_BEL_ThreeDayReminder";
+    public static final String EMAIL_OUTCOME_FAMILY_UNIT = "Email_BEL_FamilyUnit";
+    public static final String EMAIL_OUTCOME_GENERIC_ERROR = "Email_BEL_GenericError";
   }
 }
