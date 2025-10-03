@@ -4,14 +4,14 @@ import it.gov.pagopa.notification.manager.enums.Channel;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
-import lombok.Getter;
+import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
-@Getter
+@Data
 @AllArgsConstructor
 @NoArgsConstructor
 public class EvaluationDTO {
@@ -36,4 +36,7 @@ public class EvaluationDTO {
   private String userMail;
   private Channel channel;
 
+  // Info filled during processing
+  private String fiscalCode;
+  private String ioToken;
 }

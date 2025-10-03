@@ -7,6 +7,7 @@ public class NotificationConstants {
   public static final String STATUS_ONBOARDING_DEMANDED = "DEMANDED";
   public static final String INITIATIVE_NAME_KEY = "initiativeName";
   public static final String INITIATIVE_ID_KEY = "initiativeId";
+  public static final String REWARD_AMOUNT_KEY = "rewardAmount";
   public static final String MARKDOWN_TAG = "%";
   public static final String MARKDOWN_NA = "N.A.";
   public static final String STATUS_ONBOARDING_KO = "ONBOARDING_KO";
@@ -17,8 +18,6 @@ public class NotificationConstants {
   public static final String NOTIFICATION_STATUS_KO = "KO";
   public static final String NOTIFICATION_STATUS_RECOVER = "RECOVER";
   public static final String OPERATION_TYPE_DELETE_INITIATIVE = "DELETE_INITIATIVE";
-  public static final String ORGANIZATION_NAME_TYPE2 = "COMUNE DI GUIDONIA MONTECELIO";
-  public static final String INITIATIVE_NAME_TYPE2_CHECK = "bonus";
 
   private NotificationConstants(){}
 
@@ -47,5 +46,9 @@ public class NotificationConstants {
 
     public static final String EMAIL_OUTCOME_OK = "Email_BEL_EsitoOk";
     public static final String EMAIL_OUTCOME_PARTIAL = "Email_BEL_EsitoParziale";
+    public static final String EMAIL_OUTCOME_THANKS = "Email_BEL_Thanks";
+    public static final String EMAIL_OUTCOME_THREE_DAY_REMINDER = "Email_BEL_ThreeDayReminder";
+    public static final String EMAIL_OUTCOME_FAMILY_UNIT = "Email_BEL_FamilyUnit";
+    public static final String EMAIL_OUTCOME_GENERIC_ERROR = "Email_BEL_GenericError";
   }
 }
