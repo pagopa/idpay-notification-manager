@@ -114,6 +114,7 @@ public class NotificationManagerServiceImpl implements NotificationManagerServic
         } else {
             log.warn("[NOTIFY] Unsupported channel {} for user {}", evaluationDTO.getChannel(), evaluationDTO.getUserId());
         }
+        performanceLog(startTime);
     }
 
     private boolean shouldSkipNotification(EvaluationDTO evaluationDTO) {
@@ -158,7 +159,6 @@ public class NotificationManagerServiceImpl implements NotificationManagerServic
         }
 
         notificationSent(notification, notificationId);
-        performanceLog(startTime);
     }
 
     @Override
