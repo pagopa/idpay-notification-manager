@@ -249,4 +249,50 @@ class OnboardingWebNotificationTest {
         assertEquals("REASON", dto.getTemplateValues().get("reason"));
         assertEquals("HELPDESK", dto.getTemplateValues().get("managedEntity"));
     }
+
+    @Test
+    void processOnboardingKo_shouldBuildGenericErrorDto_withRealValues_whenIseeTypeFail() {
+
+        EvaluationDTO evaluationDTO = getEvaluationDto();
+        OnboardingRejectionReason rr = OnboardingRejectionReason.builder()
+                .code(ISEE_TYPE_FAIL)
+                .detail("ISEE non valido")
+                .authorityLabel("INPS")
+                .build();
+        evaluationDTO.setOnboardingRejectionReasons(List.of(rr));
+
+        EmailNotificationProperties.Subject subjectMock = Mockito.mock(EmailNotificationProperties.Subject.class);
+        Mockito.when(emailNotificationPropertiesMock.getSubject()).thenReturn(subjectMock);
+        Mockito.when(subjectMock.getKoGenericError()).thenReturn("SUBJ_KO_GENERIC");
+
+        EmailMessageDTO dto =
+                ((OnboardingWebNotificationImpl) onboardingWebNotification).processOnboardingKo(evaluationDTO);
+
+        assertNotNull(dto);
+        assertEquals("SUBJ_KO_GENERIC", dto.getSubject());
+        assertEquals(EMAIL_OUTCOME_GENERIC_ERROR, dto.getTemplateName());
+        assertEquals(evaluationDTO.getUserId(), dto.getTemplateValues().get("name"));
+        assertEquals("ISEE non valido", dto.getTemplateValues().get("reason"));
+        assertEquals("INPS", dto.getTemplateValues().get("managedEntity"));
+    }
+
+    @Test
+    void processOnboardingKo_shouldBuildGenericErrorDto_withoutReasonAndManagedEntity_whenReasonsEmpty() {
+        EvaluationDTO evaluationDTO = getEvaluationDto();
+        evaluationDTO.setOnboardingRejectionReasons(List.of());
+
+        EmailNotificationProperties.Subject subjectMock = Mockito.mock(EmailNotificationProperties.Subject.class);
+        Mockito.when(emailNotificationPropertiesMock.getSubject()).thenReturn(subjectMock);
+        Mockito.when(subjectMock.getKoGenericError()).thenReturn("SUBJ_KO_GENERIC");
+
+        EmailMessageDTO dto =
+                ((OnboardingWebNotificationImpl) onboardingWebNotification).processOnboardingKo(evaluationDTO);
+
+        assertNotNull(dto);
+        assertEquals("SUBJ_KO_GENERIC", dto.getSubject());
+        assertEquals(EMAIL_OUTCOME_GENERIC_ERROR, dto.getTemplateName());
+        assertEquals(evaluationDTO.getUserId(), dto.getTemplateValues().get("name"));
+        assertFalse(dto.getTemplateValues().containsKey("reason"));
+        assertFalse(dto.getTemplateValues().containsKey("managedEntity"));
+    }
 }
