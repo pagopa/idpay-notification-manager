@@ -48,11 +48,6 @@ public class OnboardingIoNotificationImpl extends BaseOnboardingNotification<Not
     }
 
     @Override
-    String flowName() {
-        return "NOTIFY_ONBOARDING_IO";
-    }
-
-    @Override
     protected NotificationDTO generateOnboardingOkNotification(boolean isPartial, EvaluationDTO evaluationDTO) {
         String subject = isPartial ? notificationProperties.getSubject().getOkPartialBel() : notificationProperties.getSubject().getOkBel();
         String markdown = replaceMessageItem(

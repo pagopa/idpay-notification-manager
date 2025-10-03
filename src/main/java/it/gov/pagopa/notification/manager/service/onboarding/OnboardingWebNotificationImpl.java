@@ -38,11 +38,6 @@ public class OnboardingWebNotificationImpl extends BaseOnboardingNotification<Em
     }
 
     @Override
-    String flowName() {
-        return "NOTIFY_ONBOARDING_WEB";
-    }
-
-    @Override
     protected EmailMessageDTO generateOnboardingOkNotification(boolean isPartial, EvaluationDTO evaluationDTO) {
         String template = isPartial ? EMAIL_OUTCOME_PARTIAL: EMAIL_OUTCOME_OK;
 

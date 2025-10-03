@@ -31,8 +31,6 @@ public abstract class BaseOnboardingNotification<R> {
 
     abstract R processOnboardingKo(EvaluationDTO evaluationDTO);
 
-    abstract String flowName();
-
     private R processOnboardingOk(EvaluationDTO evaluationDTO) {
         boolean isBudgetAboveThreshold = evaluationDTO.getBeneficiaryBudgetCents() != null && evaluationDTO.getBeneficiaryBudgetCents() == 10000;
         boolean isPartial = Boolean.TRUE.equals(evaluationDTO.getVerifyIsee()) && isBudgetAboveThreshold;
