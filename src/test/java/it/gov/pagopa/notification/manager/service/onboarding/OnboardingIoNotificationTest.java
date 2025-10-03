@@ -116,6 +116,7 @@ class OnboardingIoNotificationTest {
         );
     }
 
+    //region ONBOARDING_OK
     @Test
     void processNotification_whenTemplateEsitoOk200() {
         EvaluationDTO evaluationDTO = getEvaluationDto();
@@ -231,9 +232,54 @@ class OnboardingIoNotificationTest {
         evaluationDTO.setVerifyIsee(false);
         evaluationDTO.setBeneficiaryBudgetCents(null);
 
+        NotificationProperties.Subject subjectMock = Mockito.mock(NotificationProperties.Subject.class);
+        Mockito.when(notificationPropertiesMock.getSubject()).thenReturn(subjectMock);
+        Mockito.when(subjectMock.getOkBel()).thenReturn(SUBJECT_OK);
+
+        NotificationProperties.Markdown markdownMock = Mockito.mock(NotificationProperties.Markdown.class);
+        Mockito.when(notificationPropertiesMock.getMarkdown()).thenReturn(markdownMock);
+        Mockito.when(markdownMock.getOkBel()).thenReturn(MARKDOWN_OK_BEL);
+        Mockito.when(markdownMock.getDoubleNewLine()).thenReturn(MARKDOWN_DOUBLE_LINE);
+        Mockito.when(markdownMock.getOkCta()).thenReturn(MARKDOWN_CTA_OK);
+
+        NotificationResource notificationResource = Mockito.mock(NotificationResource.class);
+        Mockito.when(ioBackEndRestConnectorMock.notify(Mockito.any(NotificationDTO.class), Mockito.anyString()))
+                .thenReturn(notificationResource);
+        Mockito.when(notificationResource.getId()).thenReturn(MESSAGE_ID);
+
         String result = onboardingIoNotification.processNotification(evaluationDTO);
 
-        Assertions.assertNull(result);
+        String expectedMarkdown = """
+                it:
+                            cta_1:
+                                text: "Vai al bonus"
+                                action: "ioit://idpay/initiative/INITIATIVE_ID"
+                        en:
+                            cta_1:
+                                text: "Go to the bonus page"
+                                action: "ioit://idpay/initiative/INITIATIVE_ID"
+
+
+                Buone notizie! Hai ottenuto il INITIATIVE_NAME da N.A.€. sarà valido **per i prossimi 10 giorni**.
+
+                È disponibile ora nella sezione Portafoglio, dove troverai i dettagli dell'importo e la validità.
+
+                **Cosa puoi fare ora?**
+
+                Puoi usarlo per ottenere uno sconto del 30% sul prezzo d'acquisto di un elettrodomestico nuovo ad alta efficienza, fino ad un massimo di N.A.€.
+
+                **Come fare?**
+
+                Per avere più informazioni su come e dove usare il bonus, [leggi i dettagli](http://www.google.com/).
+
+                **Importante:** ricorda che puoi usare il bonus solo se hai un vecchio elettrodomestico da smaltire. Concorda con il venditore quando e come consegnarlo, ma non smaltirlo autonomamente in discarica.""";
+
+
+        Mockito.verify(ioBackEndRestConnectorMock, Mockito.times(1))
+                .notify(Mockito.argThat(notificationDTO -> notificationDTO.getContent().getMarkdown().equals(expectedMarkdown)), Mockito.anyString());
+
+        Assertions.assertNotNull(result);
+        Assertions.assertEquals(MESSAGE_ID, result);
     }
 
     @Test
@@ -320,4 +366,30 @@ class OnboardingIoNotificationTest {
 
         Assertions.assertNull(result);
     }
+
+    //endregion
+
+    //region Onboarding JOINED
+    @Test
+    void onboardingJoined(){
+        EvaluationDTO evaluationDTO = getEvaluationDto();
+        evaluationDTO.setStatus( NotificationConstants.STATUS_ONBOARDING_JOINED);
+
+        String result = onboardingIoNotification.processNotification(evaluationDTO);
+
+        Assertions.assertNull(result);
+    }
+    //endregion
+
+    //region ONBOARDING_KO
+    @Test
+    void onboardingKO(){
+        EvaluationDTO evaluationDTO = getEvaluationDto();
+        evaluationDTO.setStatus( NotificationConstants.STATUS_ONBOARDING_KO);
+
+        String result = onboardingIoNotification.processNotification(evaluationDTO);
+
+        Assertions.assertNull(result);
+    }
+    //endregion
 }

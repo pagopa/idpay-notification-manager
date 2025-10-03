@@ -63,6 +63,7 @@ class OnboardingWebNotificationTest {
         );
     }
 
+    //region ONBOARDING_OK
     @Test
     void processNotification_whenTemplateEsitoOk200() {
         EvaluationDTO evaluationDTO = getEvaluationDto();
@@ -114,10 +115,21 @@ class OnboardingWebNotificationTest {
         evaluationDTO.setVerifyIsee(false);
         evaluationDTO.setBeneficiaryBudgetCents(null);
 
+        EmailNotificationProperties.Subject subjectMock = Mockito.mock(EmailNotificationProperties.Subject.class);
+        Mockito.when(emailNotificationPropertiesMock.getSubject()).thenReturn(subjectMock);
+
+        Mockito.when(subjectMock.getOk()).thenReturn("TEST_OK");
+
+        Mockito.doAnswer(invocation -> null)
+                .when(emailNotificationConnectorMock)
+                .sendEmail(Mockito.any(EmailMessageDTO.class));
+
         onboardingWebNotification.processNotification(evaluationDTO);
 
-        Mockito.verify(emailNotificationConnectorMock, Mockito.never())
-                .sendEmail(Mockito.any());
+        Mockito.verify(emailNotificationConnectorMock, Mockito.times(1))
+                .sendEmail(Mockito.argThat(email ->
+                        !email.getTemplateValues().containsKey("amount")
+                ));
     }
 
     @Test
@@ -161,4 +173,33 @@ class OnboardingWebNotificationTest {
         Mockito.verify(emailNotificationConnectorMock, Mockito.times(1))
                 .sendEmail(Mockito.any(EmailMessageDTO.class));
     }
+
+    //endregion
+
+    //region ONBOARDING_JOINED
+    @Test
+    void processNotification_onboardingStatusJoined(){
+        EvaluationDTO evaluationDTO = getEvaluationDto();
+        evaluationDTO.setStatus( NotificationConstants.STATUS_ONBOARDING_JOINED);
+
+        onboardingWebNotification.processNotification(evaluationDTO);
+
+        Mockito.verify(emailNotificationConnectorMock, Mockito.never())
+                .sendEmail(Mockito.any());
+    }
+    //endregion
+
+    //region ONBOARDING_KO
+    @Test
+    void processNotification_onboardingStatusKo(){
+        EvaluationDTO evaluationDTO = getEvaluationDto();
+        evaluationDTO.setStatus( NotificationConstants.STATUS_ONBOARDING_KO);
+
+        onboardingWebNotification.processNotification(evaluationDTO);
+
+        Mockito.verify(emailNotificationConnectorMock, Mockito.never())
+                .sendEmail(Mockito.any());
+    }
+    //endregion
+
 }

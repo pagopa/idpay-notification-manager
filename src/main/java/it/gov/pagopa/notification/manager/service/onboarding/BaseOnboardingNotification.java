@@ -34,11 +34,7 @@ public abstract class BaseOnboardingNotification<R> {
     abstract String flowName();
 
     private R processOnboardingOk(EvaluationDTO evaluationDTO) {
-        if (evaluationDTO.getBeneficiaryBudgetCents() == null){
-            log.error("[NOTIFY] Cannot perform notification due to incomplete budget info for user {}. Evaluation status: {}", evaluationDTO.getUserId(), evaluationDTO.getStatus());
-            return null;
-        }
-        boolean isBudgetAboveThreshold = evaluationDTO.getBeneficiaryBudgetCents() == 10000;
+        boolean isBudgetAboveThreshold = evaluationDTO.getBeneficiaryBudgetCents() != null && evaluationDTO.getBeneficiaryBudgetCents() == 10000;
         boolean isPartial = Boolean.TRUE.equals(evaluationDTO.getVerifyIsee()) && isBudgetAboveThreshold;
         return generateOnboardingOkNotification(isPartial, evaluationDTO);
 
