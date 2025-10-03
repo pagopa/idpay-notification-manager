@@ -51,7 +51,9 @@ class NotificationManagerControllerTest {
                   1L,
                   true,
                   null,
-                  IO
+                  IO,
+                  null,
+                  null
           );
 
 
