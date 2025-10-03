@@ -392,4 +392,16 @@ class OnboardingIoNotificationTest {
         Assertions.assertNull(result);
     }
     //endregion
+
+    //region ONBOARDING_STATUS_INVALID
+    @Test
+    void onboardingInvalidStatus(){
+        EvaluationDTO evaluationDTO = getEvaluationDto();
+        evaluationDTO.setStatus("ANOTHER_STATUS");
+
+        String result = onboardingIoNotification.processNotification(evaluationDTO);
+
+        Assertions.assertNull(result);
+    }
+    //endregion
 }

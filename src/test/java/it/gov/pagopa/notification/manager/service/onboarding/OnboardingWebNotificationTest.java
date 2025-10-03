@@ -202,4 +202,17 @@ class OnboardingWebNotificationTest {
     }
     //endregion
 
+    //region ONBOARDING_STATUS_INVALID
+    @Test
+    void onboardingInvalidStatus(){
+        EvaluationDTO evaluationDTO = getEvaluationDto();
+        evaluationDTO.setStatus("ANOTHER_TEST");
+
+        onboardingWebNotification.processNotification(evaluationDTO);
+
+        Mockito.verify(emailNotificationConnectorMock, Mockito.never())
+                .sendEmail(Mockito.any());
+    }
+    //endregion
+
 }

@@ -49,7 +49,7 @@ public class OnboardingIoNotificationImpl extends BaseOnboardingNotification<Not
 
     @Override
     String flowName() {
-        return "";
+        return "NOTIFY_ONBOARDING_IO";
     }
 
     @Override

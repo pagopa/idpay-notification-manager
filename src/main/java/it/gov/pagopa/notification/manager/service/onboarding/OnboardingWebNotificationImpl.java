@@ -39,7 +39,7 @@ public class OnboardingWebNotificationImpl extends BaseOnboardingNotification<Em
 
     @Override
     String flowName() {
-        return "";
+        return "NOTIFY_ONBOARDING_WEB";
     }
 
     @Override
