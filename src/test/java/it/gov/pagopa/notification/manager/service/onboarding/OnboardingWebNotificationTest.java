@@ -5,6 +5,7 @@ import it.gov.pagopa.notification.manager.connector.EmailNotificationConnector;
 import it.gov.pagopa.notification.manager.constants.NotificationConstants;
 import it.gov.pagopa.notification.manager.dto.EmailMessageDTO;
 import it.gov.pagopa.notification.manager.dto.EvaluationDTO;
+import it.gov.pagopa.notification.manager.dto.OnboardingRejectionReason;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -16,9 +17,11 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
-import static it.gov.pagopa.notification.manager.constants.NotificationConstants.EmailTemplates.EMAIL_OUTCOME_OK;
-import static it.gov.pagopa.notification.manager.constants.NotificationConstants.EmailTemplates.EMAIL_OUTCOME_PARTIAL;
+import static it.gov.pagopa.notification.manager.constants.NotificationConstants.EmailTemplates.*;
+import static it.gov.pagopa.notification.manager.dto.OnboardingRejectionReason.OnboardingRejectionReasonCode.ISEE_TYPE_FAIL;
+import static it.gov.pagopa.notification.manager.dto.OnboardingRejectionReason.OnboardingRejectionReasonCode.REJECTION_REASON_INITIATIVE_ENDED;
 import static it.gov.pagopa.notification.manager.enums.Channel.WEB;
+import static org.junit.jupiter.api.Assertions.*;
 
 @ExtendWith(MockitoExtension.class)
 class OnboardingWebNotificationTest {
@@ -174,45 +177,76 @@ class OnboardingWebNotificationTest {
                 .sendEmail(Mockito.any(EmailMessageDTO.class));
     }
 
-    //endregion
-
-    //region ONBOARDING_JOINED
     @Test
-    void processNotification_onboardingStatusJoined(){
+    void processOnboardingJoined_shouldBuildFamilyUnitEmailDto() {
         EvaluationDTO evaluationDTO = getEvaluationDto();
-        evaluationDTO.setStatus( NotificationConstants.STATUS_ONBOARDING_JOINED);
 
-        onboardingWebNotification.processNotification(evaluationDTO);
+        EmailNotificationProperties.Subject subjectMock = Mockito.mock(EmailNotificationProperties.Subject.class);
+        Mockito.when(emailNotificationPropertiesMock.getSubject()).thenReturn(subjectMock);
+        Mockito.when(subjectMock.getKoFamilyUnit()).thenReturn("SUBJ_FAMILY_UNIT");
 
-        Mockito.verify(emailNotificationConnectorMock, Mockito.never())
-                .sendEmail(Mockito.any());
+        EmailMessageDTO dto =
+                ((OnboardingWebNotificationImpl) onboardingWebNotification).processOnboardingJoined(evaluationDTO);
+
+        assertNotNull(dto);
+        assertEquals("SUBJ_FAMILY_UNIT", dto.getSubject());
+        assertEquals(EMAIL_OUTCOME_FAMILY_UNIT, dto.getTemplateName());
+        assertTrue(dto.getTemplateValues().containsKey("name"));
+        assertEquals(evaluationDTO.getUserId(), dto.getTemplateValues().get("name"));
     }
-    //endregion
 
-    //region ONBOARDING_KO
     @Test
-    void processNotification_onboardingStatusKo(){
+    void processOnboardingKo_shouldBuildThanksDto_whenInitiativeEnded() {
         EvaluationDTO evaluationDTO = getEvaluationDto();
-        evaluationDTO.setStatus( NotificationConstants.STATUS_ONBOARDING_KO);
+        OnboardingRejectionReason rr = OnboardingRejectionReason.builder()
+                .code(REJECTION_REASON_INITIATIVE_ENDED)
+                .detail("ignored")
+                .authorityLabel("ignored")
+                .build();
+        evaluationDTO.setOnboardingRejectionReasons(List.of(rr));
 
-        onboardingWebNotification.processNotification(evaluationDTO);
+        EmailNotificationProperties.Subject subjectMock = Mockito.mock(EmailNotificationProperties.Subject.class);
+        Mockito.when(emailNotificationPropertiesMock.getSubject()).thenReturn(subjectMock);
+        Mockito.when(subjectMock.getKoThanks()).thenReturn("SUBJ_KO_THANKS");
 
-        Mockito.verify(emailNotificationConnectorMock, Mockito.never())
-                .sendEmail(Mockito.any());
+        EmailMessageDTO dto =
+                ((OnboardingWebNotificationImpl) onboardingWebNotification).processOnboardingKo(evaluationDTO);
+
+        assertNotNull(dto);
+        assertEquals("SUBJ_KO_THANKS", dto.getSubject());
+        assertEquals(EMAIL_OUTCOME_THANKS, dto.getTemplateName());
+        assertTrue(dto.getTemplateValues().containsKey("name"));
+        assertEquals(evaluationDTO.getUserId(), dto.getTemplateValues().get("name"));
+        assertFalse(dto.getTemplateValues().containsKey("reason"));
+        assertFalse(dto.getTemplateValues().containsKey("managedEntity"));
     }
-    //endregion
 
-    //region ONBOARDING_STATUS_INVALID
     @Test
-    void onboardingInvalidStatus(){
+    void processOnboardingKo_shouldBuildGenericErrorDto_whenIseeTypeFail() {
         EvaluationDTO evaluationDTO = getEvaluationDto();
-        evaluationDTO.setStatus("ANOTHER_TEST");
+        OnboardingRejectionReason rr = OnboardingRejectionReason.builder()
+                .code(ISEE_TYPE_FAIL)
+                .detail(null)
+                .authorityLabel(null)
+                .build();
+        evaluationDTO.setOnboardingRejectionReasons(List.of(rr));
 
-        onboardingWebNotification.processNotification(evaluationDTO);
+        EmailNotificationProperties.Subject subjectMock = Mockito.mock(EmailNotificationProperties.Subject.class);
+        Mockito.when(emailNotificationPropertiesMock.getSubject()).thenReturn(subjectMock);
+        Mockito.when(subjectMock.getKoGenericError()).thenReturn("SUBJ_KO_GENERIC");
 
-        Mockito.verify(emailNotificationConnectorMock, Mockito.never())
-                .sendEmail(Mockito.any());
+        // when
+        EmailMessageDTO dto =
+                ((OnboardingWebNotificationImpl) onboardingWebNotification).processOnboardingKo(evaluationDTO);
+
+        // then
+        assertNotNull(dto);
+        assertEquals("SUBJ_KO_GENERIC", dto.getSubject());
+        assertEquals(EMAIL_OUTCOME_GENERIC_ERROR, dto.getTemplateName());
+        assertTrue(dto.getTemplateValues().containsKey("name"));
+        assertEquals(evaluationDTO.getUserId(), dto.getTemplateValues().get("name"));
+        // fallback applicati perché detail e authorityLabel erano null
+        assertEquals("REASON", dto.getTemplateValues().get("reason"));
+        assertEquals("HELPDESK", dto.getTemplateValues().get("managedEntity"));
     }
-    //endregion
-
 }
