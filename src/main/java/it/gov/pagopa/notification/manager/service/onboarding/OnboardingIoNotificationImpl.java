@@ -48,11 +48,6 @@ public class OnboardingIoNotificationImpl extends BaseOnboardingNotification<Not
     }
 
     @Override
-    String flowName() {
-        return "";
-    }
-
-    @Override
     protected NotificationDTO generateOnboardingOkNotification(boolean isPartial, EvaluationDTO evaluationDTO) {
         String subject = isPartial ? notificationProperties.getSubject().getOkPartialBel() : notificationProperties.getSubject().getOkBel();
         String markdown = replaceMessageItem(
@@ -71,7 +66,7 @@ public class OnboardingIoNotificationImpl extends BaseOnboardingNotification<Not
         } else {
             placeholders = Map.of(
                     NotificationConstants.INITIATIVE_NAME_KEY, evaluationDTO.getInitiativeName(),
-                    NotificationConstants.REWARD_AMOUNT_KEY, String.valueOf(CommonUtilities.centsToEuro(evaluationDTO.getBeneficiaryBudgetCents()))
+                    NotificationConstants.REWARD_AMOUNT_KEY, evaluationDTO.getBeneficiaryBudgetCents() != null ? String.valueOf(CommonUtilities.centsToEuro(evaluationDTO.getBeneficiaryBudgetCents())) : ""
             );
             markdown = markdown.concat(this.notificationProperties.getMarkdown().getOkBel());
         }

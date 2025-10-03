@@ -116,12 +116,6 @@ public class NotificationMarkdown {
   @Value("${notification.manager.markdown.ko.generic}")
   private String markdownKoGeneric;
 
-  @Value("${notification.manager.subject.ok.type2}")
-  private String subjectOkType2;
-
-  @Value("${notification.manager.markdown.ok.type2}")
-  private String markdownOkType2;
-
   public String getSubjectCheckIbanKo() {
     return this.subjectCheckIbanKo;
   }

@@ -38,17 +38,11 @@ public class OnboardingWebNotificationImpl extends BaseOnboardingNotification<Em
     }
 
     @Override
-    String flowName() {
-        return "";
-    }
-
-    @Override
     protected EmailMessageDTO generateOnboardingOkNotification(boolean isPartial, EvaluationDTO evaluationDTO) {
         String template = isPartial ? EMAIL_OUTCOME_PARTIAL: EMAIL_OUTCOME_OK;
 
         Map<String, String> templateValues = new HashMap<>();
-        templateValues.put("userId", evaluationDTO.getUserId());
-        templateValues.put("initiativeId", evaluationDTO.getInitiativeId());
+        templateValues.put("name", evaluationDTO.getUserId());
 
         if (evaluationDTO.getBeneficiaryBudgetCents() != null) {
             long amount = evaluationDTO.getBeneficiaryBudgetCents() / 100;

@@ -46,8 +46,6 @@ import java.util.List;
 import java.util.stream.Stream;
 
 import static it.gov.pagopa.notification.manager.constants.NotificationConstants.AnyNotificationConsumer.SubTypes.*;
-import static it.gov.pagopa.notification.manager.constants.NotificationConstants.EmailTemplates.EMAIL_OUTCOME_OK;
-import static it.gov.pagopa.notification.manager.constants.NotificationConstants.EmailTemplates.EMAIL_OUTCOME_PARTIAL;
 import static it.gov.pagopa.notification.manager.enums.Channel.IO;
 import static it.gov.pagopa.notification.manager.enums.Channel.WEB;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -372,20 +370,10 @@ class NotificationManagerServiceTest {
 
         Mockito.when(ioBackEndRestConnector.getProfile(FISCAL_CODE_DTO, TOKEN)).thenReturn(PROFILE_RESOURCE);
 
-        Mockito.when(notificationMarkdown.getSubject(EVALUATION_DTO)).thenReturn(SUBJECT);
-
-        Mockito.when(notificationMarkdown.getMarkdown(EVALUATION_DTO)).thenReturn(MARKDOWN);
-
-        Mockito.when(
-                        notificationDTOMapper.map(
-                                Mockito.eq(FISCAL_CODE),
-                                Mockito.any(Long.class),
-                                Mockito.anyString(),
-                                Mockito.anyString()))
-                .thenReturn(NOTIFICATION_DTO);
-
         Mockito.when(ioBackEndRestConnector.notify(NOTIFICATION_DTO, TOKEN))
                 .thenReturn(NOTIFICATION_RESOURCE);
+
+        Mockito.when(onboardingIoNotification.processNotification(Mockito.any())).thenReturn("ID");
 
         try {
             notificationManagerService.notify(EVALUATION_DTO);
@@ -451,6 +439,64 @@ class NotificationManagerServiceTest {
         Mockito.when(evaluationDTO.getChannel()).thenReturn(fakeChannel);
 
         Assertions.assertDoesNotThrow(() -> notificationManagerService.notify(evaluationDTO));
+    }
+
+    @Test
+    void notify_webNotification() {
+        EvaluationDTO evaluationDTO = new EvaluationDTO(
+                TEST_TOKEN,
+                INITIATIVE_ID,
+                INITIATIVE_ID,
+                TEST_DATE_ONLY_DATE,
+                INITIATIVE_ID,
+                ORGANIZATION_NAME,
+                NotificationConstants.STATUS_ONBOARDING_OK,
+                TEST_DATE,
+                TEST_DATE,
+                List.of(),
+                50000L,
+                1L,
+                true,
+                null,
+                WEB,
+                null,
+                null
+        );
+
+        Mockito.when(onboardingWebNotification.processNotification(evaluationDTO)).thenReturn(null);
+
+        notificationManagerService.notify(evaluationDTO);
+
+
+        verify(onboardingWebNotification, times(1)).processNotification(any());
+    }
+
+    @Test
+    void notify_webNotification_scapeNotification() {
+        EvaluationDTO evaluationDTO = new EvaluationDTO(
+                TEST_TOKEN,
+                INITIATIVE_ID,
+                INITIATIVE_ID,
+                TEST_DATE_ONLY_DATE,
+                INITIATIVE_ID,
+                ORGANIZATION_NAME,
+                NotificationConstants.STATUS_ONBOARDING_DEMANDED,
+                TEST_DATE,
+                TEST_DATE,
+                List.of(),
+                50000L,
+                1L,
+                true,
+                null,
+                WEB,
+                null,
+                null
+        );
+
+        notificationManagerService.notify(evaluationDTO);
+
+
+        verify(onboardingWebNotification, never()).processNotification(any());
     }
 
     @Test
