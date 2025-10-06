@@ -17,6 +17,9 @@ public class EmailNotificationProperties {
     public static class Subject {
         private String ok;
         private String partial;
-
+        private String okThreeDayReminder;
+        private String koFamilyUnit;
+        private String koThanks;
+        private String koGenericError;
     }
 }

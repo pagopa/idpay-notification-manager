@@ -10,8 +10,8 @@ import org.springframework.stereotype.Service;
 import java.util.HashMap;
 import java.util.Map;
 
-import static it.gov.pagopa.notification.manager.constants.NotificationConstants.EmailTemplates.EMAIL_OUTCOME_OK;
-import static it.gov.pagopa.notification.manager.constants.NotificationConstants.EmailTemplates.EMAIL_OUTCOME_PARTIAL;
+import static it.gov.pagopa.notification.manager.constants.NotificationConstants.EmailTemplates.*;
+import static it.gov.pagopa.notification.manager.dto.OnboardingRejectionReason.OnboardingRejectionReasonCode.REJECTION_REASON_INITIATIVE_ENDED;
 
 @Slf4j
 @Service
@@ -29,12 +29,33 @@ public class OnboardingWebNotificationImpl extends BaseOnboardingNotification<Em
 
     @Override
     EmailMessageDTO processOnboardingJoined(EvaluationDTO evaluationDTO) {
-        return null; //TODO implements required in task UPBE-248
+        Map<String, String> templateValues = new HashMap<>();
+        templateValues.put("name", evaluationDTO.getUserId());
+        return createNotification(evaluationDTO, emailNotificationProperties.getSubject().getKoFamilyUnit(), EMAIL_OUTCOME_FAMILY_UNIT, templateValues);
     }
 
     @Override
     EmailMessageDTO processOnboardingKo(EvaluationDTO evaluationDTO) {
-        return null; //TODO implements required in task UPBE-248
+        var reasons = evaluationDTO.getOnboardingRejectionReasons();
+        var firstReason = (reasons != null && !reasons.isEmpty()) ? reasons.getFirst() : null;
+
+        final boolean initiativeEnded = firstReason != null
+                && REJECTION_REASON_INITIATIVE_ENDED.equals(firstReason.getCode());
+
+        final String template = initiativeEnded ? EMAIL_OUTCOME_THANKS : EMAIL_OUTCOME_GENERIC_ERROR;
+        final String subject  = initiativeEnded
+                ? emailNotificationProperties.getSubject().getKoThanks()
+                : emailNotificationProperties.getSubject().getKoGenericError();
+
+        Map<String, String> templateValues = new HashMap<>();
+        templateValues.put("name", evaluationDTO.getUserId());
+
+        if (!initiativeEnded && firstReason != null) {
+            templateValues.put("reason", firstReason.getDetail() != null ? firstReason.getDetail() : "REASON");
+            templateValues.put("managedEntity", firstReason.getAuthorityLabel() != null ? firstReason.getAuthorityLabel() : "HELPDESK");
+        }
+
+        return createNotification(evaluationDTO, subject, template, templateValues);
     }
 
     @Override
