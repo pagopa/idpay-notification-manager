@@ -16,6 +16,9 @@ import org.springframework.util.StringUtils;
 
 import java.util.Map;
 
+import static it.gov.pagopa.notification.manager.constants.NotificationConstants.EmailTemplates.*;
+import static it.gov.pagopa.notification.manager.dto.OnboardingRejectionReason.OnboardingRejectionReasonCode.REJECTION_REASON_INITIATIVE_ENDED;
+
 @Slf4j
 @Service
 public class OnboardingIoNotificationImpl extends BaseOnboardingNotification<NotificationDTO> implements OnboardingIoNotification {
@@ -39,12 +42,33 @@ public class OnboardingIoNotificationImpl extends BaseOnboardingNotification<Not
 
     @Override
     NotificationDTO processOnboardingJoined(EvaluationDTO evaluationDTO) {
-        return null; //TODO UPBE-208
+        String subject = notificationProperties.getSubject().getJoinedBel();
+        String markdown = notificationProperties.getMarkdown().getJoinedBel().concat(this.notificationProperties.getMarkdown().getDoubleNewLine());
+        return createNotification(evaluationDTO, subject, markdown, null);
     }
 
     @Override
     NotificationDTO processOnboardingKo(EvaluationDTO evaluationDTO) {
-        return null; //TODO UPBE-208
+        var reasons = evaluationDTO.getOnboardingRejectionReasons();
+        var firstReason = (reasons != null && !reasons.isEmpty()) ? reasons.getFirst() : null;
+
+        final boolean initiativeEnded = firstReason != null
+                && REJECTION_REASON_INITIATIVE_ENDED.equals(firstReason.getCode());
+
+        final String markdown = initiativeEnded ? EMAIL_OUTCOME_THANKS : EMAIL_OUTCOME_GENERIC_ERROR;
+        final String subject  = initiativeEnded
+                ? notificationProperties.getSubject().getKoThanksBel()
+                : notificationProperties.getSubject().getKoGenericBel();
+
+        Map<String, String> placeholders = null;
+
+        if (!initiativeEnded && firstReason != null) {
+            placeholders = Map.of(
+                    NotificationConstants.REASON_KEY, firstReason.getDetail() != null ? firstReason.getDetail() : "REASON",
+                    NotificationConstants.MANAGED_ENTITY_KEY, firstReason.getAuthorityLabel() != null ? firstReason.getAuthorityLabel() : "HELPDESK"
+            );
+        }
+        return createNotification(evaluationDTO, subject, markdown, placeholders);
     }
 
     @Override
@@ -55,7 +79,7 @@ public class OnboardingIoNotificationImpl extends BaseOnboardingNotification<Not
                 NotificationConstants.INITIATIVE_ID_KEY,
                 evaluationDTO.getInitiativeId())
                 .concat(this.notificationProperties.getMarkdown().getDoubleNewLine());
-        Map<String, String> placeholders = null;
+        Map<String, String> placeholders;
 
         if(isPartial) {
             placeholders = Map.of(
@@ -76,7 +100,7 @@ public class OnboardingIoNotificationImpl extends BaseOnboardingNotification<Not
 
     @Override
     NotificationDTO createNotification(EvaluationDTO evaluationDTO, String subject, String body, Map<String, String> bodyValues) {
-        String markdown = replaceMessageItems(body, bodyValues);
+        String markdown = bodyValues != null ? replaceMessageItems(body, bodyValues) : body;
         return notificationDTOMapper.map(evaluationDTO.getFiscalCode(), timeToLive, subject, markdown);
     }
 

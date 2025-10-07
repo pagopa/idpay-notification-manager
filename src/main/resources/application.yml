@@ -34,7 +34,7 @@ rest-client:
         partial:  ${SUBJECT_BEL_OK_PARTIAL:Hai ottenuto il bonus!}
         ok-threeDayReminder: ${SUBJECT_OK_THREE_DAY_REMINDER:Il tuo bonus scade tra 3 giorni!}
         ko-familyUnit: ${SUBJECT_KO_FAMILY_UNIT:Il bonus è stato già richiesto}
-        ko-thanks: "${SUBJECT_OK_THANKS:\"Bonus Elettrodomestici: tutti i fondi sono stati assegnati\"}"
+        ko-thanks: '${SUBJECT_OK_THANKS:Bonus Elettrodomestici: tutti i fondi sono stati assegnati}'
         ko-genericError: ${SUBJECT_KO_GENERIC_ERROR:Non è stato possibile assegnarti il bonus}
       place-holder:
         ok: productFileName
@@ -263,8 +263,34 @@ notification:
         ${MARKDOWN_OK:Buone notizie! Hai ottenuto %initiativeName%. Da questo momento puoi visualizzare il bonus nella sezione Portafoglio dell'app IO.
 
         Ti ricordiamo che per iniziare ad usufruire del bonus devi configurare almeno un metodo di pagamento.
-
+ 
         Puoi trovare maggiori informazioni sul [sito](http://example.com/).}
+
+      joined-bel: |-
+        ${MARKDOWN_JOINED_BEL:La tua richiesta per il Bonus Elettrodomestici non può essere elaborata. Un'altra persona che fa parte della tua famiglia ha già presentato richiesta.
+
+        È possibile inviare **una sola richiesta per ogni famiglia anagrafica.**
+
+        Per avere più dettagli sui requisiti del bonus, [leggi come fare](http://example.com/).}
+
+      ko-generic-bel: |-
+        ${MARKDOWN_KO_GENERIC_BEL:Purtroppo la tua richiesta per il Bonus Elettrodomestici non è stata accettata.
+
+        Non è stato possibile assegnarti il bonus perché:
+        
+         - %reason%
+
+        **Hai dei dubbi?**
+        
+        Se pensi che ci sia stato un errore, segnalalo a %managedEntity%.}
+
+      ko-thanks-bel: |-
+        ${MARKDOWN_KO_THANKS_BEL:La tua richiesta era in lista d'attesa, ma **tutti i fondi disponibili sono stati assegnati**.
+        Ci dispiace, ma purtroppo non è possibile assegnare il bonus.
+        
+        Grazie per aver mostrato interesse per il **Bonus Elettrodomestici**.
+        
+        Alla prossima iniziativa!}
 
       ok.type3: |-
         ${MARKDOWN_OK_CTA_TYPE3: }
@@ -320,6 +346,9 @@ notification:
       ok: ${SUBJECT_OK:Il tuo Bonus è attivo}
       ok-bel: ${SUBJECT_OK_BEL:Hai ottenuto il bonus!}
       ok-partial-bel: ${SUBJECT_OK_PARTIAL_BEL:Hai ottenuto il bonus!}
+      ko-generic-bel: ${SUBJECT_KO_GENERIC_BEL:Non è stato possibile assegnarti il bonus}
+      ko-thanks-bel: '${SUBJECT_KO_THANKS_BEL:Bonus Elettrodomestici: tutti i fondi sono stati assegnati}'
+      joined-bel: ${SUBJECT_JOINED_BEL:Il bonus è stato già richiesto}
       ok.type2: ${SUBJECT_OK_TYPE2:Il tuo Bonus è attivo!}
       ok.type3: ${SUBJECT_OK_TYPE3:}
       demanded: ${SUBJECT_DEMANDED:Attiva il bonus %initiativeName%}

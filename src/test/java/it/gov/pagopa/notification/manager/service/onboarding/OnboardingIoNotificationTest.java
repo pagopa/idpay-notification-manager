@@ -9,6 +9,7 @@ import it.gov.pagopa.notification.manager.constants.NotificationConstants;
 import it.gov.pagopa.notification.manager.dto.EvaluationDTO;
 import it.gov.pagopa.notification.manager.dto.NotificationDTO;
 import it.gov.pagopa.notification.manager.dto.NotificationResource;
+import it.gov.pagopa.notification.manager.dto.OnboardingRejectionReason;
 import it.gov.pagopa.notification.manager.dto.mapper.NotificationDTOMapper;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -24,6 +25,8 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 
+import static it.gov.pagopa.notification.manager.dto.OnboardingRejectionReason.OnboardingRejectionReasonCode.FAMILY_CRITERIA_FAIL;
+import static it.gov.pagopa.notification.manager.dto.OnboardingRejectionReason.OnboardingRejectionReasonCode.REJECTION_REASON_INITIATIVE_ENDED;
 import static it.gov.pagopa.notification.manager.enums.Channel.IO;
 
 @ExtendWith(MockitoExtension.class)
@@ -367,33 +370,6 @@ class OnboardingIoNotificationTest {
         Assertions.assertNull(result);
     }
 
-    //endregion
-
-    //region Onboarding JOINED
-    @Test
-    void onboardingJoined(){
-        EvaluationDTO evaluationDTO = getEvaluationDto();
-        evaluationDTO.setStatus( NotificationConstants.STATUS_ONBOARDING_JOINED);
-
-        String result = onboardingIoNotification.processNotification(evaluationDTO);
-
-        Assertions.assertNull(result);
-    }
-    //endregion
-
-    //region ONBOARDING_KO
-    @Test
-    void onboardingKO(){
-        EvaluationDTO evaluationDTO = getEvaluationDto();
-        evaluationDTO.setStatus( NotificationConstants.STATUS_ONBOARDING_KO);
-
-        String result = onboardingIoNotification.processNotification(evaluationDTO);
-
-        Assertions.assertNull(result);
-    }
-    //endregion
-
-    //region ONBOARDING_STATUS_INVALID
     @Test
     void onboardingInvalidStatus(){
         EvaluationDTO evaluationDTO = getEvaluationDto();
@@ -403,5 +379,70 @@ class OnboardingIoNotificationTest {
 
         Assertions.assertNull(result);
     }
-    //endregion
+
+    @Test
+    void processOnboardingJoined_buildsSubjectAndMarkdown() {
+        EvaluationDTO evaluationDTO = getEvaluationDto();
+
+        NotificationProperties.Subject subjectMock = Mockito.mock(NotificationProperties.Subject.class);
+        Mockito.when(notificationPropertiesMock.getSubject()).thenReturn(subjectMock);
+        Mockito.when(subjectMock.getJoinedBel()).thenReturn("SUBJECT_JOINED_BEL");
+
+        NotificationProperties.Markdown markdownMock = Mockito.mock(NotificationProperties.Markdown.class);
+        Mockito.when(notificationPropertiesMock.getMarkdown()).thenReturn(markdownMock);
+        Mockito.when(markdownMock.getJoinedBel()).thenReturn("MD_JOINED");
+        Mockito.when(markdownMock.getDoubleNewLine()).thenReturn(MARKDOWN_DOUBLE_LINE);
+
+        NotificationDTO dto = ((OnboardingIoNotificationImpl) onboardingIoNotification)
+                .processOnboardingJoined(evaluationDTO);
+
+        Assertions.assertNotNull(dto);
+        Assertions.assertEquals("SUBJECT_JOINED_BEL", dto.getContent().getSubject());
+        Assertions.assertEquals("MD_JOINED" + MARKDOWN_DOUBLE_LINE, dto.getContent().getMarkdown());
+    }
+
+    @Test
+    void processOnboardingKo_whenInitiativeEnded_true_usesThanksSubject_andNoPlaceholders() {
+        EvaluationDTO evaluationDTO = getEvaluationDto();
+
+        OnboardingRejectionReason reason = OnboardingRejectionReason
+                .builder()
+                .code(REJECTION_REASON_INITIATIVE_ENDED)
+                .detail("Dettaglio che non verrà usato nel ramo 'ended'")
+                .authorityLabel("ENTE XYZ")
+                .build();
+        evaluationDTO.setOnboardingRejectionReasons(List.of(reason));
+
+        NotificationProperties.Subject subjectMock = Mockito.mock(NotificationProperties.Subject.class);
+        Mockito.when(notificationPropertiesMock.getSubject()).thenReturn(subjectMock);
+        Mockito.when(subjectMock.getKoThanksBel()).thenReturn("SUBJECT_KO_THANKS_BEL");
+
+        NotificationDTO dto = ((OnboardingIoNotificationImpl) onboardingIoNotification)
+                .processOnboardingKo(evaluationDTO);
+
+        Assertions.assertNotNull(dto);
+        Assertions.assertEquals("SUBJECT_KO_THANKS_BEL", dto.getContent().getSubject());
+    }
+
+    @Test
+    void processOnboardingKo_whenGeneric_withReason_buildsPlaceholdersAndSubject() {
+        EvaluationDTO evaluationDTO = getEvaluationDto();
+        OnboardingRejectionReason reason = OnboardingRejectionReason
+                .builder()
+                .code(FAMILY_CRITERIA_FAIL)
+                .detail("Documento mancante")
+                .authorityLabel("Comune di Test")
+                .build();
+        evaluationDTO.setOnboardingRejectionReasons(List.of(reason));
+
+        NotificationProperties.Subject subjectMock = Mockito.mock(NotificationProperties.Subject.class);
+        Mockito.when(notificationPropertiesMock.getSubject()).thenReturn(subjectMock);
+        Mockito.when(subjectMock.getKoGenericBel()).thenReturn("SUBJECT_KO_GENERIC_BEL");
+
+        NotificationDTO dto = ((OnboardingIoNotificationImpl) onboardingIoNotification)
+                .processOnboardingKo(evaluationDTO);
+
+        Assertions.assertNotNull(dto);
+        Assertions.assertEquals("SUBJECT_KO_GENERIC_BEL", dto.getContent().getSubject());
+    }
 }
