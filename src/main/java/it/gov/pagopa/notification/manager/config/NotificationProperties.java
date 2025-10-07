@@ -20,6 +20,9 @@ public class NotificationProperties {
         private String doubleNewLine;
         private String okBel;
         private String okPartialBel;
+        private String joinedBel;
+        private String koGenericBel;
+        private String koThanksBel;
     }
 
     @Getter
@@ -27,6 +30,9 @@ public class NotificationProperties {
     public static class Subject {
         private String okBel;
         private String okPartialBel;
+        private String joinedBel;
+        private String koGenericBel;
+        private String koThanksBel;
 
     }
 }
