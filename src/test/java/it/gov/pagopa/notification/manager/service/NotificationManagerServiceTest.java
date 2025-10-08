@@ -41,6 +41,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Stream;
 
 import static it.gov.pagopa.notification.manager.constants.NotificationConstants.AnyNotificationConsumer.SubTypes.*;
@@ -50,6 +51,12 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
+/**
+ * Test “hardened”:
+ * - Esecutori fittizi con implementazione completa (niente metodi vuoti).
+ * - Helper AutoCloseable per swap/restore dell'executor e del parallelism via try-with-resources.
+ * - Nessuna interferenza tra test e niente RejectedExecutionException/InterruptedException spurie.
+ */
 @ExtendWith({SpringExtension.class, MockitoExtension.class})
 @ContextConfiguration(classes = NotificationManagerServiceImpl.class)
 @TestPropertySource(properties = {
@@ -58,59 +65,117 @@ import static org.mockito.Mockito.*;
 })
 class NotificationManagerServiceTest {
 
-    @FunctionalInterface
-    private interface ThrowingRunnable { void run() throws Exception; }
+    // ===== Helpers =====
 
-    private void withRealExecutor(ThrowingRunnable body) {
-        Integer originalParallelism = (Integer) ReflectionTestUtils
-                .getField(notificationManagerService, "parallelism");
-        ExecutorService original = (ExecutorService) ReflectionTestUtils
-                .getField(notificationManagerService, "executorService");
-        try {
-            ReflectionTestUtils.setField(notificationManagerService, "parallelism", 1);
-            ReflectionTestUtils.invokeMethod(notificationManagerService, "init");
-            body.run();
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        } finally {
-            notificationManagerService.close();
-            ReflectionTestUtils.setField(notificationManagerService, "executorService", original);
-            ReflectionTestUtils.setField(notificationManagerService, "parallelism", originalParallelism);
-            Thread.interrupted();
+    /** Contesto che sostituisce executor e parallelism e ripristina a fine blocco (try-with-resources). */
+    private static final class ExecSwap implements AutoCloseable {
+        private final NotificationManagerServiceImpl svc;
+        private final ExecutorService originalExec;
+        private final int originalPar;
+
+        ExecSwap(NotificationManagerServiceImpl svc, ExecutorService newExec, int newPar) {
+            this.svc = svc;
+            this.originalExec = (ExecutorService) ReflectionTestUtils.getField(svc, "executorService");
+            this.originalPar = (Integer) ReflectionTestUtils.getField(svc, "parallelism");
+            ReflectionTestUtils.setField(svc, "executorService", newExec);
+            ReflectionTestUtils.setField(svc, "parallelism", newPar);
+        }
+
+        @Override
+        public void close() {
+            ReflectionTestUtils.setField(svc, "executorService", originalExec);
+            ReflectionTestUtils.setField(svc, "parallelism", originalPar);
+            Thread.interrupted(); // pulizia stato interrupt del thread corrente
         }
     }
 
-    @SuppressWarnings("unchecked")
-    private void withSafeExecutor(ThrowingRunnable body) {
-        ExecutorService original = (ExecutorService) ReflectionTestUtils
-                .getField(notificationManagerService, "executorService");
-        Integer originalParallelism = (Integer) ReflectionTestUtils
-                .getField(notificationManagerService, "parallelism");
+    /** Executor testuale che restituisce sempre il Future passato in costruzione (usato per Execution/Interrupted). */
+    private static final class FixedFutureExecutor extends AbstractExecutorService {
+        private final Future<?> fixedFuture;
+        /** stato “shutdown” separato da “terminated” per evitare duplicazioni tra i due metodi */
+        private final AtomicBoolean shutdown = new AtomicBoolean(false);
+        private final AtomicBoolean terminated = new AtomicBoolean(false);
 
-        Future<Long> okFuture = CompletableFuture.completedFuture(0L);
-        ExecutorService safeExec = new AbstractExecutorService() {
-            @Override public void shutdown() {}
-            @Override public List<Runnable> shutdownNow() { return List.of(); }
-            @Override public boolean isShutdown() { return false; }
-            @Override public boolean isTerminated() { return false; }
-            @Override public boolean awaitTermination(long timeout, TimeUnit unit) { return true; }
-            @Override public void execute(Runnable command) {}
-            @Override public <T> Future<T> submit(Callable<T> task) { return (Future<T>) okFuture; }
-        };
+        FixedFutureExecutor(Future<?> fixedFuture) {
+            this.fixedFuture = fixedFuture;
+        }
 
-        try {
-            ReflectionTestUtils.setField(notificationManagerService, "executorService", safeExec);
-            ReflectionTestUtils.setField(notificationManagerService, "parallelism", 1);
-            body.run();
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        } finally {
-            ReflectionTestUtils.setField(notificationManagerService, "executorService", original);
-            ReflectionTestUtils.setField(notificationManagerService, "parallelism", originalParallelism);
-            Thread.interrupted();
+        @Override
+        public void shutdown() {
+            // implementazione minimale ma non vuota: marca entrambi gli stati
+            shutdown.set(true);
+            terminated.set(true);
+        }
+
+        @Override
+        public List<Runnable> shutdownNow() {
+            // non ci sono task accodati: restituiamo lista vuota
+            shutdown();
+            return Collections.emptyList();
+        }
+
+        @Override
+        public boolean isShutdown() {
+            return shutdown.get();
+        }
+
+        @Override
+        public boolean isTerminated() {
+            // non identico a isShutdown per evitare duplicati: vero solo quando abbiamo marcato terminated
+            return terminated.get();
+        }
+
+        @Override
+        public boolean awaitTermination(long timeout, TimeUnit unit) {
+            // non ci sono thread attivi: ritorna sempre true
+            return true;
+        }
+
+        @Override
+        public void execute(Runnable command) {
+            // Non usato nei test: esplicitiamo chiaramente
+            throw new UnsupportedOperationException("execute() not used in test");
+        }
+
+        @Override
+        @SuppressWarnings("unchecked")
+        public <T> Future<T> submit(Callable<T> task) {
+            // ritorna sempre il future fittizio fornito (ExecutionException/InterruptedException simulati a richiesta)
+            return (Future<T>) fixedFuture;
         }
     }
 
+    /** Executor reale a thread singolo per eseguire davvero i worker di recover (nessun code smell). */
+    private static final class SingleThreadDirectExecutor extends AbstractExecutorService {
+        private final ExecutorService delegate = Executors.newSingleThreadExecutor(r -> {
+            Thread t = new Thread(r, "test-recovery-thread");
+            t.setDaemon(true);
+            return t;
+        });
+
+        @Override public void shutdown() { delegate.shutdown(); }
+        @Override public List<Runnable> shutdownNow() { return delegate.shutdownNow(); }
+        @Override public boolean isShutdown() { return delegate.isShutdown(); }
+        @Override public boolean isTerminated() { return delegate.isTerminated(); }
+        @Override public boolean awaitTermination(long timeout, TimeUnit unit) throws InterruptedException {
+            return delegate.awaitTermination(timeout, unit);
+        }
+        @Override public void execute(Runnable command) { delegate.execute(command); }
+        @Override public <T> Future<T> submit(Callable<T> task) { return delegate.submit(task); }
+    }
+
+    private ExecSwap swapToRealExecutor() {
+        // Inizializza l’executor del service con un thread vero e parallelism 1
+        SingleThreadDirectExecutor exec = new SingleThreadDirectExecutor();
+        ReflectionTestUtils.invokeMethod(notificationManagerService, "init"); // inizializza se necessario
+        return new ExecSwap(notificationManagerService, exec, 1);
+    }
+
+    private ExecSwap swapToFixedFuture(Future<Long> f) {
+        return new ExecSwap(notificationManagerService, new FixedFutureExecutor(f), 1);
+    }
+
+    // ===== Dati fissi =====
     private static final String TEST_TOKEN = "TEST_TOKEN";
     private static final String INITIATIVE_ID = "INITIATIVE_ID";
     private static final LocalDateTime TEST_DATE = LocalDateTime.now();
@@ -324,6 +389,8 @@ class NotificationManagerServiceTest {
     @MockBean AuditUtilities auditUtilities;
     @MockBean OnboardingIoNotification onboardingIoNotification;
     @MockBean OnboardingWebNotification onboardingWebNotification;
+
+    // ===== TESTS =====
 
     @Test
     void sendToQueue() {
@@ -750,54 +817,58 @@ class NotificationManagerServiceTest {
 
     @Test
     void recoverKoNotifications() {
-        withRealExecutor(() -> {
-            when(notificationManagerRepository.findKoToRecover(any(LocalDateTime.class)))
-                    .thenReturn(KO_NOTIFICATION_FIRST_RETRY, KO_REFUND_NOTIFICATION_FIRST_RETRY,
-                            KO_CHECK_IBAN_NOTIFICATION_FIRST_RETRY, KO_SUSPENSION_NOTIFICATION_FIRST_RETRY,
-                            KO_READMISSION_NOTIFICATION_FIRST_RETRY, KO_NOTIFICATION_N_RETRY, null);
+        when(notificationManagerRepository.findKoToRecover(any(LocalDateTime.class)))
+                .thenReturn(KO_NOTIFICATION_FIRST_RETRY, KO_REFUND_NOTIFICATION_FIRST_RETRY,
+                        KO_CHECK_IBAN_NOTIFICATION_FIRST_RETRY, KO_SUSPENSION_NOTIFICATION_FIRST_RETRY,
+                        KO_READMISSION_NOTIFICATION_FIRST_RETRY, KO_NOTIFICATION_N_RETRY, null);
 
-            when(initiativeRestConnector.getIOTokens(EVALUATION_DTO.getInitiativeId()))
-                    .thenReturn(INITIATIVE_ADDITIONAL_INFO_DTO);
-            when(pdvDecryptRestConnector.getPii(TEST_TOKEN)).thenReturn(FISCAL_CODE_RESOURCE);
-            when(ioBackEndRestConnector.getProfile(argThat(fc -> FISCAL_CODE.equals(fc.getFiscalCode())), eq(TOKEN)))
-                    .thenReturn(PROFILE_RESOURCE);
+        when(initiativeRestConnector.getIOTokens(EVALUATION_DTO.getInitiativeId()))
+                .thenReturn(INITIATIVE_ADDITIONAL_INFO_DTO);
+        when(pdvDecryptRestConnector.getPii(TEST_TOKEN)).thenReturn(FISCAL_CODE_RESOURCE);
+        when(ioBackEndRestConnector.getProfile(argThat(fc -> FISCAL_CODE.equals(fc.getFiscalCode())), eq(TOKEN)))
+                .thenReturn(PROFILE_RESOURCE);
 
-            when(notificationMarkdown.getSubject(any(Notification.class))).thenReturn(SUBJECT);
-            when(notificationMarkdown.getSubjectCheckIbanKo()).thenReturn(SUBJECT);
-            when(notificationMarkdown.getSubjectRefund(anyString())).thenReturn(SUBJECT);
-            when(notificationMarkdown.getSubjectSuspension(anyString())).thenReturn(SUBJECT);
-            when(notificationMarkdown.getSubjectReadmission(anyString())).thenReturn(SUBJECT);
+        when(notificationMarkdown.getSubject(any(Notification.class))).thenReturn(SUBJECT);
+        when(notificationMarkdown.getSubjectCheckIbanKo()).thenReturn(SUBJECT);
+        when(notificationMarkdown.getSubjectRefund(anyString())).thenReturn(SUBJECT);
+        when(notificationMarkdown.getSubjectSuspension(anyString())).thenReturn(SUBJECT);
+        when(notificationMarkdown.getSubjectReadmission(anyString())).thenReturn(SUBJECT);
 
-            when(notificationMarkdown.getMarkdown(any(Notification.class))).thenReturn(MARKDOWN);
-            when(notificationMarkdown.getMarkdownCheckIbanKo()).thenReturn(MARKDOWN);
-            when(notificationMarkdown.getMarkdownRefund(anyString(), any())).thenReturn(MARKDOWN);
-            when(notificationMarkdown.getMarkdownSuspension()).thenReturn(MARKDOWN);
-            when(notificationMarkdown.getMarkdownReadmission()).thenReturn(MARKDOWN);
+        when(notificationMarkdown.getMarkdown(any(Notification.class))).thenReturn(MARKDOWN);
+        when(notificationMarkdown.getMarkdownCheckIbanKo()).thenReturn(MARKDOWN);
+        when(notificationMarkdown.getMarkdownRefund(anyString(), any())).thenReturn(MARKDOWN);
+        when(notificationMarkdown.getMarkdownSuspension()).thenReturn(MARKDOWN);
+        when(notificationMarkdown.getMarkdownReadmission()).thenReturn(MARKDOWN);
 
-            when(notificationDTOMapper.map(eq(FISCAL_CODE), anyLong(), anyString(), anyString()))
-                    .thenReturn(NOTIFICATION_DTO);
-            when(ioBackEndRestConnector.notify(NOTIFICATION_DTO, TOKEN)).thenReturn(NOTIFICATION_RESOURCE);
+        when(notificationDTOMapper.map(eq(FISCAL_CODE), anyLong(), anyString(), anyString()))
+                .thenReturn(NOTIFICATION_DTO);
+        when(ioBackEndRestConnector.notify(NOTIFICATION_DTO, TOKEN)).thenReturn(NOTIFICATION_RESOURCE);
 
+        try (ExecSwap ignored = swapToRealExecutor()) {
             assertDoesNotThrow(() -> notificationManagerService.schedule());
-            checkKoNotifications();
-            verify(notificationManagerRepository, times(6)).save(any(Notification.class));
-        });
+        }
+
+        checkKoNotifications();
+        verify(notificationManagerRepository, times(6)).save(any(Notification.class));
     }
 
     @Test
     void recoverKoNotification_ko_for_whitelist() {
-        withSafeExecutor(() -> {
-            when(notificationManagerRepository.findKoToRecover(any(LocalDateTime.class)))
-                    .thenReturn(KO_NOTIFICATION_WHITELIST, KO_NOTIFICATION_WHITELIST, null);
-            when(initiativeRestConnector.getIOTokens(EVALUATION_DTO.getInitiativeId()))
-                    .thenReturn(INITIATIVE_ADDITIONAL_INFO_DTO);
-            when(pdvDecryptRestConnector.getPii(TEST_TOKEN)).thenReturn(FISCAL_CODE_RESOURCE);
-            when(ioBackEndRestConnector.getProfile(argThat(fc -> FISCAL_CODE.equals(fc.getFiscalCode())), eq(TOKEN)))
-                    .thenReturn(PROFILE_RESOURCE);
+        when(notificationManagerRepository.findKoToRecover(any(LocalDateTime.class)))
+                .thenReturn(KO_NOTIFICATION_WHITELIST, KO_NOTIFICATION_WHITELIST, null);
+        when(initiativeRestConnector.getIOTokens(EVALUATION_DTO.getInitiativeId()))
+                .thenReturn(INITIATIVE_ADDITIONAL_INFO_DTO);
+        when(pdvDecryptRestConnector.getPii(TEST_TOKEN)).thenReturn(FISCAL_CODE_RESOURCE);
+        when(ioBackEndRestConnector.getProfile(argThat(fc -> FISCAL_CODE.equals(fc.getFiscalCode())), eq(TOKEN)))
+                .thenReturn(PROFILE_RESOURCE);
 
+        // executor che non esegue nulla ma non fallisce
+        Future<Long> ok = CompletableFuture.completedFuture(0L);
+        try (ExecSwap ignored = swapToFixedFuture(ok)) {
             assertDoesNotThrow(() -> notificationManagerService.schedule());
-            verify(notificationManagerRepository, never()).save(any(Notification.class));
-        });
+        }
+
+        verify(notificationManagerRepository, never()).save(any(Notification.class));
     }
 
     @Test
@@ -963,7 +1034,7 @@ class NotificationManagerServiceTest {
 
     private List<Notification> createNotificationPage() {
         List<Notification> notificationPage = new ArrayList<>();
-        for (int i = 0; i < NotificationManagerServiceTest.PAGE_SIZE; i++) {
+        for (int i = 0; i < PAGE_SIZE; i++) {
             notificationPage.add(Notification.builder()
                     .id("ID_NOTIFICATION" + i)
                     .initiativeId(INITIATIVE_ID)
@@ -1057,19 +1128,16 @@ class NotificationManagerServiceTest {
 
     @Test
     void recoverKoNotifications_noneFound_logsZero_noSaves() {
-        withRealExecutor(() -> {
-            when(notificationManagerRepository.findKoToRecover(any(LocalDateTime.class))).thenReturn(null);
+        when(notificationManagerRepository.findKoToRecover(any(LocalDateTime.class))).thenReturn(null);
+        try (ExecSwap ignored = swapToRealExecutor()) {
             assertDoesNotThrow(() -> notificationManagerService.recoverKoNotifications());
-            verify(notificationManagerRepository, never()).save(any());
-        });
+        }
+        verify(notificationManagerRepository, never()).save(any());
     }
 
     @Test
     void recoverKoNotifications_handlesExecutionException() {
-        ExecutorService original = (ExecutorService) ReflectionTestUtils
-                .getField(notificationManagerService, "executorService");
-
-        Future<Long> badFuture = new Future<>() {
+        Future<Long> bad = new Future<>() {
             @Override public boolean cancel(boolean mayInterruptIfRunning) { return false; }
             @Override public boolean isCancelled() { return false; }
             @Override public boolean isDone() { return true; }
@@ -1077,34 +1145,15 @@ class NotificationManagerServiceTest {
             @Override public Long get(long timeout, TimeUnit unit) throws ExecutionException { throw new ExecutionException(new RuntimeException("boom")); }
         };
 
-        ExecutorService stubExec = new AbstractExecutorService() {
-            private volatile boolean shutdown;
-            @Override public void shutdown() { shutdown = true; }
-            @Override public List<Runnable> shutdownNow() { shutdown = true; return List.of(); }
-            @Override public boolean isShutdown() { return shutdown; }
-            @Override public boolean isTerminated() { return shutdown; }
-            @Override public boolean awaitTermination(long timeout, TimeUnit unit) { return true; }
-            @Override public void execute(Runnable command) {}
-            @Override @SuppressWarnings("unchecked")
-            public <T> Future<T> submit(Callable<T> task) { return (Future<T>) badFuture; }
-        };
-
-        ReflectionTestUtils.setField(notificationManagerService, "executorService", stubExec);
-        try {
+        try (ExecSwap ignored = swapToFixedFuture(bad)) {
             when(notificationManagerRepository.findKoToRecover(any())).thenReturn(null);
             assertDoesNotThrow(() -> notificationManagerService.recoverKoNotifications());
-        } finally {
-            ReflectionTestUtils.setField(notificationManagerService, "executorService", original);
-            Thread.interrupted();
         }
     }
 
     @Test
     void recoverKoNotifications_handlesInterruptedException_rethrowsIllegalState() {
-        ExecutorService original = (ExecutorService) ReflectionTestUtils
-                .getField(notificationManagerService, "executorService");
-
-        Future<Long> interruptedFuture = new Future<>() {
+        Future<Long> interrupted = new Future<>() {
             @Override public boolean cancel(boolean mayInterruptIfRunning) { return false; }
             @Override public boolean isCancelled() { return false; }
             @Override public boolean isDone() { return true; }
@@ -1112,35 +1161,19 @@ class NotificationManagerServiceTest {
             @Override public Long get(long timeout, TimeUnit unit) throws InterruptedException { throw new InterruptedException("interrupted"); }
         };
 
-        ExecutorService stubExec = new AbstractExecutorService() {
-            private volatile boolean shutdown;
-            @Override public void shutdown() { shutdown = true; }
-            @Override public List<Runnable> shutdownNow() { shutdown = true; return List.of(); }
-            @Override public boolean isShutdown() { return shutdown; }
-            @Override public boolean isTerminated() { return shutdown; }
-            @Override public boolean awaitTermination(long timeout, TimeUnit unit) { return true; }
-            @Override public void execute(Runnable command) {}
-            @Override @SuppressWarnings("unchecked")
-            public <T> Future<T> submit(Callable<T> task) { return (Future<T>) interruptedFuture; }
-        };
-
-        ReflectionTestUtils.setField(notificationManagerService, "executorService", stubExec);
-        try {
+        try (ExecSwap ignored = swapToFixedFuture(interrupted)) {
             when(notificationManagerRepository.findKoToRecover(any())).thenReturn(null);
             assertThrows(IllegalStateException.class, () -> notificationManagerService.recoverKoNotifications());
-        } finally {
-            ReflectionTestUtils.setField(notificationManagerService, "executorService", original);
-            Thread.interrupted();
         }
     }
 
     @Test
     void close_shutsDownExecutor() {
-        withRealExecutor(() -> {
+        try (ExecSwap ignored = swapToRealExecutor()) {
             notificationManagerService.close();
             ExecutorService exec = (ExecutorService) ReflectionTestUtils
                     .getField(notificationManagerService, "executorService");
             assertTrue(exec.isShutdown(), "ExecutorService should be shut down after close()");
-        });
+        }
     }
 }
