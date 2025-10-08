@@ -13,7 +13,6 @@ import it.gov.pagopa.notification.manager.dto.event.*;
 import it.gov.pagopa.notification.manager.dto.initiative.InitiativeAdditionalInfoDTO;
 import it.gov.pagopa.notification.manager.dto.mapper.NotificationDTOMapper;
 import it.gov.pagopa.notification.manager.dto.mapper.NotificationMapper;
-import it.gov.pagopa.notification.manager.enums.Channel;
 import it.gov.pagopa.notification.manager.event.producer.OutcomeProducer;
 import it.gov.pagopa.notification.manager.model.Notification;
 import it.gov.pagopa.notification.manager.model.NotificationMarkdown;
@@ -22,7 +21,6 @@ import it.gov.pagopa.notification.manager.repository.NotificationManagerReposito
 import it.gov.pagopa.notification.manager.service.onboarding.OnboardingIoNotification;
 import it.gov.pagopa.notification.manager.service.onboarding.OnboardingWebNotification;
 import it.gov.pagopa.notification.manager.utils.AuditUtilities;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -36,20 +34,20 @@ import org.springframework.http.HttpStatus;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
+import java.util.*;
+import java.util.concurrent.*;
 import java.util.stream.Stream;
 
 import static it.gov.pagopa.notification.manager.constants.NotificationConstants.AnyNotificationConsumer.SubTypes.*;
 import static it.gov.pagopa.notification.manager.enums.Channel.IO;
 import static it.gov.pagopa.notification.manager.enums.Channel.WEB;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.ArgumentMatchers.any;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 @ExtendWith({SpringExtension.class, MockitoExtension.class})
@@ -59,14 +57,67 @@ import static org.mockito.Mockito.*;
         "notification.manager.recover.parallelism=7"
 })
 class NotificationManagerServiceTest {
+
+    @FunctionalInterface
+    private interface ThrowingRunnable { void run() throws Exception; }
+
+    private void withRealExecutor(ThrowingRunnable body) {
+        Integer originalParallelism = (Integer) ReflectionTestUtils
+                .getField(notificationManagerService, "parallelism");
+        ExecutorService original = (ExecutorService) ReflectionTestUtils
+                .getField(notificationManagerService, "executorService");
+        try {
+            ReflectionTestUtils.setField(notificationManagerService, "parallelism", 1);
+            ReflectionTestUtils.invokeMethod(notificationManagerService, "init");
+            body.run();
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        } finally {
+            notificationManagerService.close();
+            ReflectionTestUtils.setField(notificationManagerService, "executorService", original);
+            ReflectionTestUtils.setField(notificationManagerService, "parallelism", originalParallelism);
+            Thread.interrupted();
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    private void withSafeExecutor(ThrowingRunnable body) {
+        ExecutorService original = (ExecutorService) ReflectionTestUtils
+                .getField(notificationManagerService, "executorService");
+        Integer originalParallelism = (Integer) ReflectionTestUtils
+                .getField(notificationManagerService, "parallelism");
+
+        Future<Long> okFuture = CompletableFuture.completedFuture(0L);
+        ExecutorService safeExec = new AbstractExecutorService() {
+            @Override public void shutdown() {}
+            @Override public List<Runnable> shutdownNow() { return List.of(); }
+            @Override public boolean isShutdown() { return false; }
+            @Override public boolean isTerminated() { return false; }
+            @Override public boolean awaitTermination(long timeout, TimeUnit unit) { return true; }
+            @Override public void execute(Runnable command) {}
+            @Override public <T> Future<T> submit(Callable<T> task) { return (Future<T>) okFuture; }
+        };
+
+        try {
+            ReflectionTestUtils.setField(notificationManagerService, "executorService", safeExec);
+            ReflectionTestUtils.setField(notificationManagerService, "parallelism", 1);
+            body.run();
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        } finally {
+            ReflectionTestUtils.setField(notificationManagerService, "executorService", original);
+            ReflectionTestUtils.setField(notificationManagerService, "parallelism", originalParallelism);
+            Thread.interrupted();
+        }
+    }
+
     private static final String TEST_TOKEN = "TEST_TOKEN";
     private static final String INITIATIVE_ID = "INITIATIVE_ID";
     private static final LocalDateTime TEST_DATE = LocalDateTime.now();
     private static final LocalDate TEST_DATE_ONLY_DATE = LocalDate.now();
     private static final FiscalCodeResource FISCAL_CODE_RESOURCE = new FiscalCodeResource();
     private static final List<String> PREFERRED_LANGUAGES = new ArrayList<>();
-    private static final ProfileResource PROFILE_RESOURCE = new ProfileResource(true,
-            PREFERRED_LANGUAGES);
+    private static final ProfileResource PROFILE_RESOURCE = new ProfileResource(true, PREFERRED_LANGUAGES);
     private static final ProfileResource PROFILE_RESOURCE_KO = new ProfileResource();
     private static final String FISCAL_CODE = "TEST_FISCAL_CODE";
     private static final String PRIMARY_KEY = "PRIMARY_KEY";
@@ -83,53 +134,21 @@ class NotificationManagerServiceTest {
     private static final String ORGANIZATION_NAME = "ORGANIZATION_NAME";
     private static final String OPERATION_TYPE_DELETE_INITIATIVE = "DELETE_INITIATIVE";
     private static final int PAGE_SIZE = 100;
+
     private static final EvaluationDTO EVALUATION_DTO =
             new EvaluationDTO(
-                    TEST_TOKEN,
-                    INITIATIVE_ID,
-                    INITIATIVE_ID,
-                    TEST_DATE_ONLY_DATE,
-                    INITIATIVE_ID,
-                    ORGANIZATION_NAME,
-                    NotificationConstants.STATUS_ONBOARDING_OK,
-                    TEST_DATE,
-                    TEST_DATE,
-                    List.of(),
-                    50000L,
-                    1L,
-                    true,
-                    null,
-                    IO,
-                    null,
-                    null,
-                    null,
-                    null
+                    TEST_TOKEN, INITIATIVE_ID, INITIATIVE_ID, TEST_DATE_ONLY_DATE, INITIATIVE_ID, ORGANIZATION_NAME,
+                    NotificationConstants.STATUS_ONBOARDING_OK, TEST_DATE, TEST_DATE, List.of(),
+                    50000L, 1L, true, null, IO, null, null, null, null
             );
 
     private static final EvaluationDTO EVALUATION_DTO_WEB = new EvaluationDTO(
-            TEST_TOKEN,
-            INITIATIVE_ID,
-            INITIATIVE_ID,
-            TEST_DATE_ONLY_DATE,
-            INITIATIVE_ID,
-            ORGANIZATION_NAME,
-            NotificationConstants.STATUS_ONBOARDING_OK,
-            TEST_DATE,
-            TEST_DATE,
-            List.of(),
-            50000L,
-            1L,
-            true,
-            "user@email.com",
-            WEB,
-            null,
-            null,
-            null,
-            null
+            TEST_TOKEN, INITIATIVE_ID, INITIATIVE_ID, TEST_DATE_ONLY_DATE, INITIATIVE_ID, ORGANIZATION_NAME,
+            NotificationConstants.STATUS_ONBOARDING_OK, TEST_DATE, TEST_DATE, List.of(),
+            50000L, 1L, true, "user@email.com", WEB, null, null, null, null
     );
 
     private static final FiscalCodeDTO FISCAL_CODE_DTO = new FiscalCodeDTO(FISCAL_CODE);
-
     private static final NotificationResource NOTIFICATION_RESOURCE = new NotificationResource();
     private static final NotificationDTO NOTIFICATION_DTO = new NotificationDTO();
     private static final Notification NOTIFICATION =
@@ -162,6 +181,7 @@ class NotificationManagerServiceTest {
             .serviceId(SERVICE_ID)
             .status("ACCEPTED")
             .build();
+
     private static final NotificationCitizenOnQueueDTO NOTIFICATION_CITIZEN_ON_QUEUE_DTO = NotificationCitizenOnQueueDTO.builder()
             .initiativeName(INITIATIVE_NAME)
             .initiativeId(INITIATIVE_ID)
@@ -241,18 +261,21 @@ class NotificationManagerServiceTest {
             .retryDate(LocalDateTime.now())
             .operationType(ONBOARDING)
             .build();
+
     private static final NotificationSuspensionQueueDTO NOTIFICATION_SUSPENSION_QUEUE_DTO = NotificationSuspensionQueueDTO.builder()
             .initiativeName(INITIATIVE_NAME)
             .initiativeId(INITIATIVE_ID)
             .operationType(OPERATION_TYPE)
             .userId(TEST_TOKEN)
             .build();
+
     private static final NotificationReadmissionQueueDTO NOTIFICATION_READMISSION_QUEUE_DTO = NotificationReadmissionQueueDTO.builder()
             .initiativeName(INITIATIVE_NAME)
             .initiativeId(INITIATIVE_ID)
             .operationType(OPERATION_TYPE)
             .userId(TEST_TOKEN)
             .build();
+
     private static final Notification NOTIFICATION_SUSPENSION = Notification.builder()
             .notificationDate(LocalDateTime.now())
             .notificationStatus(NotificationConstants.NOTIFICATION_STATUS_OK)
@@ -261,6 +284,7 @@ class NotificationManagerServiceTest {
             .operationType(OPERATION_TYPE)
             .userId(TEST_TOKEN)
             .build();
+
     private static final Notification NOTIFICATION_READMISSION = Notification.builder()
             .notificationDate(LocalDateTime.now())
             .notificationStatus(NotificationConstants.NOTIFICATION_STATUS_OK)
@@ -287,54 +311,32 @@ class NotificationManagerServiceTest {
 
     @Autowired
     NotificationManagerServiceImpl notificationManagerService;
-    @MockBean
-    OutcomeProducer outcomeProducer;
-    @MockBean
-    InitiativeRestConnector initiativeRestConnector;
-    @MockBean
-    IOBackEndRestConnector ioBackEndRestConnector;
-    @MockBean
-    EmailNotificationConnector emailNotificationConnector;
-    @MockBean
-    NotificationManagerRepository notificationManagerRepository;
-    @MockBean
-    NotificationManagerRepositoryExtended notificationManagerRepositoryExtended;
-    @MockBean
-    NotificationDTOMapper notificationDTOMapper;
-    @MockBean
-    PdvDecryptRestConnector pdvDecryptRestConnector;
-    @MockBean
-    NotificationMapper notificationMapper;
-    @MockBean
-    NotificationMarkdown notificationMarkdown;
-    @MockBean
-    AuditUtilities auditUtilities;
-    @MockBean
-    OnboardingIoNotification onboardingIoNotification;
-    @MockBean
-    OnboardingWebNotification onboardingWebNotification;
+    @MockBean OutcomeProducer outcomeProducer;
+    @MockBean InitiativeRestConnector initiativeRestConnector;
+    @MockBean IOBackEndRestConnector ioBackEndRestConnector;
+    @MockBean EmailNotificationConnector emailNotificationConnector;
+    @MockBean NotificationManagerRepository notificationManagerRepository;
+    @MockBean NotificationManagerRepositoryExtended notificationManagerRepositoryExtended;
+    @MockBean NotificationDTOMapper notificationDTOMapper;
+    @MockBean PdvDecryptRestConnector pdvDecryptRestConnector;
+    @MockBean NotificationMapper notificationMapper;
+    @MockBean NotificationMarkdown notificationMarkdown;
+    @MockBean AuditUtilities auditUtilities;
+    @MockBean OnboardingIoNotification onboardingIoNotification;
+    @MockBean OnboardingWebNotification onboardingWebNotification;
 
     @Test
     void sendToQueue() {
-        Mockito.doNothing().when(outcomeProducer).sendOutcome(EVALUATION_DTO);
-
+        doNothing().when(outcomeProducer).sendOutcome(EVALUATION_DTO);
         notificationManagerService.addOutcome(EVALUATION_DTO);
-
         verify(outcomeProducer, times(1)).sendOutcome(EVALUATION_DTO);
     }
 
     @Test
     void notify_onboardingKo_shouldSkipNotification() {
         EvaluationDTO evaluationDTO = new EvaluationDTO(
-                TEST_TOKEN,
-                INITIATIVE_ID,
-                INITIATIVE_ID,
-                TEST_DATE_ONLY_DATE,
-                INITIATIVE_ID,
-                ORGANIZATION_NAME,
-                NotificationConstants.STATUS_ONBOARDING_OK,
-                TEST_DATE,
-                TEST_DATE,
+                TEST_TOKEN, INITIATIVE_ID, INITIATIVE_ID, TEST_DATE_ONLY_DATE, INITIATIVE_ID, ORGANIZATION_NAME,
+                NotificationConstants.STATUS_ONBOARDING_OK, TEST_DATE, TEST_DATE,
                 List.of(
                         new OnboardingRejectionReason(
                                 OnboardingRejectionReason.OnboardingRejectionReasonType.FAMILY_CRITERIA_KO,
@@ -345,15 +347,7 @@ class NotificationManagerServiceTest {
                                 OnboardingRejectionReason.OnboardingRejectionReasonCode.ISEE_TYPE_FAIL,
                                 null, null, null)
                 ),
-                50000L,
-                1L,
-                true,
-                "user@mail.com",
-                IO,
-                null,
-                null,
-                null,
-                null
+                50000L, 1L, true, "user@mail.com", IO, null, null, null, null
         );
 
         notificationManagerService.notify(evaluationDTO);
@@ -363,56 +357,26 @@ class NotificationManagerServiceTest {
         verify(notificationManagerRepository, times(0)).save(any(Notification.class));
     }
 
-
     @Test
     void notify_ok() {
-        Mockito.when(notificationMapper.evaluationToNotification(EVALUATION_DTO))
-                .thenReturn(NOTIFICATION);
+        when(notificationMapper.evaluationToNotification(EVALUATION_DTO)).thenReturn(NOTIFICATION);
+        when(initiativeRestConnector.getIOTokens(EVALUATION_DTO.getInitiativeId())).thenReturn(INITIATIVE_ADDITIONAL_INFO_DTO);
+        when(pdvDecryptRestConnector.getPii(TEST_TOKEN)).thenReturn(FISCAL_CODE_RESOURCE);
+        when(ioBackEndRestConnector.getProfile(argThat(fc -> FISCAL_CODE.equals(fc.getFiscalCode())), eq(TOKEN)))
+                .thenReturn(PROFILE_RESOURCE);
+        when(ioBackEndRestConnector.notify(NOTIFICATION_DTO, TOKEN)).thenReturn(NOTIFICATION_RESOURCE);
+        when(onboardingIoNotification.processNotification(any())).thenReturn("ID");
 
-        Mockito.when(initiativeRestConnector.getIOTokens(EVALUATION_DTO.getInitiativeId()))
-                .thenReturn(INITIATIVE_ADDITIONAL_INFO_DTO);
-
-        Mockito.when(pdvDecryptRestConnector.getPii(TEST_TOKEN)).thenReturn(FISCAL_CODE_RESOURCE);
-
-        Mockito.when(ioBackEndRestConnector.getProfile(FISCAL_CODE_DTO, TOKEN)).thenReturn(PROFILE_RESOURCE);
-
-        Mockito.when(ioBackEndRestConnector.notify(NOTIFICATION_DTO, TOKEN))
-                .thenReturn(NOTIFICATION_RESOURCE);
-
-        Mockito.when(onboardingIoNotification.processNotification(Mockito.any())).thenReturn("ID");
-
-        try {
-            notificationManagerService.notify(EVALUATION_DTO);
-        } catch (FeignException e) {
-            Assertions.fail();
-        }
-
-        Mockito.verify(notificationManagerRepository, Mockito.times(1))
-                .save(NOTIFICATION);
+        assertDoesNotThrow(() -> notificationManagerService.notify(EVALUATION_DTO));
+        verify(notificationManagerRepository, times(1)).save(NOTIFICATION);
     }
 
     @Test
     void notify_appIo_ioTokensNull_triggersNotificationKO() {
         EvaluationDTO evaluationDTO = new EvaluationDTO(
-                TEST_TOKEN,
-                INITIATIVE_ID,
-                INITIATIVE_ID,
-                TEST_DATE_ONLY_DATE,
-                INITIATIVE_ID,
-                ORGANIZATION_NAME,
-                NotificationConstants.STATUS_ONBOARDING_OK,
-                TEST_DATE,
-                TEST_DATE,
-                List.of(),
-                50000L,
-                1L,
-                true,
-                null,
-                IO,
-                null,
-                null,
-                null,
-                null
+                TEST_TOKEN, INITIATIVE_ID, INITIATIVE_ID, TEST_DATE_ONLY_DATE, INITIATIVE_ID, ORGANIZATION_NAME,
+                NotificationConstants.STATUS_ONBOARDING_OK, TEST_DATE, TEST_DATE, List.of(), 50000L, 1L,
+                true, null, IO, null, null, null, null
         );
 
         Notification notification = Notification.builder()
@@ -422,92 +386,50 @@ class NotificationManagerServiceTest {
                 .onboardingOutcome(evaluationDTO.getStatus())
                 .rejectReasons(evaluationDTO.getOnboardingRejectionReasons())
                 .build();
-        Mockito.when(notificationMapper.evaluationToNotification(evaluationDTO)).thenReturn(notification);
-
-        Mockito.when(initiativeRestConnector.getIOTokens(evaluationDTO.getInitiativeId())).thenReturn(null);
+        when(notificationMapper.evaluationToNotification(evaluationDTO)).thenReturn(notification);
+        when(initiativeRestConnector.getIOTokens(evaluationDTO.getInitiativeId())).thenReturn(null);
 
         notificationManagerService.notify(evaluationDTO);
 
-        verify(notificationManagerRepository, times(1)).save(Mockito.argThat(n ->
-                n.getNotificationStatus() != null &&
-                        n.getNotificationStatus().equals(NotificationConstants.NOTIFICATION_STATUS_KO)
-        ));
+        verify(notificationManagerRepository, times(1)).save(argThat(n ->
+                NotificationConstants.NOTIFICATION_STATUS_KO.equals(n.getNotificationStatus())));
     }
 
     @Test
     void notify_unsupportedChannel_logsWarning() {
-        EvaluationDTO evaluationDTO = Mockito.mock(EvaluationDTO.class);
+        EvaluationDTO evaluationDTO = mock(EvaluationDTO.class);
+        when(evaluationDTO.getUserId()).thenReturn("user@email.com");
 
-        Mockito.when(evaluationDTO.getUserId()).thenReturn("user@email.com");
+        var fakeChannel = mock(it.gov.pagopa.notification.manager.enums.Channel.class);
+        when(fakeChannel.isAppIo()).thenReturn(false);
+        when(fakeChannel.isWeb()).thenReturn(false);
+        when(evaluationDTO.getChannel()).thenReturn(fakeChannel);
 
-        Channel fakeChannel = Mockito.mock(Channel.class);
-        Mockito.when(fakeChannel.isAppIo()).thenReturn(false);
-        Mockito.when(fakeChannel.isWeb()).thenReturn(false);
-
-        Mockito.when(evaluationDTO.getChannel()).thenReturn(fakeChannel);
-
-        Assertions.assertDoesNotThrow(() -> notificationManagerService.notify(evaluationDTO));
+        assertDoesNotThrow(() -> notificationManagerService.notify(evaluationDTO));
     }
 
     @Test
     void notify_webNotification() {
         EvaluationDTO evaluationDTO = new EvaluationDTO(
-                TEST_TOKEN,
-                INITIATIVE_ID,
-                INITIATIVE_ID,
-                TEST_DATE_ONLY_DATE,
-                INITIATIVE_ID,
-                ORGANIZATION_NAME,
-                NotificationConstants.STATUS_ONBOARDING_OK,
-                TEST_DATE,
-                TEST_DATE,
-                List.of(),
-                50000L,
-                1L,
-                true,
-                null,
-                WEB,
-                null,
-                null,
-                null,
-                null
+                TEST_TOKEN, INITIATIVE_ID, INITIATIVE_ID, TEST_DATE_ONLY_DATE, INITIATIVE_ID, ORGANIZATION_NAME,
+                NotificationConstants.STATUS_ONBOARDING_OK, TEST_DATE, TEST_DATE, List.of(),
+                50000L, 1L, true, null, WEB, null, null, null, null
         );
 
-        Mockito.when(onboardingWebNotification.processNotification(evaluationDTO)).thenReturn(null);
-
+        when(onboardingWebNotification.processNotification(evaluationDTO)).thenReturn(null);
         notificationManagerService.notify(evaluationDTO);
-
-
         verify(onboardingWebNotification, times(1)).processNotification(any());
     }
 
     @Test
     void notify_webNotification_scapeNotification() {
         EvaluationDTO evaluationDTO = new EvaluationDTO(
-                TEST_TOKEN,
-                INITIATIVE_ID,
-                INITIATIVE_ID,
-                TEST_DATE_ONLY_DATE,
-                INITIATIVE_ID,
-                ORGANIZATION_NAME,
-                NotificationConstants.STATUS_ONBOARDING_DEMANDED,
-                TEST_DATE,
-                TEST_DATE,
-                List.of(),
-                50000L,
-                1L,
-                true,
-                null,
-                WEB,
-                null,
-                null,
-                null,
-                null
+                TEST_TOKEN, INITIATIVE_ID, INITIATIVE_ID, TEST_DATE_ONLY_DATE, INITIATIVE_ID, ORGANIZATION_NAME,
+                NotificationConstants.STATUS_ONBOARDING_DEMANDED, TEST_DATE, TEST_DATE, List.of(),
+                50000L, 1L, true, null, WEB, null, null, null, null
         );
 
         notificationManagerService.notify(evaluationDTO);
-
-
         verify(onboardingWebNotification, never()).processNotification(any());
     }
 
@@ -515,41 +437,18 @@ class NotificationManagerServiceTest {
     void notify_ko() {
         EvaluationDTO evaluationDTO =
                 new EvaluationDTO(
-                        TEST_TOKEN,
-                        INITIATIVE_ID,
-                        INITIATIVE_ID,
-                        TEST_DATE_ONLY_DATE,
-                        INITIATIVE_ID,
-                        ORGANIZATION_NAME,
-                        NotificationConstants.STATUS_ONBOARDING_OK,
-                        TEST_DATE,
-                        TEST_DATE,
-                        null,
-                        50000L,
-                        1L,
-                        true,
-                        null,
-                        IO,
-                        null,
-                        null,
-                        null,
-                        null
+                        TEST_TOKEN, INITIATIVE_ID, INITIATIVE_ID, TEST_DATE_ONLY_DATE, INITIATIVE_ID, ORGANIZATION_NAME,
+                        NotificationConstants.STATUS_ONBOARDING_OK, TEST_DATE, TEST_DATE, null,
+                        50000L, 1L, true, null, IO, null, null, null, null
                 );
 
-        Mockito.when(pdvDecryptRestConnector.getPii(TEST_TOKEN)).thenReturn(FISCAL_CODE_RESOURCE);
-        Mockito.when(ioBackEndRestConnector.getProfile(FISCAL_CODE_DTO, TOKEN))
+        when(pdvDecryptRestConnector.getPii(TEST_TOKEN)).thenReturn(FISCAL_CODE_RESOURCE);
+        when(ioBackEndRestConnector.getProfile(argThat(fc -> FISCAL_CODE.equals(fc.getFiscalCode())), eq(TOKEN)))
                 .thenReturn(PROFILE_RESOURCE);
-
-        Mockito.when(initiativeRestConnector.getIOTokens(evaluationDTO.getInitiativeId()))
-                .thenReturn(INITIATIVE_ADDITIONAL_INFO_DTO);
-        Mockito.when(notificationMarkdown.getSubject(evaluationDTO)).thenReturn(SUBJECT);
-        Mockito.when(notificationMarkdown.getMarkdown(evaluationDTO)).thenReturn(MARKDOWN);
-        Mockito.when(
-                        notificationDTOMapper.map(
-                                Mockito.eq(FISCAL_CODE),
-                                Mockito.any(Long.class),
-                                Mockito.anyString(),
-                                Mockito.anyString()))
+        when(initiativeRestConnector.getIOTokens(evaluationDTO.getInitiativeId())).thenReturn(INITIATIVE_ADDITIONAL_INFO_DTO);
+        when(notificationMarkdown.getSubject(evaluationDTO)).thenReturn(SUBJECT);
+        when(notificationMarkdown.getMarkdown(evaluationDTO)).thenReturn(MARKDOWN);
+        when(notificationDTOMapper.map(eq(FISCAL_CODE), anyLong(), anyString(), anyString()))
                 .thenReturn(NOTIFICATION_DTO);
         Notification notification =
                 Notification.builder()
@@ -559,775 +458,499 @@ class NotificationManagerServiceTest {
                         .onboardingOutcome(evaluationDTO.getStatus())
                         .rejectReasons(evaluationDTO.getOnboardingRejectionReasons())
                         .build();
-        Mockito.when(notificationMapper.evaluationToNotification(evaluationDTO))
-                .thenReturn(notification);
-        Request request =
-                Request.create(
-                        Request.HttpMethod.POST, "url", new HashMap<>(), null, new RequestTemplate());
-        Mockito.doThrow(new FeignException.BadRequest("", request, new byte[0], null))
-                .when(ioBackEndRestConnector)
-                .notify(NOTIFICATION_DTO, TOKEN);
+        when(notificationMapper.evaluationToNotification(evaluationDTO)).thenReturn(notification);
+        Request request = Request.create(Request.HttpMethod.POST, "url", new HashMap<>(), null, new RequestTemplate());
+        doThrow(new FeignException.BadRequest("", request, new byte[0], null))
+                .when(ioBackEndRestConnector).notify(NOTIFICATION_DTO, TOKEN);
 
         try {
             notificationManagerService.notify(evaluationDTO);
         } catch (FeignException e) {
             assertEquals(HttpStatus.BAD_REQUEST.value(), e.status());
         }
-
-        verify(notificationManagerRepository, times(1))
-                .save(Mockito.any(Notification.class));
+        verify(notificationManagerRepository, times(1)).save(any(Notification.class));
     }
 
     @Test
     void notify_ko_get_io_tokens() {
         EvaluationDTO evaluationDTO =
                 new EvaluationDTO(
-                        TEST_TOKEN,
-                        INITIATIVE_ID,
-                        INITIATIVE_ID,
-                        TEST_DATE_ONLY_DATE,
-                        INITIATIVE_ID,
-                        ORGANIZATION_NAME,
-                        NotificationConstants.STATUS_ONBOARDING_OK,
-                        TEST_DATE,
-                        TEST_DATE,
+                        TEST_TOKEN, INITIATIVE_ID, INITIATIVE_ID, TEST_DATE_ONLY_DATE, INITIATIVE_ID, ORGANIZATION_NAME,
+                        NotificationConstants.STATUS_ONBOARDING_OK, TEST_DATE, TEST_DATE,
                         List.of(
                                 new OnboardingRejectionReason(
                                         OnboardingRejectionReason.OnboardingRejectionReasonType.AUTOMATED_CRITERIA_FAIL,
-                                        OnboardingRejectionReason.OnboardingRejectionReasonCode.AUTOMATED_CRITERIA_ISEE_FAIL,
-                                        null,
-                                        null,
-                                        null
-                                ),
+                                        OnboardingRejectionReason.OnboardingRejectionReasonCode.AUTOMATED_CRITERIA_ISEE_FAIL, null, null, null),
                                 new OnboardingRejectionReason(
                                         OnboardingRejectionReason.OnboardingRejectionReasonType.ISEE_TYPE_KO,
-                                        OnboardingRejectionReason.OnboardingRejectionReasonCode.ISEE_TYPE_FAIL,
-                                        null,
-                                        null,
-                                        null
-                                )
+                                        OnboardingRejectionReason.OnboardingRejectionReasonCode.ISEE_TYPE_FAIL, null, null, null)
                         ),
-                        50000L,
-                        1L,
-                        true,
-                        null,
-                        IO,
-                        null,
-                        null,
-                        null,
-                        null
+                        50000L, 1L, true, null, IO, null, null, null, null
                 );
 
-
-        Request request =
-                Request.create(Request.HttpMethod.GET, "url", new HashMap<>(), null, new RequestTemplate());
-
-        Mockito.doThrow(new FeignException.NotFound("", request, new byte[0], null))
-                .when(initiativeRestConnector)
-                .getIOTokens(evaluationDTO.getInitiativeId());
-
-        Mockito.when(notificationMapper.evaluationToNotification(evaluationDTO))
-                .thenReturn(NOTIFICATION);
+        Request request = Request.create(Request.HttpMethod.GET, "url", new HashMap<>(), null, new RequestTemplate());
+        doThrow(new FeignException.NotFound("", request, new byte[0], null))
+                .when(initiativeRestConnector).getIOTokens(evaluationDTO.getInitiativeId());
+        when(notificationMapper.evaluationToNotification(evaluationDTO)).thenReturn(NOTIFICATION);
 
         notificationManagerService.notify(evaluationDTO);
-        verify(notificationManagerRepository, times(1))
-                .save(Mockito.any(Notification.class));
+        verify(notificationManagerRepository, times(1)).save(any(Notification.class));
     }
 
     @Test
     void notify_ko_user_not_allowed_feign() {
-        Mockito.when(pdvDecryptRestConnector.getPii(TEST_TOKEN)).thenReturn(FISCAL_CODE_RESOURCE);
-
-        Mockito.when(initiativeRestConnector.getIOTokens(EVALUATION_DTO.getInitiativeId()))
-                .thenReturn(INITIATIVE_ADDITIONAL_INFO_DTO);
-        Request request =
-                Request.create(Request.HttpMethod.GET, "url", new HashMap<>(), null, new RequestTemplate());
-        Mockito.doThrow(new FeignException.NotFound("", request, new byte[0], null))
+        when(pdvDecryptRestConnector.getPii(TEST_TOKEN)).thenReturn(FISCAL_CODE_RESOURCE);
+        when(initiativeRestConnector.getIOTokens(EVALUATION_DTO.getInitiativeId())).thenReturn(INITIATIVE_ADDITIONAL_INFO_DTO);
+        Request request = Request.create(Request.HttpMethod.GET, "url", new HashMap<>(), null, new RequestTemplate());
+        doThrow(new FeignException.NotFound("", request, new byte[0], null))
                 .when(ioBackEndRestConnector)
-                .getProfile(FISCAL_CODE_DTO, TOKEN);
-
-        Mockito.when(notificationMapper.evaluationToNotification(EVALUATION_DTO))
-                .thenReturn(NOTIFICATION);
+                .getProfile(argThat(fc -> FISCAL_CODE.equals(fc.getFiscalCode())), eq(TOKEN));
+        when(notificationMapper.evaluationToNotification(EVALUATION_DTO)).thenReturn(NOTIFICATION);
 
         notificationManagerService.notify(EVALUATION_DTO);
-
-        Mockito.verify(notificationManagerRepository, Mockito.times(1))
-                .save(Mockito.any(Notification.class));
+        verify(notificationManagerRepository, times(1)).save(any(Notification.class));
     }
 
     @Test
     void notify_ko_user_not_allowed() {
-        Mockito.when(pdvDecryptRestConnector.getPii(TEST_TOKEN)).thenReturn(FISCAL_CODE_RESOURCE);
-
-        Mockito.when(initiativeRestConnector.getIOTokens(EVALUATION_DTO.getInitiativeId()))
-                .thenReturn(INITIATIVE_ADDITIONAL_INFO_DTO);
-        Mockito.when(ioBackEndRestConnector.getProfile(FISCAL_CODE_DTO, TOKEN))
+        when(pdvDecryptRestConnector.getPii(TEST_TOKEN)).thenReturn(FISCAL_CODE_RESOURCE);
+        when(initiativeRestConnector.getIOTokens(EVALUATION_DTO.getInitiativeId())).thenReturn(INITIATIVE_ADDITIONAL_INFO_DTO);
+        when(ioBackEndRestConnector.getProfile(argThat(fc -> FISCAL_CODE.equals(fc.getFiscalCode())), eq(TOKEN)))
                 .thenReturn(PROFILE_RESOURCE_KO);
-        Mockito.when(notificationMapper.evaluationToNotification(EVALUATION_DTO))
-                .thenReturn(NOTIFICATION);
+        when(notificationMapper.evaluationToNotification(EVALUATION_DTO)).thenReturn(NOTIFICATION);
 
         notificationManagerService.notify(EVALUATION_DTO);
-
-        verify(notificationManagerRepository, times(1))
-                .save(Mockito.any(Notification.class));
+        verify(notificationManagerRepository, times(1)).save(any(Notification.class));
     }
 
     @Test
     void notify_ko_no_cf() {
-        Mockito.when(initiativeRestConnector.getIOTokens(EVALUATION_DTO_WEB.getInitiativeId()))
+        when(initiativeRestConnector.getIOTokens(EVALUATION_DTO_WEB.getInitiativeId()))
                 .thenReturn(INITIATIVE_ADDITIONAL_INFO_DTO);
-
-        Request request =
-                Request.create(Request.HttpMethod.GET, "url", new HashMap<>(), null, new RequestTemplate());
-        Mockito.doThrow(new FeignException.NotFound("", request, new byte[0], null))
-                .when(pdvDecryptRestConnector)
-                .getPii(TEST_TOKEN);
-
-        Mockito.when(notificationMapper.evaluationToNotification(EVALUATION_DTO))
-                .thenReturn(NOTIFICATION);
+        Request request = Request.create(Request.HttpMethod.GET, "url", new HashMap<>(), null, new RequestTemplate());
+        doThrow(new FeignException.NotFound("", request, new byte[0], null))
+                .when(pdvDecryptRestConnector).getPii(TEST_TOKEN);
+        when(notificationMapper.evaluationToNotification(EVALUATION_DTO)).thenReturn(NOTIFICATION);
 
         notificationManagerService.notify(EVALUATION_DTO);
-
-        verify(notificationManagerRepository, times(1))
-                .save(Mockito.any(Notification.class));
+        verify(notificationManagerRepository, times(1)).save(any(Notification.class));
     }
 
     @Test
     void sendNotificationFromOperationType_checkiban_ok() {
-
-        Mockito.when(notificationMapper.toEntity(NOTIFICATION_IBAN_QUEUE_DTO))
-                .thenReturn(NOTIFICATION);
-
-        Mockito.when(initiativeRestConnector.getIOTokens(NOTIFICATION_IBAN_QUEUE_DTO.getInitiativeId()))
+        when(notificationMapper.toEntity(NOTIFICATION_IBAN_QUEUE_DTO)).thenReturn(NOTIFICATION);
+        when(initiativeRestConnector.getIOTokens(NOTIFICATION_IBAN_QUEUE_DTO.getInitiativeId()))
                 .thenReturn(INITIATIVE_ADDITIONAL_INFO_DTO);
-
-        Mockito.when(pdvDecryptRestConnector.getPii(TEST_TOKEN)).thenReturn(FISCAL_CODE_RESOURCE);
-        Mockito.when(notificationMarkdown.getSubjectCheckIbanKo()).thenReturn(SUBJECT);
-
-        Mockito.when(notificationMarkdown.getMarkdownCheckIbanKo()).thenReturn(MARKDOWN);
-
-        Mockito.when(ioBackEndRestConnector.getProfile(FISCAL_CODE_DTO, TOKEN))
+        when(pdvDecryptRestConnector.getPii(TEST_TOKEN)).thenReturn(FISCAL_CODE_RESOURCE);
+        when(notificationMarkdown.getSubjectCheckIbanKo()).thenReturn(SUBJECT);
+        when(notificationMarkdown.getMarkdownCheckIbanKo()).thenReturn(MARKDOWN);
+        when(ioBackEndRestConnector.getProfile(argThat(fc -> FISCAL_CODE.equals(fc.getFiscalCode())), eq(TOKEN)))
                 .thenReturn(PROFILE_RESOURCE);
-
-        Mockito.when(
-                        notificationDTOMapper.map(
-                                Mockito.eq(FISCAL_CODE),
-                                Mockito.any(Long.class),
-                                Mockito.anyString(),
-                                Mockito.anyString()))
+        when(notificationDTOMapper.map(eq(FISCAL_CODE), anyLong(), anyString(), anyString()))
                 .thenReturn(NOTIFICATION_DTO);
+        when(ioBackEndRestConnector.notify(NOTIFICATION_DTO, TOKEN)).thenReturn(NOTIFICATION_RESOURCE);
 
-        Mockito.when(ioBackEndRestConnector.notify(NOTIFICATION_DTO, TOKEN))
-                .thenReturn(NOTIFICATION_RESOURCE);
-        try {
-            notificationManagerService.sendNotificationFromOperationType(NOTIFICATION_IBAN_QUEUE_DTO);
-        } catch (FeignException e) {
-            Assertions.fail();
-        }
-
-        verify(notificationManagerRepository, times(1))
-                .save(NOTIFICATION);
+        assertDoesNotThrow(() -> notificationManagerService.sendNotificationFromOperationType(NOTIFICATION_IBAN_QUEUE_DTO));
+        verify(notificationManagerRepository, times(1)).save(NOTIFICATION);
     }
 
     @Test
     void sendNotificationFromOperationType_not_expected() {
-
-        NotificationQueueDTO notificationQueue =
-                new NotificationQueueDTO("","","","");
-
-        try {
-            notificationManagerService.sendNotificationFromOperationType(notificationQueue);
-
-        } catch (FeignException e) {
-            Assertions.fail();
-        }
-        verify(notificationManagerRepository, times(0))
-                .save(any());
+        NotificationQueueDTO notificationQueue = new NotificationQueueDTO("", "", "", "");
+        assertDoesNotThrow(() -> notificationManagerService.sendNotificationFromOperationType(notificationQueue));
+        verify(notificationManagerRepository, times(0)).save(any());
     }
 
     @Test
     void sendNotificationFromOperationType_checkiban_ko() {
-        Mockito.when(pdvDecryptRestConnector.getPii(TEST_TOKEN)).thenReturn(FISCAL_CODE_RESOURCE);
-        Mockito.when(ioBackEndRestConnector.getProfile(FISCAL_CODE_DTO, TOKEN))
+        when(pdvDecryptRestConnector.getPii(TEST_TOKEN)).thenReturn(FISCAL_CODE_RESOURCE);
+        when(ioBackEndRestConnector.getProfile(argThat(fc -> FISCAL_CODE.equals(fc.getFiscalCode())), eq(TOKEN)))
                 .thenReturn(PROFILE_RESOURCE);
-
-        Mockito.when(initiativeRestConnector.getIOTokens(NOTIFICATION_IBAN_QUEUE_DTO.getInitiativeId()))
+        when(initiativeRestConnector.getIOTokens(NOTIFICATION_IBAN_QUEUE_DTO.getInitiativeId()))
                 .thenReturn(INITIATIVE_ADDITIONAL_INFO_DTO);
-        Mockito.when(notificationMarkdown.getSubjectCheckIbanKo()).thenReturn(SUBJECT);
-        Mockito.when(notificationMarkdown.getMarkdownCheckIbanKo()).thenReturn(MARKDOWN);
-        Mockito.when(
-                        notificationDTOMapper.map(
-                                Mockito.eq(FISCAL_CODE),
-                                Mockito.any(Long.class),
-                                Mockito.anyString(),
-                                Mockito.anyString()))
+        when(notificationMarkdown.getSubjectCheckIbanKo()).thenReturn(SUBJECT);
+        when(notificationMarkdown.getMarkdownCheckIbanKo()).thenReturn(MARKDOWN);
+        when(notificationDTOMapper.map(eq(FISCAL_CODE), anyLong(), anyString(), anyString()))
                 .thenReturn(NOTIFICATION_DTO);
+        when(notificationMapper.toEntity(NOTIFICATION_IBAN_QUEUE_DTO)).thenReturn(NOTIFICATION);
 
-        Mockito.when(notificationMapper.toEntity(NOTIFICATION_IBAN_QUEUE_DTO))
-                .thenReturn(NOTIFICATION);
-        Request request =
-                Request.create(
-                        Request.HttpMethod.POST, "url", new HashMap<>(), null, new RequestTemplate());
-        Mockito.doThrow(new FeignException.BadRequest("", request, new byte[0], null))
-                .when(ioBackEndRestConnector)
-                .notify(NOTIFICATION_DTO, TOKEN);
+        Request request = Request.create(Request.HttpMethod.POST, "url", new HashMap<>(), null, new RequestTemplate());
+        doThrow(new FeignException.BadRequest("", request, new byte[0], null))
+                .when(ioBackEndRestConnector).notify(NOTIFICATION_DTO, TOKEN);
 
         try {
             notificationManagerService.sendNotificationFromOperationType(NOTIFICATION_IBAN_QUEUE_DTO);
         } catch (FeignException e) {
             assertEquals(HttpStatus.BAD_REQUEST.value(), e.status());
         }
-
-        verify(notificationManagerRepository, times(1))
-                .save(Mockito.any(Notification.class));
+        verify(notificationManagerRepository, times(1)).save(any(Notification.class));
     }
 
     @Test
     void sendNotificationFromOperationType_allowed_citzen_ok() {
-
-        Mockito.when(notificationMapper.toEntity(NOTIFICATION_CITIZEN_ON_QUEUE_DTO))
-                .thenReturn(NOTIFICATION);
-
-        Mockito.when(initiativeRestConnector.getIOTokens(INITIATIVE_ID))
-                .thenReturn(INITIATIVE_ADDITIONAL_INFO_DTO);
-
-        Mockito.when(pdvDecryptRestConnector.getPii(TEST_TOKEN)).thenReturn(FISCAL_CODE_RESOURCE);
-        Mockito.when(notificationMarkdown.getMarkdownInitiativePublishing()).thenReturn(SUBJECT);
-
-        Mockito.when(notificationMarkdown.getSubjectInitiativePublishing()).thenReturn(MARKDOWN);
-
-        Mockito.when(ioBackEndRestConnector.getProfile(FISCAL_CODE_DTO, TOKEN))
+        when(notificationMapper.toEntity(NOTIFICATION_CITIZEN_ON_QUEUE_DTO)).thenReturn(NOTIFICATION);
+        when(initiativeRestConnector.getIOTokens(INITIATIVE_ID)).thenReturn(INITIATIVE_ADDITIONAL_INFO_DTO);
+        when(pdvDecryptRestConnector.getPii(TEST_TOKEN)).thenReturn(FISCAL_CODE_RESOURCE);
+        when(notificationMarkdown.getMarkdownInitiativePublishing()).thenReturn(SUBJECT);
+        when(notificationMarkdown.getSubjectInitiativePublishing()).thenReturn(MARKDOWN);
+        when(ioBackEndRestConnector.getProfile(argThat(fc -> FISCAL_CODE.equals(fc.getFiscalCode())), eq(TOKEN)))
                 .thenReturn(PROFILE_RESOURCE);
-
-        Mockito.when(
-                        notificationDTOMapper.map(
-                                Mockito.eq(FISCAL_CODE),
-                                Mockito.any(Long.class),
-                                Mockito.anyString(),
-                                Mockito.anyString()))
+        when(notificationDTOMapper.map(eq(FISCAL_CODE), anyLong(), anyString(), anyString()))
                 .thenReturn(NOTIFICATION_DTO);
+        when(ioBackEndRestConnector.notify(NOTIFICATION_DTO, TOKEN)).thenReturn(NOTIFICATION_RESOURCE);
 
-        Mockito.when(ioBackEndRestConnector.notify(NOTIFICATION_DTO, TOKEN))
-                .thenReturn(NOTIFICATION_RESOURCE);
-        try {
-            notificationManagerService.sendNotificationFromOperationType(NOTIFICATION_CITIZEN_ON_QUEUE_DTO);
-        } catch (FeignException e) {
-            Assertions.fail();
-        }
-
-        verify(notificationManagerRepository, times(1))
-                .save(NOTIFICATION);
+        assertDoesNotThrow(() -> notificationManagerService.sendNotificationFromOperationType(NOTIFICATION_CITIZEN_ON_QUEUE_DTO));
+        verify(notificationManagerRepository, times(1)).save(NOTIFICATION);
     }
 
     @Test
     void checkIbanKo_ko_get_io_tokens() {
-        Mockito.when(pdvDecryptRestConnector.getPii(TEST_TOKEN)).thenReturn(FISCAL_CODE_RESOURCE);
-
-        Request request =
-                Request.create(Request.HttpMethod.GET, "url", new HashMap<>(), null, new RequestTemplate());
-
-        Mockito.doThrow(new FeignException.NotFound("", request, new byte[0], null))
-                .when(initiativeRestConnector)
-                .getIOTokens(NOTIFICATION_IBAN_QUEUE_DTO.getInitiativeId());
-
-        Mockito.when(notificationMapper.toEntity(NOTIFICATION_IBAN_QUEUE_DTO))
-                .thenReturn(NOTIFICATION);
+        when(pdvDecryptRestConnector.getPii(TEST_TOKEN)).thenReturn(FISCAL_CODE_RESOURCE);
+        Request request = Request.create(Request.HttpMethod.GET, "url", new HashMap<>(), null, new RequestTemplate());
+        doThrow(new FeignException.NotFound("", request, new byte[0], null))
+                .when(initiativeRestConnector).getIOTokens(NOTIFICATION_IBAN_QUEUE_DTO.getInitiativeId());
+        when(notificationMapper.toEntity(NOTIFICATION_IBAN_QUEUE_DTO)).thenReturn(NOTIFICATION);
 
         notificationManagerService.sendNotificationFromOperationType(NOTIFICATION_IBAN_QUEUE_DTO);
-        verify(notificationManagerRepository, times(1))
-                .save(Mockito.any(Notification.class));
+        verify(notificationManagerRepository, times(1)).save(any(Notification.class));
     }
 
     @Test
     void citizen_ko_get_io_tokens() {
-        Mockito.when(pdvDecryptRestConnector.getPii(TEST_TOKEN)).thenReturn(FISCAL_CODE_RESOURCE);
-
-        Request request =
-                Request.create(Request.HttpMethod.GET, "url", new HashMap<>(), null, new RequestTemplate());
-
-        Mockito.doThrow(new FeignException.NotFound("", request, new byte[0], null))
-                .when(initiativeRestConnector)
-                .getIOTokens(NOTIFICATION_IBAN_QUEUE_DTO.getInitiativeId());
-
-        Mockito.when(notificationMapper.toEntity(NOTIFICATION_CITIZEN_ON_QUEUE_DTO))
-                .thenReturn(NOTIFICATION);
+        when(pdvDecryptRestConnector.getPii(TEST_TOKEN)).thenReturn(FISCAL_CODE_RESOURCE);
+        Request request = Request.create(Request.HttpMethod.GET, "url", new HashMap<>(), null, new RequestTemplate());
+        doThrow(new FeignException.NotFound("", request, new byte[0], null))
+                .when(initiativeRestConnector).getIOTokens(NOTIFICATION_IBAN_QUEUE_DTO.getInitiativeId());
+        when(notificationMapper.toEntity(NOTIFICATION_CITIZEN_ON_QUEUE_DTO)).thenReturn(NOTIFICATION);
 
         notificationManagerService.sendNotificationFromOperationType(NOTIFICATION_CITIZEN_ON_QUEUE_DTO);
-        verify(notificationManagerRepository, times(1))
-                .save(Mockito.any(Notification.class));
+        verify(notificationManagerRepository, times(1)).save(any(Notification.class));
     }
 
     @Test
     void checkIbanKo_ko_user_not_allowed_feign() {
-        Mockito.when(pdvDecryptRestConnector.getPii(TEST_TOKEN)).thenReturn(FISCAL_CODE_RESOURCE);
-
-        Mockito.when(initiativeRestConnector.getIOTokens(NOTIFICATION_IBAN_QUEUE_DTO.getInitiativeId()))
+        when(pdvDecryptRestConnector.getPii(TEST_TOKEN)).thenReturn(FISCAL_CODE_RESOURCE);
+        when(initiativeRestConnector.getIOTokens(NOTIFICATION_IBAN_QUEUE_DTO.getInitiativeId()))
                 .thenReturn(INITIATIVE_ADDITIONAL_INFO_DTO);
-        Request request =
-                Request.create(Request.HttpMethod.GET, "url", new HashMap<>(), null, new RequestTemplate());
-        Mockito.doThrow(new FeignException.NotFound("", request, new byte[0], null))
+        Request request = Request.create(Request.HttpMethod.GET, "url", new HashMap<>(), null, new RequestTemplate());
+        doThrow(new FeignException.NotFound("", request, new byte[0], null))
                 .when(ioBackEndRestConnector)
-                .getProfile(FISCAL_CODE_DTO, TOKEN);
-
-        Mockito.when(notificationMapper.toEntity(NOTIFICATION_IBAN_QUEUE_DTO))
-                .thenReturn(NOTIFICATION);
+                .getProfile(argThat(fc -> FISCAL_CODE.equals(fc.getFiscalCode())), eq(TOKEN));
+        when(notificationMapper.toEntity(NOTIFICATION_IBAN_QUEUE_DTO)).thenReturn(NOTIFICATION);
 
         notificationManagerService.sendNotificationFromOperationType(NOTIFICATION_IBAN_QUEUE_DTO);
-
-        verify(notificationManagerRepository, times(1))
-                .save(Mockito.any(Notification.class));
+        verify(notificationManagerRepository, times(1)).save(any(Notification.class));
     }
 
     @Test
     void citizen_ko_user_not_allowed_feign() {
-        Mockito.when(pdvDecryptRestConnector.getPii(TEST_TOKEN)).thenReturn(FISCAL_CODE_RESOURCE);
-
-        Mockito.when(initiativeRestConnector.getIOTokens(INITIATIVE_ID))
-                .thenReturn(INITIATIVE_ADDITIONAL_INFO_DTO);
-        Request request =
-                Request.create(Request.HttpMethod.GET, "url", new HashMap<>(), null, new RequestTemplate());
-        Mockito.doThrow(new FeignException.NotFound("", request, new byte[0], null))
+        when(pdvDecryptRestConnector.getPii(TEST_TOKEN)).thenReturn(FISCAL_CODE_RESOURCE);
+        when(initiativeRestConnector.getIOTokens(INITIATIVE_ID)).thenReturn(INITIATIVE_ADDITIONAL_INFO_DTO);
+        Request request = Request.create(Request.HttpMethod.GET, "url", new HashMap<>(), null, new RequestTemplate());
+        doThrow(new FeignException.NotFound("", request, new byte[0], null))
                 .when(ioBackEndRestConnector)
-                .getProfile(FISCAL_CODE_DTO, TOKEN);
-
-        Mockito.when(notificationMapper.toEntity(NOTIFICATION_CITIZEN_ON_QUEUE_DTO))
-                .thenReturn(NOTIFICATION);
+                .getProfile(argThat(fc -> FISCAL_CODE.equals(fc.getFiscalCode())), eq(TOKEN));
+        when(notificationMapper.toEntity(NOTIFICATION_CITIZEN_ON_QUEUE_DTO)).thenReturn(NOTIFICATION);
 
         notificationManagerService.sendNotificationFromOperationType(NOTIFICATION_CITIZEN_ON_QUEUE_DTO);
-
-        verify(notificationManagerRepository, times(1))
-                .save(Mockito.any(Notification.class));
+        verify(notificationManagerRepository, times(1)).save(any(Notification.class));
     }
 
     @Test
     void checkIbanKo_ko_user_not_allowed() {
-        Mockito.when(pdvDecryptRestConnector.getPii(TEST_TOKEN)).thenReturn(FISCAL_CODE_RESOURCE);
-
-        Mockito.when(initiativeRestConnector.getIOTokens(NOTIFICATION_IBAN_QUEUE_DTO.getInitiativeId()))
+        when(pdvDecryptRestConnector.getPii(TEST_TOKEN)).thenReturn(FISCAL_CODE_RESOURCE);
+        when(initiativeRestConnector.getIOTokens(NOTIFICATION_IBAN_QUEUE_DTO.getInitiativeId()))
                 .thenReturn(INITIATIVE_ADDITIONAL_INFO_DTO);
-        Mockito.when(ioBackEndRestConnector.getProfile(FISCAL_CODE_DTO, TOKEN))
+        when(ioBackEndRestConnector.getProfile(argThat(fc -> FISCAL_CODE.equals(fc.getFiscalCode())), eq(TOKEN)))
                 .thenReturn(PROFILE_RESOURCE_KO);
-
-        Mockito.when(notificationMapper.toEntity(NOTIFICATION_IBAN_QUEUE_DTO))
-                .thenReturn(NOTIFICATION);
+        when(notificationMapper.toEntity(NOTIFICATION_IBAN_QUEUE_DTO)).thenReturn(NOTIFICATION);
 
         notificationManagerService.sendNotificationFromOperationType(NOTIFICATION_IBAN_QUEUE_DTO);
-
-        verify(notificationManagerRepository, times(1))
-                .save(Mockito.any(Notification.class));
+        verify(notificationManagerRepository, times(1)).save(any(Notification.class));
     }
 
     @Test
     void citizen_ko_user_not_allowed() {
-        Mockito.when(pdvDecryptRestConnector.getPii(TEST_TOKEN)).thenReturn(FISCAL_CODE_RESOURCE);
-
-        Mockito.when(initiativeRestConnector.getIOTokens(INITIATIVE_ID))
-                .thenReturn(INITIATIVE_ADDITIONAL_INFO_DTO);
-        Mockito.when(ioBackEndRestConnector.getProfile(FISCAL_CODE_DTO, TOKEN))
+        when(pdvDecryptRestConnector.getPii(TEST_TOKEN)).thenReturn(FISCAL_CODE_RESOURCE);
+        when(initiativeRestConnector.getIOTokens(INITIATIVE_ID)).thenReturn(INITIATIVE_ADDITIONAL_INFO_DTO);
+        when(ioBackEndRestConnector.getProfile(argThat(fc -> FISCAL_CODE.equals(fc.getFiscalCode())), eq(TOKEN)))
                 .thenReturn(PROFILE_RESOURCE_KO);
-
-        Mockito.when(notificationMapper.toEntity(NOTIFICATION_CITIZEN_ON_QUEUE_DTO))
-                .thenReturn(NOTIFICATION);
+        when(notificationMapper.toEntity(NOTIFICATION_CITIZEN_ON_QUEUE_DTO)).thenReturn(NOTIFICATION);
 
         notificationManagerService.sendNotificationFromOperationType(NOTIFICATION_CITIZEN_ON_QUEUE_DTO);
-
-        verify(notificationManagerRepository, times(1))
-                .save(Mockito.any(Notification.class));
+        verify(notificationManagerRepository, times(1)).save(any(Notification.class));
     }
 
     @Test
     void checkIbanKo_ko_no_cf() {
-        Mockito.when(initiativeRestConnector.getIOTokens(NOTIFICATION_IBAN_QUEUE_DTO.getInitiativeId()))
+        when(initiativeRestConnector.getIOTokens(NOTIFICATION_IBAN_QUEUE_DTO.getInitiativeId()))
                 .thenReturn(INITIATIVE_ADDITIONAL_INFO_DTO);
-        Request request =
-                Request.create(Request.HttpMethod.GET, "url", new HashMap<>(), null, new RequestTemplate());
-        Mockito.doThrow(new FeignException.NotFound("", request, new byte[0], null))
-                .when(pdvDecryptRestConnector)
-                .getPii(TEST_TOKEN);
-
-        Mockito.when(notificationMapper.toEntity(NOTIFICATION_IBAN_QUEUE_DTO))
-                .thenReturn(NOTIFICATION);
+        Request request = Request.create(Request.HttpMethod.GET, "url", new HashMap<>(), null, new RequestTemplate());
+        doThrow(new FeignException.NotFound("", request, new byte[0], null))
+                .when(pdvDecryptRestConnector).getPii(TEST_TOKEN);
+        when(notificationMapper.toEntity(NOTIFICATION_IBAN_QUEUE_DTO)).thenReturn(NOTIFICATION);
 
         notificationManagerService.sendNotificationFromOperationType(NOTIFICATION_IBAN_QUEUE_DTO);
-
-        verify(notificationManagerRepository, times(1))
-                .save(Mockito.any(Notification.class));
+        verify(notificationManagerRepository, times(1)).save(any(Notification.class));
     }
 
     @Test
     void citizen_ko_no_cf() {
-        Mockito.when(initiativeRestConnector.getIOTokens(INITIATIVE_ID))
-                .thenReturn(INITIATIVE_ADDITIONAL_INFO_DTO);
-        Request request =
-                Request.create(Request.HttpMethod.GET, "url", new HashMap<>(), null, new RequestTemplate());
-        Mockito.doThrow(new FeignException.NotFound("", request, new byte[0], null))
-                .when(pdvDecryptRestConnector)
-                .getPii(TEST_TOKEN);
-
-        Mockito.when(notificationMapper.toEntity(NOTIFICATION_CITIZEN_ON_QUEUE_DTO))
-                .thenReturn(NOTIFICATION);
+        when(initiativeRestConnector.getIOTokens(INITIATIVE_ID)).thenReturn(INITIATIVE_ADDITIONAL_INFO_DTO);
+        Request request = Request.create(Request.HttpMethod.GET, "url", new HashMap<>(), null, new RequestTemplate());
+        doThrow(new FeignException.NotFound("", request, new byte[0], null))
+                .when(pdvDecryptRestConnector).getPii(TEST_TOKEN);
+        when(notificationMapper.toEntity(NOTIFICATION_CITIZEN_ON_QUEUE_DTO)).thenReturn(NOTIFICATION);
 
         notificationManagerService.sendNotificationFromOperationType(NOTIFICATION_CITIZEN_ON_QUEUE_DTO);
-
-        verify(notificationManagerRepository, times(1))
-                .save(Mockito.any(Notification.class));
+        verify(notificationManagerRepository, times(1)).save(any(Notification.class));
     }
 
     @Test
     void sendNotificationFromOperationType_notification_notNull_ioTokens_notNull() {
-        Mockito.when(notificationMapper.toEntity(NOTIFICATION_CITIZEN_ON_QUEUE_DTO))
-                .thenReturn(NOTIFICATION);
+        when(notificationMapper.toEntity(NOTIFICATION_CITIZEN_ON_QUEUE_DTO)).thenReturn(NOTIFICATION);
+        when(initiativeRestConnector.getIOTokens(INITIATIVE_ID)).thenReturn(null);
+        when(pdvDecryptRestConnector.getPii(TEST_TOKEN)).thenReturn(FISCAL_CODE_RESOURCE);
+        when(notificationMarkdown.getMarkdownInitiativePublishing()).thenReturn(SUBJECT);
+        when(notificationMarkdown.getSubjectInitiativePublishing()).thenReturn(MARKDOWN);
 
-        Mockito.when(initiativeRestConnector.getIOTokens(INITIATIVE_ID))
-                .thenReturn(null);
-
-        Mockito.when(pdvDecryptRestConnector.getPii(TEST_TOKEN)).thenReturn(FISCAL_CODE_RESOURCE);
-        Mockito.when(notificationMarkdown.getMarkdownInitiativePublishing()).thenReturn(SUBJECT);
-
-        Mockito.when(notificationMarkdown.getSubjectInitiativePublishing()).thenReturn(MARKDOWN);
-        try {
-            notificationManagerService.sendNotificationFromOperationType(NOTIFICATION_CITIZEN_ON_QUEUE_DTO);
-        } catch (FeignException e) {
-            Assertions.fail();
-        }
-
-        verify(notificationManagerRepository, times(1))
-                .save(NOTIFICATION);
+        assertDoesNotThrow(() -> notificationManagerService.sendNotificationFromOperationType(NOTIFICATION_CITIZEN_ON_QUEUE_DTO));
+        verify(notificationManagerRepository, times(1)).save(NOTIFICATION);
     }
 
     @Test
     void sendNotificationFromOperationType_checkiban_notification_Null_ioTokens_null() {
-        Mockito.when(notificationMapper.toEntity(NOTIFICATION_IBAN_QUEUE_DTO))
-                .thenReturn(null);
+        when(notificationMapper.toEntity(NOTIFICATION_IBAN_QUEUE_DTO)).thenReturn(null);
+        when(initiativeRestConnector.getIOTokens(INITIATIVE_ID)).thenReturn(null);
+        when(pdvDecryptRestConnector.getPii(TEST_TOKEN)).thenReturn(FISCAL_CODE_RESOURCE);
+        when(notificationMarkdown.getMarkdownInitiativePublishing()).thenReturn(SUBJECT);
+        when(notificationMarkdown.getSubjectInitiativePublishing()).thenReturn(MARKDOWN);
 
-        Mockito.when(initiativeRestConnector.getIOTokens(INITIATIVE_ID))
-                .thenReturn(null);
-
-        Mockito.when(pdvDecryptRestConnector.getPii(TEST_TOKEN)).thenReturn(FISCAL_CODE_RESOURCE);
-        Mockito.when(notificationMarkdown.getMarkdownInitiativePublishing()).thenReturn(SUBJECT);
-
-        Mockito.when(notificationMarkdown.getSubjectInitiativePublishing()).thenReturn(MARKDOWN);
-        try {
-            notificationManagerService.sendNotificationFromOperationType(NOTIFICATION_IBAN_QUEUE_DTO);
-        } catch (FeignException e) {
-            Assertions.fail();
-        }
+        assertDoesNotThrow(() -> notificationManagerService.sendNotificationFromOperationType(NOTIFICATION_IBAN_QUEUE_DTO));
     }
 
     @Test
     void sendNotificationFromOperationType_refund_ok() {
-
-        Mockito.when(notificationMapper.toEntity(NOTIFICATION_REFUND_QUEUE_DTO))
-                .thenReturn(NOTIFICATION);
-
-        Mockito.when(initiativeRestConnector.getIOTokens(NOTIFICATION_REFUND_QUEUE_DTO.getInitiativeId()))
+        when(notificationMapper.toEntity(NOTIFICATION_REFUND_QUEUE_DTO)).thenReturn(NOTIFICATION);
+        when(initiativeRestConnector.getIOTokens(NOTIFICATION_REFUND_QUEUE_DTO.getInitiativeId()))
                 .thenReturn(INITIATIVE_ADDITIONAL_INFO_DTO);
-
-        Mockito.when(pdvDecryptRestConnector.getPii(TEST_TOKEN)).thenReturn(FISCAL_CODE_RESOURCE);
-        Mockito.when(notificationMarkdown.getSubjectRefund(NOTIFICATION_REFUND_QUEUE_DTO.getStatus())).thenReturn(SUBJECT);
-
-        Mockito.when(notificationMarkdown.getMarkdownRefund(Mockito.eq(NOTIFICATION_REFUND_QUEUE_DTO.getStatus()), Mockito.any())).thenReturn(MARKDOWN);
-
-        Mockito.when(ioBackEndRestConnector.getProfile(FISCAL_CODE_DTO, TOKEN))
+        when(pdvDecryptRestConnector.getPii(TEST_TOKEN)).thenReturn(FISCAL_CODE_RESOURCE);
+        when(notificationMarkdown.getSubjectRefund(NOTIFICATION_REFUND_QUEUE_DTO.getStatus())).thenReturn(SUBJECT);
+        when(notificationMarkdown.getMarkdownRefund(eq(NOTIFICATION_REFUND_QUEUE_DTO.getStatus()), any()))
+                .thenReturn(MARKDOWN);
+        when(ioBackEndRestConnector.getProfile(argThat(fc -> FISCAL_CODE.equals(fc.getFiscalCode())), eq(TOKEN)))
                 .thenReturn(PROFILE_RESOURCE);
-
-        Mockito.when(
-                        notificationDTOMapper.map(
-                                Mockito.eq(FISCAL_CODE),
-                                Mockito.any(Long.class),
-                                Mockito.anyString(),
-                                Mockito.anyString()))
+        when(notificationDTOMapper.map(eq(FISCAL_CODE), anyLong(), anyString(), anyString()))
                 .thenReturn(NOTIFICATION_DTO);
+        when(ioBackEndRestConnector.notify(NOTIFICATION_DTO, TOKEN)).thenReturn(NOTIFICATION_RESOURCE);
 
-        Mockito.when(ioBackEndRestConnector.notify(NOTIFICATION_DTO, TOKEN))
-                .thenReturn(NOTIFICATION_RESOURCE);
-        try {
-            notificationManagerService.sendNotificationFromOperationType(NOTIFICATION_REFUND_QUEUE_DTO);
-        } catch (FeignException e) {
-            Assertions.fail();
-        }
-
-        verify(notificationManagerRepository, times(1))
-                .save(NOTIFICATION);
+        assertDoesNotThrow(() -> notificationManagerService.sendNotificationFromOperationType(NOTIFICATION_REFUND_QUEUE_DTO));
+        verify(notificationManagerRepository, times(1)).save(NOTIFICATION);
     }
 
-
-    //region recovery
     @Test
     void recoverKoNotifications() {
-        Mockito.when(notificationManagerRepository.findKoToRecover(Mockito.any(LocalDateTime.class)))
-                .thenReturn(KO_NOTIFICATION_FIRST_RETRY, KO_REFUND_NOTIFICATION_FIRST_RETRY,
-                        KO_CHECK_IBAN_NOTIFICATION_FIRST_RETRY, KO_SUSPENSION_NOTIFICATION_FIRST_RETRY,
-                        KO_READMISSION_NOTIFICATION_FIRST_RETRY, KO_NOTIFICATION_N_RETRY, null);
+        withRealExecutor(() -> {
+            when(notificationManagerRepository.findKoToRecover(any(LocalDateTime.class)))
+                    .thenReturn(KO_NOTIFICATION_FIRST_RETRY, KO_REFUND_NOTIFICATION_FIRST_RETRY,
+                            KO_CHECK_IBAN_NOTIFICATION_FIRST_RETRY, KO_SUSPENSION_NOTIFICATION_FIRST_RETRY,
+                            KO_READMISSION_NOTIFICATION_FIRST_RETRY, KO_NOTIFICATION_N_RETRY, null);
 
-        Mockito.when(initiativeRestConnector.getIOTokens(EVALUATION_DTO.getInitiativeId()))
-                .thenReturn(INITIATIVE_ADDITIONAL_INFO_DTO);
+            when(initiativeRestConnector.getIOTokens(EVALUATION_DTO.getInitiativeId()))
+                    .thenReturn(INITIATIVE_ADDITIONAL_INFO_DTO);
+            when(pdvDecryptRestConnector.getPii(TEST_TOKEN)).thenReturn(FISCAL_CODE_RESOURCE);
+            when(ioBackEndRestConnector.getProfile(argThat(fc -> FISCAL_CODE.equals(fc.getFiscalCode())), eq(TOKEN)))
+                    .thenReturn(PROFILE_RESOURCE);
 
-        Mockito.when(pdvDecryptRestConnector.getPii(TEST_TOKEN)).thenReturn(FISCAL_CODE_RESOURCE);
+            when(notificationMarkdown.getSubject(any(Notification.class))).thenReturn(SUBJECT);
+            when(notificationMarkdown.getSubjectCheckIbanKo()).thenReturn(SUBJECT);
+            when(notificationMarkdown.getSubjectRefund(anyString())).thenReturn(SUBJECT);
+            when(notificationMarkdown.getSubjectSuspension(anyString())).thenReturn(SUBJECT);
+            when(notificationMarkdown.getSubjectReadmission(anyString())).thenReturn(SUBJECT);
 
-        Mockito.when(ioBackEndRestConnector.getProfile(FISCAL_CODE_DTO, TOKEN)).thenReturn(PROFILE_RESOURCE);
+            when(notificationMarkdown.getMarkdown(any(Notification.class))).thenReturn(MARKDOWN);
+            when(notificationMarkdown.getMarkdownCheckIbanKo()).thenReturn(MARKDOWN);
+            when(notificationMarkdown.getMarkdownRefund(anyString(), any())).thenReturn(MARKDOWN);
+            when(notificationMarkdown.getMarkdownSuspension()).thenReturn(MARKDOWN);
+            when(notificationMarkdown.getMarkdownReadmission()).thenReturn(MARKDOWN);
 
-        Mockito.when(notificationMarkdown.getSubject(Mockito.any(Notification.class))).thenReturn(SUBJECT);
-        Mockito.when(notificationMarkdown.getSubjectCheckIbanKo()).thenReturn(SUBJECT);
-        Mockito.when(notificationMarkdown.getSubjectRefund(Mockito.anyString())).thenReturn(SUBJECT);
-        Mockito.when(notificationMarkdown.getSubjectSuspension(Mockito.anyString())).thenReturn(SUBJECT);
-        Mockito.when(notificationMarkdown.getSubjectReadmission(Mockito.anyString())).thenReturn(SUBJECT);
+            when(notificationDTOMapper.map(eq(FISCAL_CODE), anyLong(), anyString(), anyString()))
+                    .thenReturn(NOTIFICATION_DTO);
+            when(ioBackEndRestConnector.notify(NOTIFICATION_DTO, TOKEN)).thenReturn(NOTIFICATION_RESOURCE);
 
-        Mockito.when(notificationMarkdown.getMarkdown(Mockito.any(Notification.class))).thenReturn(MARKDOWN);
-        Mockito.when(notificationMarkdown.getMarkdownCheckIbanKo()).thenReturn(MARKDOWN);
-        Mockito.when(notificationMarkdown.getMarkdownRefund(Mockito.anyString(), Mockito.any())).thenReturn(MARKDOWN);
-        Mockito.when(notificationMarkdown.getMarkdownSuspension()).thenReturn(MARKDOWN);
-        Mockito.when(notificationMarkdown.getMarkdownReadmission()).thenReturn(MARKDOWN);
-
-        Mockito.when(
-                        notificationDTOMapper.map(
-                                Mockito.eq(FISCAL_CODE),
-                                Mockito.any(Long.class),
-                                Mockito.anyString(),
-                                Mockito.anyString()))
-                .thenReturn(NOTIFICATION_DTO);
-
-        Mockito.when(ioBackEndRestConnector.notify(NOTIFICATION_DTO, TOKEN))
-                .thenReturn(NOTIFICATION_RESOURCE);
-
-        try {
-            notificationManagerService.schedule();
+            assertDoesNotThrow(() -> notificationManagerService.schedule());
             checkKoNotifications();
-        } catch (FeignException e) {
-            Assertions.fail();
-        }
-
-        verify(notificationManagerRepository, times(6))
-                .save(Mockito.any(Notification.class));
+            verify(notificationManagerRepository, times(6)).save(any(Notification.class));
+        });
     }
 
     @Test
     void recoverKoNotification_ko_for_whitelist() {
-        Mockito.when(notificationManagerRepository.findKoToRecover(Mockito.any(LocalDateTime.class)))
-                .thenReturn(KO_NOTIFICATION_WHITELIST, KO_NOTIFICATION_WHITELIST, null);
-        Mockito.when(initiativeRestConnector.getIOTokens(EVALUATION_DTO.getInitiativeId()))
-                .thenReturn(INITIATIVE_ADDITIONAL_INFO_DTO);
+        withSafeExecutor(() -> {
+            when(notificationManagerRepository.findKoToRecover(any(LocalDateTime.class)))
+                    .thenReturn(KO_NOTIFICATION_WHITELIST, KO_NOTIFICATION_WHITELIST, null);
+            when(initiativeRestConnector.getIOTokens(EVALUATION_DTO.getInitiativeId()))
+                    .thenReturn(INITIATIVE_ADDITIONAL_INFO_DTO);
+            when(pdvDecryptRestConnector.getPii(TEST_TOKEN)).thenReturn(FISCAL_CODE_RESOURCE);
+            when(ioBackEndRestConnector.getProfile(argThat(fc -> FISCAL_CODE.equals(fc.getFiscalCode())), eq(TOKEN)))
+                    .thenReturn(PROFILE_RESOURCE);
 
-        Mockito.when(pdvDecryptRestConnector.getPii(TEST_TOKEN)).thenReturn(FISCAL_CODE_RESOURCE);
-
-        Mockito.when(ioBackEndRestConnector.getProfile(FISCAL_CODE_DTO, TOKEN)).thenReturn(PROFILE_RESOURCE);
-
-        try {
-            notificationManagerService.schedule();
-        } catch (FeignException e) {
-            Assertions.fail();
-        }
-
-        verify(notificationManagerRepository, times(0))
-                .save(Mockito.any(Notification.class));
-
+            assertDoesNotThrow(() -> notificationManagerService.schedule());
+            verify(notificationManagerRepository, never()).save(any(Notification.class));
+        });
     }
 
     @Test
     void recovery_notify_ko() {
-        Mockito.when(pdvDecryptRestConnector.getPii(TEST_TOKEN)).thenReturn(FISCAL_CODE_RESOURCE);
-        Mockito.when(ioBackEndRestConnector.getProfile(FISCAL_CODE_DTO, TOKEN))
+        when(pdvDecryptRestConnector.getPii(TEST_TOKEN)).thenReturn(FISCAL_CODE_RESOURCE);
+        when(ioBackEndRestConnector.getProfile(argThat(fc -> FISCAL_CODE.equals(fc.getFiscalCode())), eq(TOKEN)))
                 .thenReturn(PROFILE_RESOURCE);
-
-        Mockito.when(initiativeRestConnector.getIOTokens(EVALUATION_DTO.getInitiativeId()))
+        when(initiativeRestConnector.getIOTokens(EVALUATION_DTO.getInitiativeId()))
                 .thenReturn(INITIATIVE_ADDITIONAL_INFO_DTO);
-        Mockito.when(notificationMarkdown.getSubject(Mockito.any(Notification.class))).thenReturn(SUBJECT);
-        Mockito.when(notificationMarkdown.getMarkdown(Mockito.any(Notification.class))).thenReturn(MARKDOWN);
-        Mockito.when(
-                        notificationDTOMapper.map(
-                                Mockito.eq(FISCAL_CODE),
-                                Mockito.any(Long.class),
-                                Mockito.anyString(),
-                                Mockito.anyString()))
+        when(notificationMarkdown.getSubject(any(Notification.class))).thenReturn(SUBJECT);
+        when(notificationMarkdown.getMarkdown(any(Notification.class))).thenReturn(MARKDOWN);
+        when(notificationDTOMapper.map(eq(FISCAL_CODE), anyLong(), anyString(), anyString()))
                 .thenReturn(NOTIFICATION_DTO);
-        Request request =
-                Request.create(
-                        Request.HttpMethod.POST, "url", new HashMap<>(), null, new RequestTemplate());
-        Mockito.doThrow(new FeignException.BadRequest("", request, new byte[0], null))
-                .when(ioBackEndRestConnector)
-                .notify(NOTIFICATION_DTO, TOKEN);
+
+        Request request = Request.create(Request.HttpMethod.POST, "url", new HashMap<>(), null, new RequestTemplate());
+        doThrow(new FeignException.BadRequest("", request, new byte[0], null))
+                .when(ioBackEndRestConnector).notify(NOTIFICATION_DTO, TOKEN);
 
         try {
             notificationManagerService.notify(KO_NOTIFICATION_FIRST_RETRY);
         } catch (FeignException e) {
             assertEquals(HttpStatus.BAD_REQUEST.value(), e.status());
         }
-
-        verify(notificationManagerRepository, times(1))
-                .save(Mockito.any(Notification.class));
+        verify(notificationManagerRepository, times(1)).save(any(Notification.class));
     }
 
     @Test
     void recovery_notify_ko_get_io_tokens() {
-
-        Request request =
-                Request.create(Request.HttpMethod.GET, "url", new HashMap<>(), null, new RequestTemplate());
-
-        Mockito.doThrow(new FeignException.NotFound("", request, new byte[0], null))
-                .when(initiativeRestConnector)
-                .getIOTokens(EVALUATION_DTO.getInitiativeId());
+        Request request = Request.create(Request.HttpMethod.GET, "url", new HashMap<>(), null, new RequestTemplate());
+        doThrow(new FeignException.NotFound("", request, new byte[0], null))
+                .when(initiativeRestConnector).getIOTokens(EVALUATION_DTO.getInitiativeId());
 
         notificationManagerService.notify(KO_NOTIFICATION_FIRST_RETRY);
-        verify(notificationManagerRepository, times(1))
-                .save(Mockito.any(Notification.class));
+        verify(notificationManagerRepository, times(1)).save(any(Notification.class));
     }
 
     @Test
     void recovery_notify_ko_user_not_allowed_feign() {
-        Mockito.when(pdvDecryptRestConnector.getPii(TEST_TOKEN)).thenReturn(FISCAL_CODE_RESOURCE);
-
-        Mockito.when(initiativeRestConnector.getIOTokens(EVALUATION_DTO.getInitiativeId()))
+        when(pdvDecryptRestConnector.getPii(TEST_TOKEN)).thenReturn(FISCAL_CODE_RESOURCE);
+        when(initiativeRestConnector.getIOTokens(EVALUATION_DTO.getInitiativeId()))
                 .thenReturn(INITIATIVE_ADDITIONAL_INFO_DTO);
-        Request request =
-                Request.create(Request.HttpMethod.GET, "url", new HashMap<>(), null, new RequestTemplate());
-        Mockito.doThrow(new FeignException.NotFound("", request, new byte[0], null))
+        Request request = Request.create(Request.HttpMethod.GET, "url", new HashMap<>(), null, new RequestTemplate());
+        doThrow(new FeignException.NotFound("", request, new byte[0], null))
                 .when(ioBackEndRestConnector)
-                .getProfile(FISCAL_CODE_DTO, TOKEN);
+                .getProfile(argThat(fc -> FISCAL_CODE.equals(fc.getFiscalCode())), eq(TOKEN));
 
         notificationManagerService.notify(KO_NOTIFICATION_FIRST_RETRY);
-
-        verify(notificationManagerRepository, times(1))
-                .save(Mockito.any(Notification.class));
+        verify(notificationManagerRepository, times(1)).save(any(Notification.class));
     }
 
     @Test
     void recovery_notify_ko_user_not_allowed() {
-        Mockito.when(pdvDecryptRestConnector.getPii(TEST_TOKEN)).thenReturn(FISCAL_CODE_RESOURCE);
-
-        Mockito.when(initiativeRestConnector.getIOTokens(EVALUATION_DTO.getInitiativeId()))
+        when(pdvDecryptRestConnector.getPii(TEST_TOKEN)).thenReturn(FISCAL_CODE_RESOURCE);
+        when(initiativeRestConnector.getIOTokens(EVALUATION_DTO.getInitiativeId()))
                 .thenReturn(INITIATIVE_ADDITIONAL_INFO_DTO);
-        Mockito.when(ioBackEndRestConnector.getProfile(FISCAL_CODE_DTO, TOKEN))
+        when(ioBackEndRestConnector.getProfile(argThat(fc -> FISCAL_CODE.equals(fc.getFiscalCode())), eq(TOKEN)))
                 .thenReturn(PROFILE_RESOURCE_KO);
 
         notificationManagerService.notify(KO_NOTIFICATION_N_RETRY);
-
-        verify(notificationManagerRepository, times(1))
-                .save(Mockito.any(Notification.class));
+        verify(notificationManagerRepository, times(1)).save(any(Notification.class));
     }
 
     @Test
     void recovery_notify_ko_no_cf() {
-        Mockito.when(initiativeRestConnector.getIOTokens(EVALUATION_DTO.getInitiativeId()))
+        when(initiativeRestConnector.getIOTokens(EVALUATION_DTO.getInitiativeId()))
                 .thenReturn(INITIATIVE_ADDITIONAL_INFO_DTO);
-
-        Request request =
-                Request.create(Request.HttpMethod.GET, "url", new HashMap<>(), null, new RequestTemplate());
-        Mockito.doThrow(new FeignException.NotFound("", request, new byte[0], null))
-                .when(pdvDecryptRestConnector)
-                .getPii(TEST_TOKEN);
+        Request request = Request.create(Request.HttpMethod.GET, "url", new HashMap<>(), null, new RequestTemplate());
+        doThrow(new FeignException.NotFound("", request, new byte[0], null))
+                .when(pdvDecryptRestConnector).getPii(TEST_TOKEN);
 
         notificationManagerService.notify(KO_NOTIFICATION_FIRST_RETRY);
-
-        verify(notificationManagerRepository, times(1))
-                .save(Mockito.any(Notification.class));
+        verify(notificationManagerRepository, times(1)).save(any(Notification.class));
     }
 
     private void checkKoNotifications() {
-        Assertions.assertEquals(1, KO_NOTIFICATION_FIRST_RETRY.getRetry());
-        Assertions.assertTrue(KO_NOTIFICATION_FIRST_RETRY.getNotificationDate().isAfter(TEST_DATE));
+        assertEquals(1, KO_NOTIFICATION_FIRST_RETRY.getRetry());
+        assertTrue(KO_NOTIFICATION_FIRST_RETRY.getNotificationDate().isAfter(TEST_DATE));
 
-        Assertions.assertEquals(1, KO_CHECK_IBAN_NOTIFICATION_FIRST_RETRY.getRetry());
-        Assertions.assertTrue(KO_NOTIFICATION_FIRST_RETRY.getNotificationDate().isAfter(TEST_DATE));
+        assertEquals(1, KO_CHECK_IBAN_NOTIFICATION_FIRST_RETRY.getRetry());
+        assertTrue(KO_NOTIFICATION_FIRST_RETRY.getNotificationDate().isAfter(TEST_DATE));
 
-        Assertions.assertEquals(1, KO_REFUND_NOTIFICATION_FIRST_RETRY.getRetry());
-        Assertions.assertTrue(KO_NOTIFICATION_FIRST_RETRY.getNotificationDate().isAfter(TEST_DATE));
+        assertEquals(1, KO_REFUND_NOTIFICATION_FIRST_RETRY.getRetry());
+        assertTrue(KO_NOTIFICATION_FIRST_RETRY.getNotificationDate().isAfter(TEST_DATE));
 
-        Assertions.assertEquals(1, KO_SUSPENSION_NOTIFICATION_FIRST_RETRY.getRetry());
-        Assertions.assertTrue(KO_NOTIFICATION_FIRST_RETRY.getNotificationDate().isAfter(TEST_DATE));
+        assertEquals(1, KO_SUSPENSION_NOTIFICATION_FIRST_RETRY.getRetry());
+        assertTrue(KO_NOTIFICATION_FIRST_RETRY.getNotificationDate().isAfter(TEST_DATE));
 
-        Assertions.assertEquals(1, KO_READMISSION_NOTIFICATION_FIRST_RETRY.getRetry());
-        Assertions.assertTrue(KO_NOTIFICATION_FIRST_RETRY.getNotificationDate().isAfter(TEST_DATE));
+        assertEquals(1, KO_READMISSION_NOTIFICATION_FIRST_RETRY.getRetry());
+        assertTrue(KO_NOTIFICATION_FIRST_RETRY.getNotificationDate().isAfter(TEST_DATE));
 
-        Assertions.assertEquals(3, KO_NOTIFICATION_N_RETRY.getRetry());
-        Assertions.assertTrue(KO_NOTIFICATION_N_RETRY.getNotificationDate().isAfter(TEST_DATE));
+        assertEquals(3, KO_NOTIFICATION_N_RETRY.getRetry());
+        assertTrue(KO_NOTIFICATION_N_RETRY.getNotificationDate().isAfter(TEST_DATE));
     }
-    //endregion
+
     @Test
     void sendNotificationFromOperationType_suspension_ok() {
-        Mockito.when(notificationMapper.toEntity(NOTIFICATION_SUSPENSION_QUEUE_DTO)).thenReturn(NOTIFICATION_SUSPENSION);
-        Mockito.when(initiativeRestConnector.getIOTokens(INITIATIVE_ID)).thenReturn(INITIATIVE_ADDITIONAL_INFO_DTO);
-        Mockito.when(pdvDecryptRestConnector.getPii(TEST_TOKEN)).thenReturn(FISCAL_CODE_RESOURCE);
-        Mockito.when(notificationMarkdown.getMarkdownSuspension()).thenReturn(MARKDOWN);
-        Mockito.when(notificationMarkdown.getSubjectSuspension(INITIATIVE_NAME)).thenReturn(SUBJECT);
-        Mockito.when(ioBackEndRestConnector.getProfile(FISCAL_CODE_DTO, TOKEN)).thenReturn(PROFILE_RESOURCE);
-        Mockito.when(
-                        notificationDTOMapper.map(
-                                Mockito.eq(FISCAL_CODE),
-                                Mockito.any(Long.class),
-                                Mockito.anyString(),
-                                Mockito.anyString()))
+        when(notificationMapper.toEntity(NOTIFICATION_SUSPENSION_QUEUE_DTO)).thenReturn(NOTIFICATION_SUSPENSION);
+        when(initiativeRestConnector.getIOTokens(INITIATIVE_ID)).thenReturn(INITIATIVE_ADDITIONAL_INFO_DTO);
+        when(pdvDecryptRestConnector.getPii(TEST_TOKEN)).thenReturn(FISCAL_CODE_RESOURCE);
+        when(notificationMarkdown.getMarkdownSuspension()).thenReturn(MARKDOWN);
+        when(notificationMarkdown.getSubjectSuspension(INITIATIVE_NAME)).thenReturn(SUBJECT);
+        when(ioBackEndRestConnector.getProfile(argThat(fc -> FISCAL_CODE.equals(fc.getFiscalCode())), eq(TOKEN)))
+                .thenReturn(PROFILE_RESOURCE);
+        when(notificationDTOMapper.map(eq(FISCAL_CODE), anyLong(), anyString(), anyString()))
                 .thenReturn(NOTIFICATION_DTO);
-        Mockito.when(ioBackEndRestConnector.notify(NOTIFICATION_DTO, TOKEN)).thenReturn(NOTIFICATION_RESOURCE);
+        when(ioBackEndRestConnector.notify(NOTIFICATION_DTO, TOKEN)).thenReturn(NOTIFICATION_RESOURCE);
 
-        try {
-            notificationManagerService.sendNotificationFromOperationType(NOTIFICATION_SUSPENSION_QUEUE_DTO);
-        } catch (FeignException e) {
-            Assertions.fail();
-        }
-
+        assertDoesNotThrow(() -> notificationManagerService.sendNotificationFromOperationType(NOTIFICATION_SUSPENSION_QUEUE_DTO));
         verify(notificationManagerRepository, times(1)).save(NOTIFICATION_SUSPENSION);
     }
 
     @Test
     void sendNotificationFromOperationType_readmission_ok() {
-        Mockito.when(notificationMapper.toEntity(NOTIFICATION_READMISSION_QUEUE_DTO)).thenReturn(NOTIFICATION_READMISSION);
-        Mockito.when(initiativeRestConnector.getIOTokens(INITIATIVE_ID)).thenReturn(INITIATIVE_ADDITIONAL_INFO_DTO);
-        Mockito.when(pdvDecryptRestConnector.getPii(TEST_TOKEN)).thenReturn(FISCAL_CODE_RESOURCE);
-        Mockito.when(notificationMarkdown.getMarkdownReadmission()).thenReturn(MARKDOWN);
-        Mockito.when(notificationMarkdown.getSubjectReadmission(INITIATIVE_NAME)).thenReturn(SUBJECT);
-        Mockito.when(ioBackEndRestConnector.getProfile(FISCAL_CODE_DTO, TOKEN)).thenReturn(PROFILE_RESOURCE);
-        Mockito.when(
-                        notificationDTOMapper.map(
-                                Mockito.eq(FISCAL_CODE),
-                                Mockito.any(Long.class),
-                                Mockito.anyString(),
-                                Mockito.anyString()))
+        when(notificationMapper.toEntity(NOTIFICATION_READMISSION_QUEUE_DTO)).thenReturn(NOTIFICATION_READMISSION);
+        when(initiativeRestConnector.getIOTokens(INITIATIVE_ID)).thenReturn(INITIATIVE_ADDITIONAL_INFO_DTO);
+        when(pdvDecryptRestConnector.getPii(TEST_TOKEN)).thenReturn(FISCAL_CODE_RESOURCE);
+        when(notificationMarkdown.getMarkdownReadmission()).thenReturn(MARKDOWN);
+        when(notificationMarkdown.getSubjectReadmission(INITIATIVE_NAME)).thenReturn(SUBJECT);
+        when(ioBackEndRestConnector.getProfile(argThat(fc -> FISCAL_CODE.equals(fc.getFiscalCode())), eq(TOKEN)))
+                .thenReturn(PROFILE_RESOURCE);
+        when(notificationDTOMapper.map(eq(FISCAL_CODE), anyLong(), anyString(), anyString()))
                 .thenReturn(NOTIFICATION_DTO);
-        Mockito.when(ioBackEndRestConnector.notify(NOTIFICATION_DTO, TOKEN)).thenReturn(NOTIFICATION_RESOURCE);
+        when(ioBackEndRestConnector.notify(NOTIFICATION_DTO, TOKEN)).thenReturn(NOTIFICATION_RESOURCE);
 
-        try {
-            notificationManagerService.sendNotificationFromOperationType(NOTIFICATION_READMISSION_QUEUE_DTO);
-        } catch (FeignException e) {
-            Assertions.fail();
-        }
-
+        assertDoesNotThrow(() -> notificationManagerService.sendNotificationFromOperationType(NOTIFICATION_READMISSION_QUEUE_DTO));
         verify(notificationManagerRepository, times(1)).save(NOTIFICATION_READMISSION);
     }
 
     @ParameterizedTest
     @MethodSource("operationTypeAndInvocationTimes")
     void processCommand(String operationType, int times) {
-
         CommandOperationQueueDTO queueCommandOperationDTO = CommandOperationQueueDTO.builder()
                 .entityId(INITIATIVE_ID)
                 .operationType(operationType)
                 .operationTime(LocalDateTime.now())
                 .build();
 
-        Notification notification = Notification.builder()
-                .id("ID_NOTIFICATION")
-                .initiativeId(INITIATIVE_ID)
-                .build();
+        Notification notification = Notification.builder().id("ID_NOTIFICATION").initiativeId(INITIATIVE_ID).build();
         List<Notification> deletedPage = List.of(notification);
 
         if (times == 2) {
             List<Notification> walletPage = createNotificationPage();
             when(notificationManagerRepositoryExtended.deletePaged(queueCommandOperationDTO.getEntityId(), PAGE_SIZE))
-                    .thenReturn(walletPage)
-                    .thenReturn(deletedPage);
-
+                    .thenReturn(walletPage).thenReturn(deletedPage);
             Thread.currentThread().interrupt();
-
         } else {
             when(notificationManagerRepositoryExtended.deletePaged(queueCommandOperationDTO.getEntityId(), PAGE_SIZE))
                     .thenReturn(deletedPage);
         }
 
         notificationManagerService.processNotification(queueCommandOperationDTO);
-
-
-        // Then
-        verify(notificationManagerRepositoryExtended, times(times)).deletePaged(queueCommandOperationDTO.getEntityId(), PAGE_SIZE);
+        verify(notificationManagerRepositoryExtended, times(times))
+                .deletePaged(queueCommandOperationDTO.getEntityId(), PAGE_SIZE);
     }
 
     private static Stream<Arguments> operationTypeAndInvocationTimes() {
@@ -1340,14 +963,184 @@ class NotificationManagerServiceTest {
 
     private List<Notification> createNotificationPage() {
         List<Notification> notificationPage = new ArrayList<>();
-
         for (int i = 0; i < NotificationManagerServiceTest.PAGE_SIZE; i++) {
             notificationPage.add(Notification.builder()
                     .id("ID_NOTIFICATION" + i)
                     .initiativeId(INITIATIVE_ID)
                     .build());
         }
-
         return notificationPage;
+    }
+
+    @Test
+    void notify_appIo_processReturnsNull_marksKo() {
+        EvaluationDTO evaluationDTO = new EvaluationDTO(
+                TEST_TOKEN, INITIATIVE_ID, INITIATIVE_ID, TEST_DATE_ONLY_DATE, INITIATIVE_ID, ORGANIZATION_NAME,
+                NotificationConstants.STATUS_ONBOARDING_OK, TEST_DATE, TEST_DATE, List.of(),
+                50000L, 1L, true, null, IO, null, null, null, null
+        );
+
+        Notification notification = Notification.builder()
+                .initiativeId(evaluationDTO.getInitiativeId())
+                .userId(evaluationDTO.getUserId())
+                .build();
+
+        when(notificationMapper.evaluationToNotification(evaluationDTO)).thenReturn(notification);
+        when(initiativeRestConnector.getIOTokens(evaluationDTO.getInitiativeId())).thenReturn(INITIATIVE_ADDITIONAL_INFO_DTO);
+        when(pdvDecryptRestConnector.getPii(TEST_TOKEN)).thenReturn(FISCAL_CODE_RESOURCE);
+        when(ioBackEndRestConnector.getProfile(argThat(fc -> FISCAL_CODE.equals(fc.getFiscalCode())), eq(TOKEN)))
+                .thenReturn(PROFILE_RESOURCE);
+        when(onboardingIoNotification.processNotification(evaluationDTO)).thenReturn(null);
+
+        notificationManagerService.notify(evaluationDTO);
+
+        verify(notificationManagerRepository, times(1)).save(argThat(n ->
+                NotificationConstants.NOTIFICATION_STATUS_KO.equals(n.getNotificationStatus())
+                        && n.getStatusKoTimestamp() != null
+        ));
+    }
+
+    @Test
+    void notify_withUnknownOperationType_returnsFalse_andNoSave() {
+        Notification unknown = Notification.builder()
+                .initiativeId(INITIATIVE_ID)
+                .userId(TEST_TOKEN)
+                .operationType("SOMETHING_ELSE")
+                .build();
+
+        when(initiativeRestConnector.getIOTokens(INITIATIVE_ID)).thenReturn(INITIATIVE_ADDITIONAL_INFO_DTO);
+        when(pdvDecryptRestConnector.getPii(TEST_TOKEN)).thenReturn(FISCAL_CODE_RESOURCE);
+        when(ioBackEndRestConnector.getProfile(argThat(fc -> FISCAL_CODE.equals(fc.getFiscalCode())), eq(TOKEN)))
+                .thenReturn(PROFILE_RESOURCE);
+
+        boolean result = notificationManagerService.notify(unknown);
+
+        assertFalse(result);
+        verify(notificationManagerRepository, never()).save(any());
+    }
+
+    @Test
+    void sendNotificationFromOperationType_reminder_ok() {
+        NotificationReminderQueueDTO dto = NotificationReminderQueueDTO.builder()
+                .operationType("REMINDER")
+                .userId(TEST_TOKEN)
+                .initiativeId(INITIATIVE_ID)
+                .build();
+
+        Notification notification = Notification.builder()
+                .initiativeId(INITIATIVE_ID)
+                .userId(TEST_TOKEN)
+                .build();
+
+        when(notificationMapper.toEntity(dto)).thenReturn(notification);
+        when(initiativeRestConnector.getIOTokens(INITIATIVE_ID)).thenReturn(INITIATIVE_ADDITIONAL_INFO_DTO);
+        when(pdvDecryptRestConnector.getPii(TEST_TOKEN)).thenReturn(FISCAL_CODE_RESOURCE);
+        when(ioBackEndRestConnector.getProfile(argThat(fc -> FISCAL_CODE.equals(fc.getFiscalCode())), eq(TOKEN)))
+                .thenReturn(PROFILE_RESOURCE);
+        when(notificationMarkdown.getSubjectReminderBel()).thenReturn(SUBJECT);
+        when(notificationMarkdown.getMarkdownReminderBel()).thenReturn(MARKDOWN);
+        when(notificationDTOMapper.map(eq(FISCAL_CODE), anyLong(), anyString(), anyString()))
+                .thenReturn(NOTIFICATION_DTO);
+        when(ioBackEndRestConnector.notify(NOTIFICATION_DTO, TOKEN)).thenReturn(NOTIFICATION_RESOURCE);
+
+        notificationManagerService.sendNotificationFromOperationType(dto);
+        verify(notificationManagerRepository, times(1)).save(notification);
+    }
+
+    @Test
+    void schedule_invokesRecoverKoNotifications() {
+        NotificationManagerServiceImpl spy = Mockito.spy(notificationManagerService);
+        doNothing().when(spy).recoverKoNotifications();
+        spy.schedule();
+        verify(spy, times(1)).recoverKoNotifications();
+    }
+
+    @Test
+    void recoverKoNotifications_noneFound_logsZero_noSaves() {
+        withRealExecutor(() -> {
+            when(notificationManagerRepository.findKoToRecover(any(LocalDateTime.class))).thenReturn(null);
+            assertDoesNotThrow(() -> notificationManagerService.recoverKoNotifications());
+            verify(notificationManagerRepository, never()).save(any());
+        });
+    }
+
+    @Test
+    void recoverKoNotifications_handlesExecutionException() {
+        ExecutorService original = (ExecutorService) ReflectionTestUtils
+                .getField(notificationManagerService, "executorService");
+
+        Future<Long> badFuture = new Future<>() {
+            @Override public boolean cancel(boolean mayInterruptIfRunning) { return false; }
+            @Override public boolean isCancelled() { return false; }
+            @Override public boolean isDone() { return true; }
+            @Override public Long get() throws ExecutionException { throw new ExecutionException(new RuntimeException("boom")); }
+            @Override public Long get(long timeout, TimeUnit unit) throws ExecutionException { throw new ExecutionException(new RuntimeException("boom")); }
+        };
+
+        ExecutorService stubExec = new AbstractExecutorService() {
+            private volatile boolean shutdown;
+            @Override public void shutdown() { shutdown = true; }
+            @Override public List<Runnable> shutdownNow() { shutdown = true; return List.of(); }
+            @Override public boolean isShutdown() { return shutdown; }
+            @Override public boolean isTerminated() { return shutdown; }
+            @Override public boolean awaitTermination(long timeout, TimeUnit unit) { return true; }
+            @Override public void execute(Runnable command) {}
+            @Override @SuppressWarnings("unchecked")
+            public <T> Future<T> submit(Callable<T> task) { return (Future<T>) badFuture; }
+        };
+
+        ReflectionTestUtils.setField(notificationManagerService, "executorService", stubExec);
+        try {
+            when(notificationManagerRepository.findKoToRecover(any())).thenReturn(null);
+            assertDoesNotThrow(() -> notificationManagerService.recoverKoNotifications());
+        } finally {
+            ReflectionTestUtils.setField(notificationManagerService, "executorService", original);
+            Thread.interrupted();
+        }
+    }
+
+    @Test
+    void recoverKoNotifications_handlesInterruptedException_rethrowsIllegalState() {
+        ExecutorService original = (ExecutorService) ReflectionTestUtils
+                .getField(notificationManagerService, "executorService");
+
+        Future<Long> interruptedFuture = new Future<>() {
+            @Override public boolean cancel(boolean mayInterruptIfRunning) { return false; }
+            @Override public boolean isCancelled() { return false; }
+            @Override public boolean isDone() { return true; }
+            @Override public Long get() throws InterruptedException { throw new InterruptedException("interrupted"); }
+            @Override public Long get(long timeout, TimeUnit unit) throws InterruptedException { throw new InterruptedException("interrupted"); }
+        };
+
+        ExecutorService stubExec = new AbstractExecutorService() {
+            private volatile boolean shutdown;
+            @Override public void shutdown() { shutdown = true; }
+            @Override public List<Runnable> shutdownNow() { shutdown = true; return List.of(); }
+            @Override public boolean isShutdown() { return shutdown; }
+            @Override public boolean isTerminated() { return shutdown; }
+            @Override public boolean awaitTermination(long timeout, TimeUnit unit) { return true; }
+            @Override public void execute(Runnable command) {}
+            @Override @SuppressWarnings("unchecked")
+            public <T> Future<T> submit(Callable<T> task) { return (Future<T>) interruptedFuture; }
+        };
+
+        ReflectionTestUtils.setField(notificationManagerService, "executorService", stubExec);
+        try {
+            when(notificationManagerRepository.findKoToRecover(any())).thenReturn(null);
+            assertThrows(IllegalStateException.class, () -> notificationManagerService.recoverKoNotifications());
+        } finally {
+            ReflectionTestUtils.setField(notificationManagerService, "executorService", original);
+            Thread.interrupted();
+        }
+    }
+
+    @Test
+    void close_shutsDownExecutor() {
+        withRealExecutor(() -> {
+            notificationManagerService.close();
+            ExecutorService exec = (ExecutorService) ReflectionTestUtils
+                    .getField(notificationManagerService, "executorService");
+            assertTrue(exec.isShutdown(), "ExecutorService should be shut down after close()");
+        });
     }
 }
