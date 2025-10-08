@@ -5,6 +5,7 @@ import it.gov.pagopa.notification.manager.dto.EvaluationDTO;
 import it.gov.pagopa.notification.manager.dto.OnboardingRejectionReason;
 import it.gov.pagopa.notification.manager.dto.OnboardingRejectionReason.OnboardingRejectionReasonType;
 import lombok.Getter;
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -19,6 +20,7 @@ import java.util.List;
 @Component
 @Slf4j
 @Getter
+@Setter
 public class NotificationMarkdown {
   private static final List<OnboardingRejectionReasonType> ONBOARDING_KO_TYPE_GENERIC_MARKDOWN_NO_RETRY =
           List.of(OnboardingRejectionReasonType.AUTOMATED_CRITERIA_FAIL,
