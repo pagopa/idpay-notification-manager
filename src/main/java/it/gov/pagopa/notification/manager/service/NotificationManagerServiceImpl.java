@@ -397,6 +397,17 @@ public class NotificationManagerServiceImpl implements NotificationManagerServic
             subject = notificationMarkdown.getSubjectReadmission(notificationReadmissionQueueDTO.getInitiativeName());
             markdown = notificationMarkdown.getMarkdownReadmission();
 
+        } else if (anyOfNotificationQueueDTO instanceof NotificationReminderQueueDTO notificationReminderQueueDTO) {
+
+            notification = notificationMapper.toEntity(notificationReminderQueueDTO);
+
+            ioTokens = getIoTokens(notificationReminderQueueDTO.getInitiativeId());
+
+            fiscalCode = decryptUserToken(notificationReminderQueueDTO.getUserId());
+
+            subject = notificationMarkdown.getSubjectReminderBel();
+            markdown = notificationMarkdown.getMarkdownReminderBel();
+
         } else {
             return;
         }

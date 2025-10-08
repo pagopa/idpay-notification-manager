@@ -18,7 +18,6 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 import static it.gov.pagopa.notification.manager.enums.Channel.IO;
-import static it.gov.pagopa.notification.manager.enums.Channel.WEB;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @Slf4j
@@ -71,6 +70,8 @@ class NotificationMarkdownTest {
                   null,
                   IO,
                   null,
+                  null,
+                  null,
                   null
           );
 
@@ -91,6 +92,8 @@ class NotificationMarkdownTest {
                   true,
                   null,
                   IO,
+                  null,
+                  null,
                   null,
                   null
           );
@@ -113,6 +116,8 @@ class NotificationMarkdownTest {
                   null,
                   IO,
                   null,
+                  null,
+                  null,
                   null
           );
 
@@ -133,6 +138,8 @@ class NotificationMarkdownTest {
                   true,
                   null,
                   IO,
+                  null,
+                  null,
                   null,
                   null
           );
@@ -187,7 +194,7 @@ class NotificationMarkdownTest {
             Ci scusiamo per il disagio."""
             .formatted(
                     EVALUATION_DTO_KO_TECH.getInitiativeName(),
-                    EVALUATION_DTO_KO_PDND.getOnboardingRejectionReasons().get(0).getDetail());
+                    EVALUATION_DTO_KO_PDND.getOnboardingRejectionReasons().getFirst().getDetail());
     String actual = notificationMarkdown.getMarkdown(EVALUATION_DTO_KO_PDND);
     Assertions.assertEquals(expectedMarkdown, actual);
   }
@@ -401,6 +408,8 @@ class NotificationMarkdownTest {
             true,
             null,
             IO,
+            null,
+            null,
             null,
             null
     );

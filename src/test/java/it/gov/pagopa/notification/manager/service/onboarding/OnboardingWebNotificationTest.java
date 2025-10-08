@@ -6,6 +6,7 @@ import it.gov.pagopa.notification.manager.constants.NotificationConstants;
 import it.gov.pagopa.notification.manager.dto.EmailMessageDTO;
 import it.gov.pagopa.notification.manager.dto.EvaluationDTO;
 import it.gov.pagopa.notification.manager.dto.OnboardingRejectionReason;
+import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -61,6 +62,8 @@ class OnboardingWebNotificationTest {
                 true,
                 "user@email.com",
                 WEB,
+                null,
+                null,
                 null,
                 null
         );
@@ -192,7 +195,7 @@ class OnboardingWebNotificationTest {
         assertEquals("SUBJ_FAMILY_UNIT", dto.getSubject());
         assertEquals(EMAIL_OUTCOME_FAMILY_UNIT, dto.getTemplateName());
         assertTrue(dto.getTemplateValues().containsKey("name"));
-        assertEquals(evaluationDTO.getUserId(), dto.getTemplateValues().get("name"));
+        assertEquals(getNameSurname(evaluationDTO), dto.getTemplateValues().get("name"));
     }
 
     @Test
@@ -216,7 +219,7 @@ class OnboardingWebNotificationTest {
         assertEquals("SUBJ_KO_THANKS", dto.getSubject());
         assertEquals(EMAIL_OUTCOME_THANKS, dto.getTemplateName());
         assertTrue(dto.getTemplateValues().containsKey("name"));
-        assertEquals(evaluationDTO.getUserId(), dto.getTemplateValues().get("name"));
+        assertEquals(getNameSurname(evaluationDTO), dto.getTemplateValues().get("name"));
         assertFalse(dto.getTemplateValues().containsKey("reason"));
         assertFalse(dto.getTemplateValues().containsKey("managedEntity"));
     }
@@ -242,7 +245,7 @@ class OnboardingWebNotificationTest {
         assertEquals("SUBJ_KO_GENERIC", dto.getSubject());
         assertEquals(EMAIL_OUTCOME_GENERIC_ERROR, dto.getTemplateName());
         assertTrue(dto.getTemplateValues().containsKey("name"));
-        assertEquals(evaluationDTO.getUserId(), dto.getTemplateValues().get("name"));
+        assertEquals(getNameSurname(evaluationDTO), dto.getTemplateValues().get("name"));
         assertEquals("REASON", dto.getTemplateValues().get("reason"));
         assertEquals("HELPDESK", dto.getTemplateValues().get("managedEntity"));
     }
@@ -268,9 +271,14 @@ class OnboardingWebNotificationTest {
         assertNotNull(dto);
         assertEquals("SUBJ_KO_GENERIC", dto.getSubject());
         assertEquals(EMAIL_OUTCOME_GENERIC_ERROR, dto.getTemplateName());
-        assertEquals(evaluationDTO.getUserId(), dto.getTemplateValues().get("name"));
+        assertEquals(getNameSurname(evaluationDTO), dto.getTemplateValues().get("name"));
         assertEquals("ISEE non valido", dto.getTemplateValues().get("reason"));
         assertEquals("INPS", dto.getTemplateValues().get("managedEntity"));
+    }
+
+    @NotNull
+    private String getNameSurname(EvaluationDTO evaluationDTO) {
+        return evaluationDTO.getName() + " " + evaluationDTO.getSurname();
     }
 
     @Test
@@ -288,7 +296,7 @@ class OnboardingWebNotificationTest {
         assertNotNull(dto);
         assertEquals("SUBJ_KO_GENERIC", dto.getSubject());
         assertEquals(EMAIL_OUTCOME_GENERIC_ERROR, dto.getTemplateName());
-        assertEquals(evaluationDTO.getUserId(), dto.getTemplateValues().get("name"));
+        assertEquals(getNameSurname(evaluationDTO), dto.getTemplateValues().get("name"));
         assertFalse(dto.getTemplateValues().containsKey("reason"));
         assertFalse(dto.getTemplateValues().containsKey("managedEntity"));
     }
