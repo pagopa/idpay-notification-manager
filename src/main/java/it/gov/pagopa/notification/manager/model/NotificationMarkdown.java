@@ -116,9 +116,9 @@ public class NotificationMarkdown {
   @Value("${notification.manager.markdown.ko.rejected.noRetry}")
   private String markdownKoRejectedNoRetry;
 
-  @Value("${notification.manager.subject.okReminderBel}")
+  @Value("${notification.manager.subject.ok-reminder-bel}")
   private String subjectReminderBel;
-  @Value("${notification.manager.markdown.okReminderBel}")
+  @Value("${notification.manager.markdown.ok-reminder-bel}")
   private String markdownReminderBel;
 
   @Value("${notification.manager.markdown.ko.generic}")
