@@ -114,6 +114,8 @@ class OnboardingIoNotificationTest {
                 true,
                 null,
                 IO,
+                "Mario",
+                "Rossi",
                 "FISCAL_CODE",
                 "IO_TOKEN"
         );

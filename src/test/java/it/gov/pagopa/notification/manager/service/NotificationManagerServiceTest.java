@@ -101,6 +101,8 @@ class NotificationManagerServiceTest {
                     null,
                     IO,
                     null,
+                    null,
+                    null,
                     null
             );
 
@@ -120,6 +122,8 @@ class NotificationManagerServiceTest {
             true,
             "user@email.com",
             WEB,
+            null,
+            null,
             null,
             null
     );
@@ -347,6 +351,8 @@ class NotificationManagerServiceTest {
                 "user@mail.com",
                 IO,
                 null,
+                null,
+                null,
                 null
         );
 
@@ -404,6 +410,8 @@ class NotificationManagerServiceTest {
                 null,
                 IO,
                 null,
+                null,
+                null,
                 null
         );
 
@@ -460,6 +468,8 @@ class NotificationManagerServiceTest {
                 null,
                 WEB,
                 null,
+                null,
+                null,
                 null
         );
 
@@ -490,6 +500,8 @@ class NotificationManagerServiceTest {
                 null,
                 WEB,
                 null,
+                null,
+                null,
                 null
         );
 
@@ -518,6 +530,8 @@ class NotificationManagerServiceTest {
                         true,
                         null,
                         IO,
+                        null,
+                        null,
                         null,
                         null
                 );
@@ -598,6 +612,8 @@ class NotificationManagerServiceTest {
                         true,
                         null,
                         IO,
+                        null,
+                        null,
                         null,
                         null
                 );

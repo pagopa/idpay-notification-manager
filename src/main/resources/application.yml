@@ -266,12 +266,25 @@ notification:
  
         Puoi trovare maggiori informazioni sul [sito](http://example.com/).}
 
+      ok-reminder-bel: |-
+        ${MARKDOWN_OK_REMINDER_BEL:Hai già deciso come usare il Bonus Elettrodomestici?
+
+        **Hai ancora 3 giorni** per usare il contributo e sostituire un vecchio elettrodomestico con uno a basso consumo energetico.
+        
+        **Troppo tardi?**
+        
+        Se non hai fatto in tempo ad usare il bonus, puoi fare nuovamente richiesta. Se ci sono ancora fondi disponibili, la richiesta verrà inserita in lista d'attesa.
+        
+        **Hai domande?**
+        
+        Per avere più dettagli su come e dove usare il bonus, ovare maggiori informazioni [leggi la guida](http://www.google.com/).}
+
       joined-bel: |-
         ${MARKDOWN_JOINED_BEL:La tua richiesta per il Bonus Elettrodomestici non può essere elaborata. Un'altra persona che fa parte della tua famiglia ha già presentato richiesta.
 
         È possibile inviare **una sola richiesta per ogni famiglia anagrafica.**
 
-        Per avere più dettagli sui requisiti del bonus, [leggi come fare](http://example.com/).}
+        Per avere più dettagli sui requisiti del bonus, [leggi come fare](http://www.google.com/).}
 
       ko-generic-bel: |-
         ${MARKDOWN_KO_GENERIC_BEL:Purtroppo la tua richiesta per il Bonus Elettrodomestici non è stata accettata.
@@ -345,6 +358,7 @@ notification:
     subject:
       ok: ${SUBJECT_OK:Il tuo Bonus è attivo}
       ok-bel: ${SUBJECT_OK_BEL:Hai ottenuto il bonus!}
+      ok-reminder-bel: ${SUBJECT_OK_REMINDER_BEL:Il tuo bonus scade tra 3 giorni!}
       ok-partial-bel: ${SUBJECT_OK_PARTIAL_BEL:Hai ottenuto il bonus!}
       ko-generic-bel: ${SUBJECT_KO_GENERIC_BEL:Non è stato possibile assegnarti il bonus}
       ko-thanks-bel: '${SUBJECT_KO_THANKS_BEL:Bonus Elettrodomestici: tutti i fondi sono stati assegnati}'

@@ -18,6 +18,7 @@ import java.util.List;
 
 @Component
 @Slf4j
+@Getter
 public class NotificationMarkdown {
   private static final List<OnboardingRejectionReasonType> ONBOARDING_KO_TYPE_GENERIC_MARKDOWN_NO_RETRY =
           List.of(OnboardingRejectionReasonType.AUTOMATED_CRITERIA_FAIL,
@@ -113,16 +114,13 @@ public class NotificationMarkdown {
   @Value("${notification.manager.markdown.ko.rejected.noRetry}")
   private String markdownKoRejectedNoRetry;
 
+  @Value("${notification.manager.subject.okReminderBel}")
+  private String subjectReminderBel;
+  @Value("${notification.manager.markdown.okReminderBel}")
+  private String markdownReminderBel;
+
   @Value("${notification.manager.markdown.ko.generic}")
   private String markdownKoGeneric;
-
-  public String getSubjectCheckIbanKo() {
-    return this.subjectCheckIbanKo;
-  }
-
-  public String getMarkdownCheckIbanKo() {
-    return this.markdownCheckIbanKo;
-  }
 
   public String getSubjectRefund(String status) {
     return ("ACCEPTED".equals(status)) ? subjectRefundOk : subjectRefundKo;
@@ -328,14 +326,7 @@ public class NotificationMarkdown {
     return replaceMessageItem(this.subjectSuspension, NotificationConstants.INITIATIVE_NAME_KEY, initiativeName);
   }
 
-  public String getMarkdownSuspension() {
-    return this.markdownSuspension;
-  }
   public String getSubjectReadmission(String initiativeName) {
     return replaceMessageItem(this.subjectReadmission, NotificationConstants.INITIATIVE_NAME_KEY, initiativeName);
-  }
-
-  public String getMarkdownReadmission() {
-    return this.markdownReadmission;
   }
 }
