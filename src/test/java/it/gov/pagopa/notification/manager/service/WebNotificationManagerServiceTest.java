@@ -35,7 +35,6 @@ class WebNotificationManagerServiceImplTest {
     void sendReminderMail_buildsEmailMessageAndSends() {
         NotificationReminderQueueDTO dto = Mockito.mock(NotificationReminderQueueDTO.class);
         when(dto.getName()).thenReturn("Mario");
-        when(dto.getSurname()).thenReturn("Rossi");
         when(dto.getUserMail()).thenReturn("mario.rossi@example.com");
         when(dto.getUserId()).thenReturn("USER123");
 
@@ -53,7 +52,7 @@ class WebNotificationManagerServiceImplTest {
         assertNull(sent.getContent(), "Content deve essere null");
 
         assertNotNull(sent.getTemplateValues(), "Template values null");
-        assertEquals("Mario Rossi", sent.getTemplateValues().get("name"), "Placeholder name errato");
+        assertEquals("Mario", sent.getTemplateValues().get("name"), "Placeholder name errato");
     }
 
     @Test

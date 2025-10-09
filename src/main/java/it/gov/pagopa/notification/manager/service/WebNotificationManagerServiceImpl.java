@@ -4,7 +4,6 @@ import it.gov.pagopa.notification.manager.config.EmailNotificationProperties;
 import it.gov.pagopa.notification.manager.connector.EmailNotificationConnector;
 import it.gov.pagopa.notification.manager.dto.EmailMessageDTO;
 import it.gov.pagopa.notification.manager.dto.event.NotificationReminderQueueDTO;
-import it.gov.pagopa.notification.manager.utils.Utils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
@@ -28,7 +27,7 @@ public class WebNotificationManagerServiceImpl implements  WebNotificationManage
     @Override
     public void sendReminderMail(NotificationReminderQueueDTO notificationQueueDTO) {
         Map<String, String> templateValues = new HashMap<>();
-        templateValues.put("name", Utils.getNameSurname(notificationQueueDTO));
+        templateValues.put("name", notificationQueueDTO.getName());
 
         EmailMessageDTO emailMessageDTO = EmailMessageDTO.builder()
                 .templateName(EMAIL_OUTCOME_THREE_DAY_REMINDER)
