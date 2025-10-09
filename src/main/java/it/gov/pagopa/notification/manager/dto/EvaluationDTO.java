@@ -14,7 +14,7 @@ import java.util.List;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class EvaluationDTO {
+public class EvaluationDTO implements PersonNameable {
 
   @NotEmpty
   private String userId;
@@ -35,6 +35,8 @@ public class EvaluationDTO {
   private Boolean verifyIsee;
   private String userMail;
   private Channel channel;
+  private String name;
+  private String surname;
 
   // Info filled during processing
   private String fiscalCode;

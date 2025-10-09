@@ -46,6 +46,8 @@ class NotificationMapperTest {
                   null,
                   IO,
                   null,
+                  null,
+                  null,
                   null
           );
 

@@ -41,6 +41,7 @@ public class NotificationConstants {
       public static final String SUSPENSION = "SUSPENSION";
       public static final String READMISSION = "READMISSION";
       public static final String ONBOARDING = "ONBOARDING";
+      public static final String REMINDER = "REMINDER";
     }
   }
   public static final class EmailTemplates {
