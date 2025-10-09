@@ -1,6 +1,5 @@
 package it.gov.pagopa.notification.manager.dto.event;
 
-import it.gov.pagopa.notification.manager.dto.PersonNameable;
 import it.gov.pagopa.notification.manager.enums.Channel;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -13,7 +12,7 @@ import lombok.experimental.SuperBuilder;
 @SuperBuilder
 @NoArgsConstructor
 @AllArgsConstructor
-public class NotificationReminderQueueDTO extends NotificationQueueDTO implements PersonNameable {
+public class NotificationReminderQueueDTO extends NotificationQueueDTO {
     private Channel channel;
     private String initiativeName;
     private String name;

@@ -14,7 +14,7 @@ import java.util.List;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class EvaluationDTO implements PersonNameable {
+public class EvaluationDTO {
 
   @NotEmpty
   private String userId;
