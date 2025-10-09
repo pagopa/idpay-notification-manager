@@ -4,7 +4,6 @@ import it.gov.pagopa.notification.manager.config.EmailNotificationProperties;
 import it.gov.pagopa.notification.manager.connector.EmailNotificationConnector;
 import it.gov.pagopa.notification.manager.dto.EmailMessageDTO;
 import it.gov.pagopa.notification.manager.dto.EvaluationDTO;
-import it.gov.pagopa.notification.manager.utils.Utils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
@@ -31,7 +30,7 @@ public class OnboardingWebNotificationImpl extends BaseOnboardingNotification<Em
     @Override
     EmailMessageDTO processOnboardingJoined(EvaluationDTO evaluationDTO) {
         Map<String, String> templateValues = new HashMap<>();
-        templateValues.put("name", Utils.getNameSurname(evaluationDTO));
+        templateValues.put("name", evaluationDTO.getName());
         return createNotification(evaluationDTO, emailNotificationProperties.getSubject().getKoFamilyUnit(), EMAIL_OUTCOME_FAMILY_UNIT, templateValues);
     }
 
@@ -49,7 +48,7 @@ public class OnboardingWebNotificationImpl extends BaseOnboardingNotification<Em
                 : emailNotificationProperties.getSubject().getKoGenericError();
 
         Map<String, String> templateValues = new HashMap<>();
-        templateValues.put("name", Utils.getNameSurname(evaluationDTO));
+        templateValues.put("name", evaluationDTO.getName());
 
         if (!initiativeEnded && firstReason != null) {
             templateValues.put("reason", firstReason.getDetail() != null ? firstReason.getDetail() : "REASON");
@@ -64,7 +63,7 @@ public class OnboardingWebNotificationImpl extends BaseOnboardingNotification<Em
         String template = isPartial ? EMAIL_OUTCOME_PARTIAL: EMAIL_OUTCOME_OK;
 
         Map<String, String> templateValues = new HashMap<>();
-        templateValues.put("name", Utils.getNameSurname(evaluationDTO));
+        templateValues.put("name", evaluationDTO.getName());
 
         if (evaluationDTO.getBeneficiaryBudgetCents() != null) {
             long amount = evaluationDTO.getBeneficiaryBudgetCents() / 100;
