@@ -58,46 +58,30 @@ public class WebNotificationManagerServiceImpl implements  WebNotificationManage
         String sanitizedUserId = sanitizeString(notificationQueueDTO.getUserId());
         try {
             emailNotificationConnector.sendEmail(notificationToSend);
-            notificationSent(notificationToSend, notificationQueueDTO);
+            saveNotification(notificationToSend, notificationQueueDTO, NotificationConstants.NOTIFICATION_STATUS_OK, null, startTime);
         } catch (Exception e) {
             log.error("[NOTIFY] Failed to send email notification for user {}", sanitizedUserId, e);
-            notificationKO(notificationToSend, notificationQueueDTO, startTime);
+            saveNotification(notificationToSend, notificationQueueDTO, NotificationConstants.NOTIFICATION_STATUS_KO, LocalDateTime.now(), startTime);
         }
     }
 
-    private void notificationSent(EmailMessageDTO emailMessageDTO, NotificationReminderQueueDTO notificationReminderQueueDTO) {
+    private void saveNotification(EmailMessageDTO emailMessageDTO,
+                                  NotificationReminderQueueDTO notificationReminderQueueDTO,
+                                  String notificationStatus,
+                                  LocalDateTime statusKoTimeStamp,
+                                  long startTime){
         if (notificationReminderQueueDTO == null) {
             return;
         }
-        Notification notification = createNotificationFromNotificationreminderQuequeDTO(emailMessageDTO, notificationReminderQueueDTO);
-        notification.setNotificationStatus(NotificationConstants.NOTIFICATION_STATUS_OK);
-        notificationManagerRepository.save(notification);
-    }
-
-    private void notificationKO(EmailMessageDTO emailMessageDTO, NotificationReminderQueueDTO notificationReminderQueueDTO, long startTime) {
-        if (notificationReminderQueueDTO == null) {
-            return;
+        Notification notification = notificationMapper.createNotificationFromNotificationReminderQuequeDTO(emailMessageDTO,
+                notificationReminderQueueDTO);
+        notification.setNotificationStatus(notificationStatus);
+        if(statusKoTimeStamp != null){
+            notification.setStatusKoTimestamp(statusKoTimeStamp);
         }
-        Notification notification = createNotificationFromNotificationreminderQuequeDTO(emailMessageDTO, notificationReminderQueueDTO);
 
-        notification.setNotificationStatus(NotificationConstants.NOTIFICATION_STATUS_KO);
-        notification.setStatusKoTimestamp(LocalDateTime.now());
         notificationManagerRepository.save(notification);
-
         performanceLog(startTime);
-    }
-
-    private Notification createNotificationFromNotificationreminderQuequeDTO(EmailMessageDTO emailMessageDTO,
-                                                                             NotificationReminderQueueDTO notificationReminderQueueDTO){
-
-        Notification notification = notificationMapper.toEntity(notificationReminderQueueDTO);
-        notification.setTemplateName(emailMessageDTO.getTemplateName());
-        notification.setTemplateValues(emailMessageDTO.getTemplateValues());
-        notification.setSubject(emailMessageDTO.getSubject());
-        notification.setContent(emailMessageDTO.getContent());
-        notification.setSenderEmail(emailMessageDTO.getSenderEmail());
-        notification.setRecipientEmail(emailMessageDTO.getRecipientEmail());
-        return notification;
     }
 
     private void performanceLog(long startTime) {

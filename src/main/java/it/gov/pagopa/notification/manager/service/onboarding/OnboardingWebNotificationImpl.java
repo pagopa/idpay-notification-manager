@@ -5,6 +5,7 @@ import it.gov.pagopa.notification.manager.connector.EmailNotificationConnector;
 import it.gov.pagopa.notification.manager.constants.NotificationConstants;
 import it.gov.pagopa.notification.manager.dto.EmailMessageDTO;
 import it.gov.pagopa.notification.manager.dto.EvaluationDTO;
+import it.gov.pagopa.notification.manager.dto.event.NotificationReminderQueueDTO;
 import it.gov.pagopa.notification.manager.dto.mapper.NotificationMapper;
 import it.gov.pagopa.notification.manager.model.Notification;
 import it.gov.pagopa.notification.manager.repository.NotificationManagerRepository;
@@ -105,10 +106,10 @@ public class OnboardingWebNotificationImpl extends BaseOnboardingNotification<Em
         String sanitizedUserId = sanitizeString(evaluationDTO.getUserId());
         try {
             emailNotificationConnector.sendEmail(notificationToSend);
-            notificationSent(notificationToSend, evaluationDTO);
+            saveNotification(notificationToSend, evaluationDTO, NotificationConstants.NOTIFICATION_STATUS_OK, null, startTime);
         } catch (Exception e) {
             log.error("[NOTIFY] Failed to send email notification for user {}", sanitizedUserId, e);
-            notificationKO(notificationToSend, evaluationDTO, startTime);
+            saveNotification(notificationToSend, evaluationDTO, NotificationConstants.NOTIFICATION_STATUS_KO, LocalDateTime.now(), startTime);
         }
         return null;
     }
@@ -119,65 +120,50 @@ public class OnboardingWebNotificationImpl extends BaseOnboardingNotification<Em
         try {
             EmailMessageDTO emailMessageDTO = notificationMapper.notificationToEmailMessageDTO(notification);
             emailNotificationConnector.sendEmail(emailMessageDTO);
-            notificationSent(notification);
+            saveNotification(notification, NotificationConstants.NOTIFICATION_STATUS_OK, null, startTime);
             return true;
         } catch (Exception e) {
             log.error("[NOTIFY] Failed to send email notification for user {}", notification.getUserId(), e);
-            notificationKO(notification, startTime);
+            saveNotification(notification, NotificationConstants.NOTIFICATION_STATUS_KO, LocalDateTime.now(), startTime);
             return false;
         }
     }
 
-    private void notificationKO(EmailMessageDTO emailMessageDTO, EvaluationDTO evaluationDTO, long startTime) {
+    private void saveNotification(EmailMessageDTO emailMessageDTO,
+                                  EvaluationDTO evaluationDTO,
+                                  String notificationStatus,
+                                  LocalDateTime statusKoTimeStamp,
+                                  long startTime){
         if (emailMessageDTO == null) {
             return;
         }
-        Notification notification = createNotificationFromEmailMessageDTO(emailMessageDTO, evaluationDTO);
-        notification.setNotificationStatus(NotificationConstants.NOTIFICATION_STATUS_KO);
-        notification.setStatusKoTimestamp(LocalDateTime.now());
-        notificationManagerRepository.save(notification);
+        Notification notification = notificationMapper.createNotificationFromEmailMessageDTO(emailMessageDTO,
+                evaluationDTO);
+        notification.setNotificationStatus(notificationStatus);
+        if(statusKoTimeStamp != null){
+            notification.setStatusKoTimestamp(statusKoTimeStamp);
+        }
 
+        notificationManagerRepository.save(notification);
         performanceLog(startTime);
     }
 
-    private void notificationKO(Notification notification, long startTime) {
+    private void saveNotification(Notification notification,
+                                  String notificationStatus,
+                                  LocalDateTime statusKoTimeStamp,
+                                  long startTime){
         if (notification == null) {
             return;
         }
-        notification.setNotificationStatus(NotificationConstants.NOTIFICATION_STATUS_KO);
-        notificationManagerRepository.save(notification);
+        notification.setNotificationStatus(notificationStatus);
+        if(statusKoTimeStamp != null){
+            notification.setStatusKoTimestamp(statusKoTimeStamp);
+        }
 
+        notificationManagerRepository.save(notification);
         performanceLog(startTime);
     }
 
-    private void notificationSent(EmailMessageDTO emailMessageDTO, EvaluationDTO evaluationDTO) {
-        if (emailMessageDTO == null) {
-            return;
-        }
-        Notification notification = createNotificationFromEmailMessageDTO(emailMessageDTO, evaluationDTO);
-        notification.setNotificationStatus(NotificationConstants.NOTIFICATION_STATUS_OK);
-        notificationManagerRepository.save(notification);
-    }
-
-    private void notificationSent(Notification notification) {
-        if (notification == null) {
-            return;
-        }
-        notification.setNotificationStatus(NotificationConstants.NOTIFICATION_STATUS_OK);
-        notificationManagerRepository.save(notification);
-    }
-
-    private Notification createNotificationFromEmailMessageDTO(EmailMessageDTO emailMessageDTO, EvaluationDTO evaluationDTO){
-
-        Notification notification = notificationMapper.evaluationToNotification(evaluationDTO);
-        notification.setTemplateName(emailMessageDTO.getTemplateName());
-        notification.setTemplateValues(emailMessageDTO.getTemplateValues());
-        notification.setSubject(emailMessageDTO.getSubject());
-        notification.setContent(emailMessageDTO.getContent());
-        notification.setSenderEmail(emailMessageDTO.getSenderEmail());
-        notification.setRecipientEmail(emailMessageDTO.getRecipientEmail());
-        return notification;
-    }
 
     private void performanceLog(long startTime) {
         performanceLog(startTime, "NOTIFY");
