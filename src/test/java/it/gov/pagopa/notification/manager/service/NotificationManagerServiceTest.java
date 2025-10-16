@@ -313,6 +313,17 @@ class NotificationManagerServiceTest {
             .channel(Channel.IO)
             .build();
 
+    private static final Notification KO_NOTIFICATION_EMAIL_FIRST_RETRY = Notification.builder()
+            .notificationDate(TEST_DATE)
+            .initiativeId(INITIATIVE_ID)
+            .initiativeName(INITIATIVE_NAME)
+            .userId(TEST_TOKEN)
+            .notificationStatus(NotificationConstants.NOTIFICATION_STATUS_RECOVER)
+            .retryDate(LocalDateTime.now())
+            .operationType(ONBOARDING)
+            .channel(Channel.WEB)
+            .build();
+
     private static final Notification KO_NOTIFICATION_WHITELIST = Notification.builder()
             .notificationDate(TEST_DATE)
             .initiativeId(INITIATIVE_ID)
@@ -831,7 +842,7 @@ class NotificationManagerServiceTest {
         when(notificationManagerRepository.findKoToRecover(any(LocalDateTime.class)))
                 .thenReturn(KO_NOTIFICATION_FIRST_RETRY, KO_REFUND_NOTIFICATION_FIRST_RETRY,
                         KO_CHECK_IBAN_NOTIFICATION_FIRST_RETRY, KO_SUSPENSION_NOTIFICATION_FIRST_RETRY,
-                        KO_READMISSION_NOTIFICATION_FIRST_RETRY, KO_NOTIFICATION_N_RETRY, null);
+                        KO_READMISSION_NOTIFICATION_FIRST_RETRY, KO_NOTIFICATION_N_RETRY, KO_NOTIFICATION_EMAIL_FIRST_RETRY, null);
 
         when(initiativeRestConnector.getIOTokens(EVALUATION_DTO.getInitiativeId()))
                 .thenReturn(INITIATIVE_ADDITIONAL_INFO_DTO);
