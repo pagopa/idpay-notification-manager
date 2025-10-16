@@ -316,7 +316,7 @@ public class NotificationManagerServiceImpl implements NotificationManagerServic
 
             boolean recovered = true;
             try {
-                if(n.getChannel().isAppIo()) {
+                if(n.getChannel() == null || n.getChannel().isAppIo()) {
                     recovered = this.notify(n);
                 } else if(n.getChannel().isWeb()) {
                     recovered = onboardingWebNotification.notify(n);

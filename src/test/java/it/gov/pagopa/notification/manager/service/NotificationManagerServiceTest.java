@@ -13,6 +13,7 @@ import it.gov.pagopa.notification.manager.dto.event.*;
 import it.gov.pagopa.notification.manager.dto.initiative.InitiativeAdditionalInfoDTO;
 import it.gov.pagopa.notification.manager.dto.mapper.NotificationDTOMapper;
 import it.gov.pagopa.notification.manager.dto.mapper.NotificationMapper;
+import it.gov.pagopa.notification.manager.enums.Channel;
 import it.gov.pagopa.notification.manager.event.producer.OutcomeProducer;
 import it.gov.pagopa.notification.manager.model.Notification;
 import it.gov.pagopa.notification.manager.model.NotificationMarkdown;
@@ -223,6 +224,7 @@ class NotificationManagerServiceTest {
                     .userId(EVALUATION_DTO.getUserId())
                     .onboardingOutcome(EVALUATION_DTO.getStatus())
                     .rejectReasons(EVALUATION_DTO.getOnboardingRejectionReasons())
+                    .channel(Channel.IO)
                     .build();
     private static final ServiceResource SERVICE_RESOURCE = new ServiceResource();
     private static final InitiativeAdditionalInfoDTO INITIATIVE_ADDITIONAL_INFO_DTO = InitiativeAdditionalInfoDTO.builder()
@@ -264,6 +266,7 @@ class NotificationManagerServiceTest {
             .notificationStatus(NotificationConstants.NOTIFICATION_STATUS_RECOVER)
             .retryDate(LocalDateTime.now())
             .operationType(ONBOARDING)
+            .channel(Channel.IO)
             .build();
 
     private static final Notification KO_REFUND_NOTIFICATION_FIRST_RETRY = Notification.builder()
@@ -275,6 +278,7 @@ class NotificationManagerServiceTest {
             .operationType(REFUND)
             .refundStatus("ACCEPTED")
             .refundReward(BigDecimal.valueOf(100))
+            .channel(Channel.IO)
             .build();
 
     private static final Notification KO_CHECK_IBAN_NOTIFICATION_FIRST_RETRY = Notification.builder()
@@ -284,6 +288,7 @@ class NotificationManagerServiceTest {
             .notificationStatus(NotificationConstants.NOTIFICATION_STATUS_RECOVER)
             .retryDate(LocalDateTime.now())
             .operationType(CHECKIBAN_KO)
+            .channel(Channel.IO)
             .build();
 
     private static final Notification KO_SUSPENSION_NOTIFICATION_FIRST_RETRY = Notification.builder()
@@ -294,6 +299,7 @@ class NotificationManagerServiceTest {
             .notificationStatus(NotificationConstants.NOTIFICATION_STATUS_RECOVER)
             .retryDate(LocalDateTime.now())
             .operationType(SUSPENSION)
+            .channel(Channel.IO)
             .build();
 
     private static final Notification KO_READMISSION_NOTIFICATION_FIRST_RETRY = Notification.builder()
@@ -304,6 +310,7 @@ class NotificationManagerServiceTest {
             .notificationStatus(NotificationConstants.NOTIFICATION_STATUS_RECOVER)
             .retryDate(LocalDateTime.now())
             .operationType(READMISSION)
+            .channel(Channel.IO)
             .build();
 
     private static final Notification KO_NOTIFICATION_WHITELIST = Notification.builder()
@@ -313,6 +320,7 @@ class NotificationManagerServiceTest {
             .notificationStatus(NotificationConstants.NOTIFICATION_STATUS_RECOVER)
             .retryDate(LocalDateTime.now())
             .operationType(ALLOWED_CITIZEN_PUBLISH)
+            .channel(Channel.IO)
             .build();
 
     private static final Notification KO_NOTIFICATION_N_RETRY = Notification.builder()
@@ -325,6 +333,7 @@ class NotificationManagerServiceTest {
             .retry(2)
             .retryDate(LocalDateTime.now())
             .operationType(ONBOARDING)
+            .channel(Channel.IO)
             .build();
 
     private static final NotificationSuspensionQueueDTO NOTIFICATION_SUSPENSION_QUEUE_DTO = NotificationSuspensionQueueDTO.builder()
@@ -348,6 +357,7 @@ class NotificationManagerServiceTest {
             .initiativeId(INITIATIVE_ID)
             .operationType(OPERATION_TYPE)
             .userId(TEST_TOKEN)
+            .channel(Channel.IO)
             .build();
 
     private static final Notification NOTIFICATION_READMISSION = Notification.builder()
@@ -357,6 +367,7 @@ class NotificationManagerServiceTest {
             .initiativeId(INITIATIVE_ID)
             .operationType(OPERATION_TYPE)
             .userId(TEST_TOKEN)
+            .channel(Channel.IO)
             .build();
 
     static {
