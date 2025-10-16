@@ -1,6 +1,7 @@
 package it.gov.pagopa.notification.manager.dto.mapper;
 
 import it.gov.pagopa.notification.manager.constants.NotificationConstants;
+import it.gov.pagopa.notification.manager.dto.EmailMessageDTO;
 import it.gov.pagopa.notification.manager.dto.EvaluationDTO;
 import it.gov.pagopa.notification.manager.dto.event.AnyOfNotificationQueueDTO;
 import it.gov.pagopa.notification.manager.dto.event.NotificationRefundQueueDTO;
@@ -23,8 +24,21 @@ public class NotificationMapper {
               .operationType(NotificationConstants.AnyNotificationConsumer.SubTypes.ONBOARDING)
               .rejectReasons(evaluationDTO.getOnboardingRejectionReasons())
               .organizationName(evaluationDTO.getOrganizationName())
+              .channel(evaluationDTO.getChannel())
               .build();
     }
+
+    public EmailMessageDTO notificationToEmailMessageDTO(Notification notification) {
+        return EmailMessageDTO.builder()
+                .templateName(notification.getTemplateName())
+                .templateValues(notification.getTemplateValues())
+                .subject(notification.getSubject())
+                .content(notification.getContent())
+                .senderEmail(notification.getSenderEmail())
+                .recipientEmail(notification.getRecipientEmail())
+                .build();
+    }
+
 
     public Notification toEntity(AnyOfNotificationQueueDTO anyOfNotificationQueueDTO){
       Notification notification = Notification.builder().build();

@@ -4,6 +4,8 @@ import it.gov.pagopa.notification.manager.config.EmailNotificationProperties;
 import it.gov.pagopa.notification.manager.connector.EmailNotificationConnector;
 import it.gov.pagopa.notification.manager.dto.EmailMessageDTO;
 import it.gov.pagopa.notification.manager.dto.event.NotificationReminderQueueDTO;
+import it.gov.pagopa.notification.manager.dto.mapper.NotificationMapper;
+import it.gov.pagopa.notification.manager.repository.NotificationManagerRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -19,6 +21,15 @@ class WebNotificationManagerServiceImplTest {
 
     private WebNotificationManagerServiceImpl service;
 
+    private final NotificationManagerRepository notificationManagerRepository;
+    private final NotificationMapper notificationMapper;
+
+    WebNotificationManagerServiceImplTest(NotificationManagerRepository notificationManagerRepository,
+                                          NotificationMapper notificationMapper) {
+        this.notificationManagerRepository = notificationManagerRepository;
+        this.notificationMapper = notificationMapper;
+    }
+
     @BeforeEach
     void setUp() {
         emailNotificationConnector = Mockito.mock(EmailNotificationConnector.class);
@@ -28,7 +39,7 @@ class WebNotificationManagerServiceImplTest {
         when(emailNotificationProperties.getSubject()).thenReturn(subjectProps);
         when(subjectProps.getOkThreeDayReminder()).thenReturn("Il tuo bonus scade tra 3 giorni!");
 
-        service = new WebNotificationManagerServiceImpl(emailNotificationConnector, emailNotificationProperties);
+        service = new WebNotificationManagerServiceImpl(emailNotificationConnector, emailNotificationProperties, notificationManagerRepository, notificationMapper);
     }
 
     @Test

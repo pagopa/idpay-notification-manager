@@ -6,6 +6,9 @@ import it.gov.pagopa.notification.manager.constants.NotificationConstants;
 import it.gov.pagopa.notification.manager.dto.EmailMessageDTO;
 import it.gov.pagopa.notification.manager.dto.EvaluationDTO;
 import it.gov.pagopa.notification.manager.dto.OnboardingRejectionReason;
+import it.gov.pagopa.notification.manager.dto.mapper.NotificationMapper;
+import it.gov.pagopa.notification.manager.model.Notification;
+import it.gov.pagopa.notification.manager.repository.NotificationManagerRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -31,6 +34,9 @@ class OnboardingWebNotificationTest {
     private static final LocalDate TEST_DATE_ONLY_DATE = LocalDate.now();
     private static final String ORGANIZATION_NAME = "ORGANIZATION_NAME";
 
+    private static final Notification notification = Notification.builder().build();
+
+
     @Mock
     private EmailNotificationConnector emailNotificationConnectorMock;
 
@@ -39,9 +45,18 @@ class OnboardingWebNotificationTest {
 
     private OnboardingWebNotification onboardingWebNotification;
 
+    @Mock
+    NotificationManagerRepository notificationManagerRepository;
+
+    @Mock
+    NotificationMapper notificationMapper;
+
     @BeforeEach
     void setUp() {
-        onboardingWebNotification = new OnboardingWebNotificationImpl(emailNotificationConnectorMock, emailNotificationPropertiesMock);
+        onboardingWebNotification = new OnboardingWebNotificationImpl(emailNotificationConnectorMock,
+                emailNotificationPropertiesMock,
+                notificationManagerRepository,
+                notificationMapper);
     }
 
     private EvaluationDTO getEvaluationDto(){
@@ -82,7 +97,10 @@ class OnboardingWebNotificationTest {
                 .when(emailNotificationConnectorMock)
                 .sendEmail(Mockito.any(EmailMessageDTO.class));
 
+        Mockito.when(notificationMapper.evaluationToNotification(evaluationDTO)).thenReturn(notification);
+
         onboardingWebNotification.processNotification(evaluationDTO);
+
 
         Mockito.verify(emailNotificationConnectorMock, Mockito.times(1))
                 .sendEmail(Mockito.argThat(email ->
@@ -105,6 +123,8 @@ class OnboardingWebNotificationTest {
         Mockito.doAnswer(invocation -> null)
                 .when(emailNotificationConnectorMock)
                 .sendEmail(Mockito.any(EmailMessageDTO.class));
+
+        Mockito.when(notificationMapper.evaluationToNotification(evaluationDTO)).thenReturn(notification);
 
         onboardingWebNotification.processNotification(evaluationDTO);
 
@@ -129,6 +149,8 @@ class OnboardingWebNotificationTest {
                 .when(emailNotificationConnectorMock)
                 .sendEmail(Mockito.any(EmailMessageDTO.class));
 
+        Mockito.when(notificationMapper.evaluationToNotification(evaluationDTO)).thenReturn(notification);
+
         onboardingWebNotification.processNotification(evaluationDTO);
 
         Mockito.verify(emailNotificationConnectorMock, Mockito.times(1))
@@ -152,6 +174,8 @@ class OnboardingWebNotificationTest {
                 .when(emailNotificationConnectorMock)
                 .sendEmail(Mockito.any(EmailMessageDTO.class));
 
+        Mockito.when(notificationMapper.evaluationToNotification(evaluationDTO)).thenReturn(notification);
+
         onboardingWebNotification.processNotification(evaluationDTO);
 
         Mockito.verify(emailNotificationConnectorMock, Mockito.times(1))
@@ -172,6 +196,8 @@ class OnboardingWebNotificationTest {
         Mockito.doThrow(new RuntimeException("Boom"))
                 .when(emailNotificationConnectorMock)
                 .sendEmail(Mockito.any(EmailMessageDTO.class));
+
+        Mockito.when(notificationMapper.evaluationToNotification(evaluationDTO)).thenReturn(notification);
 
         onboardingWebNotification.processNotification(evaluationDTO);
 
