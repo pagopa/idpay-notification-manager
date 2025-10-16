@@ -102,11 +102,12 @@ public class OnboardingWebNotificationImpl extends BaseOnboardingNotification<Em
     @Override
     String sendNotification(EmailMessageDTO notificationToSend, EvaluationDTO evaluationDTO) {
         long startTime = System.currentTimeMillis();
+        String sanitizedUserId = sanitizeString(evaluationDTO.getUserId());
         try {
             emailNotificationConnector.sendEmail(notificationToSend);
             notificationSent(notificationToSend, evaluationDTO);
         } catch (Exception e) {
-            log.error("[NOTIFY] Failed to send email notification for user {}", evaluationDTO.getUserId(), e);
+            log.error("[NOTIFY] Failed to send email notification for user {}", sanitizedUserId, e);
             notificationKO(notificationToSend, evaluationDTO, startTime);
         }
         return null;
@@ -187,6 +188,10 @@ public class OnboardingWebNotificationImpl extends BaseOnboardingNotification<Em
                 "[PERFORMANCE_LOG] [{}] Time occurred to perform business logic: {} ms",
                 flowName,
                 System.currentTimeMillis() - startTime);
+    }
+
+    public static String sanitizeString(String str){
+        return str == null? null: str.replaceAll("[\\r\\n]", "").replaceAll("[^\\w\\s-]", "");
     }
 
 }

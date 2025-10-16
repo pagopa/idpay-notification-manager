@@ -11,11 +11,13 @@ import static it.gov.pagopa.notification.manager.constants.NotificationConstants
 public abstract class BaseOnboardingNotification<R> {
 
     public String processNotification(EvaluationDTO evaluationDTO){
+        String sanitizedUserId = sanitizeString(evaluationDTO.getUserId());
+        String sanitizedStatus = sanitizeString(evaluationDTO.getStatus());
         R notificationToSend = switch (evaluationDTO.getStatus()){
             case STATUS_ONBOARDING_OK -> processOnboardingOk(evaluationDTO);
             case STATUS_ONBOARDING_JOINED -> processOnboardingJoined(evaluationDTO);
             case STATUS_ONBOARDING_KO -> processOnboardingKo(evaluationDTO);
-            default -> {log.info("[NOTIFY] Unsupported notification for status {} for user {}", evaluationDTO.getStatus(), evaluationDTO.getUserId());
+            default -> {log.info("[NOTIFY] Unsupported notification for status {} for user {}", sanitizedStatus, sanitizedUserId);
                             yield null;
             }
         };
@@ -43,4 +45,8 @@ public abstract class BaseOnboardingNotification<R> {
     abstract R createNotification(EvaluationDTO evaluationDTO, String subject, String body, Map<String, String> bodyValues);
 
     abstract String sendNotification (R notificationToSend, EvaluationDTO evaluationDTO);
+
+    public static String sanitizeString(String str){
+        return str == null? null: str.replaceAll("[\\r\\n]", "").replaceAll("[^\\w\\s-]", "");
+    }
 }
