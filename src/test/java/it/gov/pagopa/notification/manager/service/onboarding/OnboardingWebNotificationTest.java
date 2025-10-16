@@ -6,6 +6,7 @@ import it.gov.pagopa.notification.manager.constants.NotificationConstants;
 import it.gov.pagopa.notification.manager.dto.EmailMessageDTO;
 import it.gov.pagopa.notification.manager.dto.EvaluationDTO;
 import it.gov.pagopa.notification.manager.dto.OnboardingRejectionReason;
+import it.gov.pagopa.notification.manager.dto.event.NotificationReminderQueueDTO;
 import it.gov.pagopa.notification.manager.dto.mapper.NotificationMapper;
 import it.gov.pagopa.notification.manager.model.Notification;
 import it.gov.pagopa.notification.manager.repository.NotificationManagerRepository;
@@ -47,7 +48,7 @@ class OnboardingWebNotificationTest {
     private static final String SENDER_EMAIL = "SENDER_EMAIL";
     private static final String RECIPIENT_EMAIL = "RECIPIENT_EMAIL";
 
-    private static final Notification notification = Notification.builder().build();
+    private static final Notification NOTIFICATION = Notification.builder().build();
 
     private static final EmailMessageDTO EMAIL_MESSAGE_DTO = EmailMessageDTO.builder()
             .templateName(TEMPLATE_NAME)
@@ -123,7 +124,8 @@ class OnboardingWebNotificationTest {
                 .when(emailNotificationConnectorMock)
                 .sendEmail(Mockito.any(EmailMessageDTO.class));
 
-        Mockito.when(notificationMapper.evaluationToNotification(evaluationDTO)).thenReturn(notification);
+        when(notificationMapper.createNotificationFromEmailMessageDTO(any(EmailMessageDTO.class),
+                any(EvaluationDTO.class))).thenReturn(NOTIFICATION);
 
         onboardingWebNotification.processNotification(evaluationDTO);
 
@@ -150,7 +152,8 @@ class OnboardingWebNotificationTest {
                 .when(emailNotificationConnectorMock)
                 .sendEmail(Mockito.any(EmailMessageDTO.class));
 
-        Mockito.when(notificationMapper.evaluationToNotification(evaluationDTO)).thenReturn(notification);
+        when(notificationMapper.createNotificationFromEmailMessageDTO(any(EmailMessageDTO.class),
+                any(EvaluationDTO.class))).thenReturn(NOTIFICATION);
 
         onboardingWebNotification.processNotification(evaluationDTO);
 
@@ -175,7 +178,8 @@ class OnboardingWebNotificationTest {
                 .when(emailNotificationConnectorMock)
                 .sendEmail(Mockito.any(EmailMessageDTO.class));
 
-        Mockito.when(notificationMapper.evaluationToNotification(evaluationDTO)).thenReturn(notification);
+        when(notificationMapper.createNotificationFromEmailMessageDTO(any(EmailMessageDTO.class),
+                any(EvaluationDTO.class))).thenReturn(NOTIFICATION);
 
         onboardingWebNotification.processNotification(evaluationDTO);
 
@@ -200,7 +204,8 @@ class OnboardingWebNotificationTest {
                 .when(emailNotificationConnectorMock)
                 .sendEmail(Mockito.any(EmailMessageDTO.class));
 
-        Mockito.when(notificationMapper.evaluationToNotification(evaluationDTO)).thenReturn(notification);
+        when(notificationMapper.createNotificationFromEmailMessageDTO(any(EmailMessageDTO.class),
+                any(EvaluationDTO.class))).thenReturn(NOTIFICATION);
 
         onboardingWebNotification.processNotification(evaluationDTO);
 
@@ -223,7 +228,8 @@ class OnboardingWebNotificationTest {
                 .when(emailNotificationConnectorMock)
                 .sendEmail(Mockito.any(EmailMessageDTO.class));
 
-        Mockito.when(notificationMapper.evaluationToNotification(evaluationDTO)).thenReturn(notification);
+        when(notificationMapper.createNotificationFromEmailMessageDTO(any(EmailMessageDTO.class),
+                any(EvaluationDTO.class))).thenReturn(NOTIFICATION);
 
         onboardingWebNotification.processNotification(evaluationDTO);
 
@@ -348,7 +354,7 @@ class OnboardingWebNotificationTest {
     }
     @Test
     void notify_success() {
-        when(notificationMapper.notificationToEmailMessageDTO(notification)).thenReturn(EMAIL_MESSAGE_DTO);
+        when(notificationMapper.notificationToEmailMessageDTO(NOTIFICATION)).thenReturn(EMAIL_MESSAGE_DTO);
 
         // SendEmail success simulation
         ResponseEntity<Void> successResponse = new ResponseEntity<>(HttpStatus.OK);
@@ -362,12 +368,12 @@ class OnboardingWebNotificationTest {
         });
 
         // Act
-        boolean result = onboardingWebNotification.notify(notification);
+        boolean result = onboardingWebNotification.notify(NOTIFICATION);
 
         // Verify
         assertTrue(result, "true");
         //check that the mapper has been called 1 time
-        verify(notificationMapper, times(1)).notificationToEmailMessageDTO(notification);
+        verify(notificationMapper, times(1)).notificationToEmailMessageDTO(NOTIFICATION);
         //check that sendEmail has been called 1 time
         verify(emailNotificationConnectorMock, times(1)).sendEmail(EMAIL_MESSAGE_DTO);
         //check that the notificationSent method has called the save method 1 time
@@ -377,7 +383,7 @@ class OnboardingWebNotificationTest {
     @Test
     void notify_failure() {
 
-        when(notificationMapper.notificationToEmailMessageDTO(notification)).thenReturn(EMAIL_MESSAGE_DTO);
+        when(notificationMapper.notificationToEmailMessageDTO(NOTIFICATION)).thenReturn(EMAIL_MESSAGE_DTO);
 
         //sendEmail failure simulation
         doThrow(new RuntimeException("Email service down")).when(emailNotificationConnectorMock).sendEmail(EMAIL_MESSAGE_DTO);
@@ -390,12 +396,12 @@ class OnboardingWebNotificationTest {
         });
 
         // Act
-        boolean result = onboardingWebNotification.notify(notification);
+        boolean result = onboardingWebNotification.notify(NOTIFICATION);
 
         // Verify
         assertFalse(result, "false");
         //check that the mapper has been called 1 time
-        verify(notificationMapper, times(1)).notificationToEmailMessageDTO(notification);
+        verify(notificationMapper, times(1)).notificationToEmailMessageDTO(NOTIFICATION);
         //check that sendEmail has been called 1 time
         verify(emailNotificationConnectorMock, times(1)).sendEmail(EMAIL_MESSAGE_DTO);
         //check that the notificationKo method has called the save method 1 time

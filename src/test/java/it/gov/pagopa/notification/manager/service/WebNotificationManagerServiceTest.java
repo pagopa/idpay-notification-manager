@@ -54,7 +54,9 @@ class WebNotificationManagerServiceImplTest {
         when(dto.getUserMail()).thenReturn("mario.rossi@example.com");
         when(dto.getUserId()).thenReturn("USER123");
 
-        when(notificationMapper.toEntity(any(NotificationReminderQueueDTO.class))).thenReturn(NOTIFICATION);
+        when(notificationMapper.createNotificationFromNotificationReminderQuequeDTO(any(EmailMessageDTO.class),
+                any(NotificationReminderQueueDTO.class))).thenReturn(NOTIFICATION);
+
 
         service.sendReminderMail(dto);
 
@@ -77,7 +79,8 @@ class WebNotificationManagerServiceImplTest {
     void sendReminderMail_doesNotPropagateException() {
         NotificationReminderQueueDTO dto = Mockito.mock(NotificationReminderQueueDTO.class);
 
-        when(notificationMapper.toEntity(any(NotificationReminderQueueDTO.class))).thenReturn(NOTIFICATION);
+        when(notificationMapper.createNotificationFromNotificationReminderQuequeDTO(any(EmailMessageDTO.class),
+                any(NotificationReminderQueueDTO.class))).thenReturn(NOTIFICATION);
 
         doThrow(new RuntimeException("SMTP down"))
                 .when(emailNotificationConnector)
@@ -90,7 +93,8 @@ class WebNotificationManagerServiceImplTest {
 
     @Test
     void sendNotification_doesNotPropagateException() {
-        when(notificationMapper.toEntity(any(NotificationReminderQueueDTO.class))).thenReturn(NOTIFICATION);
+        when(notificationMapper.createNotificationFromNotificationReminderQuequeDTO(any(EmailMessageDTO.class),
+                any(NotificationReminderQueueDTO.class))).thenReturn(NOTIFICATION);
         NotificationReminderQueueDTO dto = Mockito.mock(NotificationReminderQueueDTO.class);
         when(dto.getUserId()).thenReturn("USER789");
 
