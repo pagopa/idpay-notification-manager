@@ -132,13 +132,7 @@ public class OnboardingWebNotificationImpl extends BaseOnboardingNotification<Em
         if (emailMessageDTO == null) {
             return;
         }
-        Notification notification = notificationMapper.evaluationToNotification(evaluationDTO);
-        notification.setTemplateName(emailMessageDTO.getTemplateName());
-        notification.setTemplateValues(emailMessageDTO.getTemplateValues());
-        notification.setSubject(emailMessageDTO.getSubject());
-        notification.setContent(emailMessageDTO.getContent());
-        notification.setSenderEmail(emailMessageDTO.getSenderEmail());
-        notification.setRecipientEmail(emailMessageDTO.getRecipientEmail());
+        Notification notification = createNotificationFromEmailMessageDTO(emailMessageDTO, evaluationDTO);
         notification.setNotificationStatus(NotificationConstants.NOTIFICATION_STATUS_KO);
         notification.setStatusKoTimestamp(LocalDateTime.now());
         notificationManagerRepository.save(notification);
@@ -160,13 +154,7 @@ public class OnboardingWebNotificationImpl extends BaseOnboardingNotification<Em
         if (emailMessageDTO == null) {
             return;
         }
-        Notification notification = notificationMapper.evaluationToNotification(evaluationDTO);
-        notification.setTemplateName(emailMessageDTO.getTemplateName());
-        notification.setTemplateValues(emailMessageDTO.getTemplateValues());
-        notification.setSubject(emailMessageDTO.getSubject());
-        notification.setContent(emailMessageDTO.getContent());
-        notification.setSenderEmail(emailMessageDTO.getSenderEmail());
-        notification.setRecipientEmail(emailMessageDTO.getRecipientEmail());
+        Notification notification = createNotificationFromEmailMessageDTO(emailMessageDTO, evaluationDTO);
         notification.setNotificationStatus(NotificationConstants.NOTIFICATION_STATUS_OK);
         notificationManagerRepository.save(notification);
     }
@@ -177,6 +165,18 @@ public class OnboardingWebNotificationImpl extends BaseOnboardingNotification<Em
         }
         notification.setNotificationStatus(NotificationConstants.NOTIFICATION_STATUS_OK);
         notificationManagerRepository.save(notification);
+    }
+
+    private Notification createNotificationFromEmailMessageDTO(EmailMessageDTO emailMessageDTO, EvaluationDTO evaluationDTO){
+
+        Notification notification = notificationMapper.evaluationToNotification(evaluationDTO);
+        notification.setTemplateName(emailMessageDTO.getTemplateName());
+        notification.setTemplateValues(emailMessageDTO.getTemplateValues());
+        notification.setSubject(emailMessageDTO.getSubject());
+        notification.setContent(emailMessageDTO.getContent());
+        notification.setSenderEmail(emailMessageDTO.getSenderEmail());
+        notification.setRecipientEmail(emailMessageDTO.getRecipientEmail());
+        return notification;
     }
 
     private void performanceLog(long startTime) {
