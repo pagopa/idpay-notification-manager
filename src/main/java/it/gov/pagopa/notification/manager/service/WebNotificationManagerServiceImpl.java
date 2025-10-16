@@ -54,6 +54,7 @@ public class WebNotificationManagerServiceImpl implements  WebNotificationManage
 
     void sendNotification(EmailMessageDTO notificationToSend, NotificationReminderQueueDTO notificationQueueDTO) {
         long startTime = System.currentTimeMillis();
+        String sanitizedInitiativeId = sanitizeString(notificationQueueDTO.getUserId());
         try {
             emailNotificationConnector.sendEmail(notificationToSend);
             notificationSent(notificationToSend, notificationQueueDTO);
@@ -107,6 +108,8 @@ public class WebNotificationManagerServiceImpl implements  WebNotificationManage
                 System.currentTimeMillis() - startTime);
     }
 
-
+    public static String sanitizeString(String str){
+        return str == null? null: str.replaceAll("[\\r\\n]", "").replaceAll("[^\\w\\s-]", "");
+    }
 
 }
