@@ -119,11 +119,13 @@ public class OnboardingWebNotificationImpl extends BaseOnboardingNotification<Em
         try {
             EmailMessageDTO emailMessageDTO = notificationMapper.notificationToEmailMessageDTO(notification);
             emailNotificationConnector.sendEmail(emailMessageDTO);
-            saveNotification(notification, NotificationConstants.NOTIFICATION_STATUS_OK, null, startTime);
+            finalizeAndSave(notification, NotificationConstants.NOTIFICATION_STATUS_OK, null);
+            performanceLog(startTime, "NOTIFY");
             return true;
         } catch (Exception e) {
             log.error("[NOTIFY] Failed to send email notification for user {}", notification.getUserId(), e);
-            saveNotification(notification, NotificationConstants.NOTIFICATION_STATUS_KO, LocalDateTime.now(), startTime);
+            finalizeAndSave(notification, NotificationConstants.NOTIFICATION_STATUS_KO, LocalDateTime.now());
+            performanceLog(startTime, "NOTIFY");
             return false;
         }
     }
@@ -138,36 +140,21 @@ public class OnboardingWebNotificationImpl extends BaseOnboardingNotification<Em
         }
         Notification notification = notificationMapper.createNotificationFromEmailMessageDTO(emailMessageDTO,
                 evaluationDTO);
-        finalizeAndSave(notification, notificationStatus, statusKoTimeStamp, startTime);
+        finalizeAndSave(notification, notificationStatus, statusKoTimeStamp);
+        performanceLog(startTime, "NOTIFY");
     }
 
-    private void saveNotification(Notification notification,
-                                  String notificationStatus,
-                                  LocalDateTime statusKoTimeStamp,
-                                  long startTime){
-        if (notification == null) {
-            return;
-        }
-        finalizeAndSave(notification, notificationStatus, statusKoTimeStamp, startTime);
-    }
 
     private void  finalizeAndSave(Notification  notification,
                                   String  notificationStatus,
-                                  LocalDateTime statusKoTimeStamp,
-                                  long  startTime) {
+                                  LocalDateTime statusKoTimeStamp) {
         notification.setNotificationStatus(notificationStatus);
         if  (statusKoTimeStamp !=  null)  {
             notification.setStatusKoTimestamp(statusKoTimeStamp);
         }
         notificationManagerRepository.save(notification);
-        performanceLog(startTime);
     }
 
-
-
-    private void performanceLog(long startTime) {
-        performanceLog(startTime, "NOTIFY");
-    }
 
     private void performanceLog(long startTime, String flowName) {
         log.info(
