@@ -5,7 +5,6 @@ import it.gov.pagopa.notification.manager.connector.EmailNotificationConnector;
 import it.gov.pagopa.notification.manager.constants.NotificationConstants;
 import it.gov.pagopa.notification.manager.dto.EmailMessageDTO;
 import it.gov.pagopa.notification.manager.dto.EvaluationDTO;
-import it.gov.pagopa.notification.manager.dto.event.NotificationReminderQueueDTO;
 import it.gov.pagopa.notification.manager.dto.mapper.NotificationMapper;
 import it.gov.pagopa.notification.manager.model.Notification;
 import it.gov.pagopa.notification.manager.repository.NotificationManagerRepository;
@@ -139,13 +138,7 @@ public class OnboardingWebNotificationImpl extends BaseOnboardingNotification<Em
         }
         Notification notification = notificationMapper.createNotificationFromEmailMessageDTO(emailMessageDTO,
                 evaluationDTO);
-        notification.setNotificationStatus(notificationStatus);
-        if(statusKoTimeStamp != null){
-            notification.setStatusKoTimestamp(statusKoTimeStamp);
-        }
-
-        notificationManagerRepository.save(notification);
-        performanceLog(startTime);
+        finalizeAndSave(notification, notificationStatus, statusKoTimeStamp, startTime);
     }
 
     private void saveNotification(Notification notification,
@@ -155,14 +148,21 @@ public class OnboardingWebNotificationImpl extends BaseOnboardingNotification<Em
         if (notification == null) {
             return;
         }
+        finalizeAndSave(notification, notificationStatus, statusKoTimeStamp, startTime);
+    }
+
+    private void  finalizeAndSave(Notification  notification,
+                                  String  notificationStatus,
+                                  LocalDateTime statusKoTimeStamp,
+                                  long  startTime) {
         notification.setNotificationStatus(notificationStatus);
-        if(statusKoTimeStamp != null){
+        if  (statusKoTimeStamp !=  null)  {
             notification.setStatusKoTimestamp(statusKoTimeStamp);
         }
-
         notificationManagerRepository.save(notification);
         performanceLog(startTime);
     }
+
 
 
     private void performanceLog(long startTime) {
