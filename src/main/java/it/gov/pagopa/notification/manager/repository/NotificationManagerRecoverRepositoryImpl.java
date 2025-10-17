@@ -42,6 +42,7 @@ public class NotificationManagerRecoverRepositoryImpl implements NotificationMan
         Criteria criteria = Criteria.where(Notification.Fields.notificationStatus).is(NotificationConstants.NOTIFICATION_STATUS_KO)
                 .andOperator(
                         Criteria.where(Notification.Fields.retry).not().gte(maxRetries),
+                        Criteria.where(Notification.Fields.operationType).ne(NotificationConstants.OPERATION_TYPE_REMINDER),
                         new Criteria().orOperator(
                                 Criteria.where(Notification.Fields.retryDate).isNull(),
                                 Criteria.where(Notification.Fields.retryDate).lt(startTime)
@@ -60,7 +61,8 @@ public class NotificationManagerRecoverRepositoryImpl implements NotificationMan
         Criteria criteria = Criteria.where(Notification.Fields.notificationStatus).is(NotificationConstants.NOTIFICATION_STATUS_RECOVER)
                 .andOperator(
                         Criteria.where(Notification.Fields.retry).lt(maxRetries),
-                        Criteria.where(Notification.Fields.retryDate).lt(LocalDateTime.now().minusMinutes(minutesBefore))
+                        Criteria.where(Notification.Fields.retryDate).lt(LocalDateTime.now().minusMinutes(minutesBefore)),
+                        Criteria.where(Notification.Fields.operationType).ne(NotificationConstants.OPERATION_TYPE_REMINDER)
                 );
 
         return mongoTemplate.findAndModify(

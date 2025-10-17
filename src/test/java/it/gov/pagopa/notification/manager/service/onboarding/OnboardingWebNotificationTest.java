@@ -6,22 +6,32 @@ import it.gov.pagopa.notification.manager.constants.NotificationConstants;
 import it.gov.pagopa.notification.manager.dto.EmailMessageDTO;
 import it.gov.pagopa.notification.manager.dto.EvaluationDTO;
 import it.gov.pagopa.notification.manager.dto.OnboardingRejectionReason;
+import it.gov.pagopa.notification.manager.dto.event.NotificationReminderQueueDTO;
+import it.gov.pagopa.notification.manager.dto.mapper.NotificationMapper;
+import it.gov.pagopa.notification.manager.model.Notification;
+import it.gov.pagopa.notification.manager.repository.NotificationManagerRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import static it.gov.pagopa.notification.manager.constants.NotificationConstants.EmailTemplates.*;
 import static it.gov.pagopa.notification.manager.dto.OnboardingRejectionReason.OnboardingRejectionReasonCode.ISEE_TYPE_FAIL;
 import static it.gov.pagopa.notification.manager.dto.OnboardingRejectionReason.OnboardingRejectionReasonCode.REJECTION_REASON_INITIATIVE_ENDED;
 import static it.gov.pagopa.notification.manager.enums.Channel.WEB;
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class OnboardingWebNotificationTest {
@@ -31,6 +41,25 @@ class OnboardingWebNotificationTest {
     private static final LocalDate TEST_DATE_ONLY_DATE = LocalDate.now();
     private static final String ORGANIZATION_NAME = "ORGANIZATION_NAME";
 
+    private static final String TEMPLATE_NAME = "TEMPLATE_NAME";
+    private static final Map<String, String> TEMPLATE_VALUES = new HashMap<String, String>();
+    private static final String SUBJECT = "SUBJECT";
+    private static final String CONTENT = "CONTENT";
+    private static final String SENDER_EMAIL = "SENDER_EMAIL";
+    private static final String RECIPIENT_EMAIL = "RECIPIENT_EMAIL";
+
+    private static final Notification NOTIFICATION = Notification.builder().build();
+
+    private static final EmailMessageDTO EMAIL_MESSAGE_DTO = EmailMessageDTO.builder()
+            .templateName(TEMPLATE_NAME)
+            .templateValues(TEMPLATE_VALUES)
+            .subject(SUBJECT)
+            .content(CONTENT)
+            .senderEmail(SENDER_EMAIL)
+            .recipientEmail(RECIPIENT_EMAIL)
+            .build();
+
+
     @Mock
     private EmailNotificationConnector emailNotificationConnectorMock;
 
@@ -39,9 +68,18 @@ class OnboardingWebNotificationTest {
 
     private OnboardingWebNotification onboardingWebNotification;
 
+    @Mock
+    NotificationManagerRepository notificationManagerRepository;
+
+    @Mock
+    NotificationMapper notificationMapper;
+
     @BeforeEach
     void setUp() {
-        onboardingWebNotification = new OnboardingWebNotificationImpl(emailNotificationConnectorMock, emailNotificationPropertiesMock);
+        onboardingWebNotification = new OnboardingWebNotificationImpl(emailNotificationConnectorMock,
+                emailNotificationPropertiesMock,
+                notificationManagerRepository,
+                notificationMapper);
     }
 
     private EvaluationDTO getEvaluationDto(){
@@ -68,6 +106,10 @@ class OnboardingWebNotificationTest {
         );
     }
 
+
+
+
+
     //region ONBOARDING_OK
     @Test
     void processNotification_whenTemplateEsitoOk200() {
@@ -82,7 +124,11 @@ class OnboardingWebNotificationTest {
                 .when(emailNotificationConnectorMock)
                 .sendEmail(Mockito.any(EmailMessageDTO.class));
 
+        when(notificationMapper.createNotificationFromEmailMessageDTO(any(EmailMessageDTO.class),
+                any(EvaluationDTO.class))).thenReturn(NOTIFICATION);
+
         onboardingWebNotification.processNotification(evaluationDTO);
+
 
         Mockito.verify(emailNotificationConnectorMock, Mockito.times(1))
                 .sendEmail(Mockito.argThat(email ->
@@ -105,6 +151,9 @@ class OnboardingWebNotificationTest {
         Mockito.doAnswer(invocation -> null)
                 .when(emailNotificationConnectorMock)
                 .sendEmail(Mockito.any(EmailMessageDTO.class));
+
+        when(notificationMapper.createNotificationFromEmailMessageDTO(any(EmailMessageDTO.class),
+                any(EvaluationDTO.class))).thenReturn(NOTIFICATION);
 
         onboardingWebNotification.processNotification(evaluationDTO);
 
@@ -129,6 +178,9 @@ class OnboardingWebNotificationTest {
                 .when(emailNotificationConnectorMock)
                 .sendEmail(Mockito.any(EmailMessageDTO.class));
 
+        when(notificationMapper.createNotificationFromEmailMessageDTO(any(EmailMessageDTO.class),
+                any(EvaluationDTO.class))).thenReturn(NOTIFICATION);
+
         onboardingWebNotification.processNotification(evaluationDTO);
 
         Mockito.verify(emailNotificationConnectorMock, Mockito.times(1))
@@ -152,6 +204,9 @@ class OnboardingWebNotificationTest {
                 .when(emailNotificationConnectorMock)
                 .sendEmail(Mockito.any(EmailMessageDTO.class));
 
+        when(notificationMapper.createNotificationFromEmailMessageDTO(any(EmailMessageDTO.class),
+                any(EvaluationDTO.class))).thenReturn(NOTIFICATION);
+
         onboardingWebNotification.processNotification(evaluationDTO);
 
         Mockito.verify(emailNotificationConnectorMock, Mockito.times(1))
@@ -172,6 +227,9 @@ class OnboardingWebNotificationTest {
         Mockito.doThrow(new RuntimeException("Boom"))
                 .when(emailNotificationConnectorMock)
                 .sendEmail(Mockito.any(EmailMessageDTO.class));
+
+        when(notificationMapper.createNotificationFromEmailMessageDTO(any(EmailMessageDTO.class),
+                any(EvaluationDTO.class))).thenReturn(NOTIFICATION);
 
         onboardingWebNotification.processNotification(evaluationDTO);
 
@@ -293,5 +351,60 @@ class OnboardingWebNotificationTest {
         assertEquals(evaluationDTO.getName(), dto.getTemplateValues().get("name"));
         assertFalse(dto.getTemplateValues().containsKey("reason"));
         assertFalse(dto.getTemplateValues().containsKey("managedEntity"));
+    }
+    @Test
+    void notify_success() {
+        when(notificationMapper.notificationToEmailMessageDTO(NOTIFICATION)).thenReturn(EMAIL_MESSAGE_DTO);
+
+        // SendEmail success simulation
+        ResponseEntity<Void> successResponse = new ResponseEntity<>(HttpStatus.OK);
+        Mockito.when(emailNotificationConnectorMock.sendEmail(EMAIL_MESSAGE_DTO))
+                .thenReturn(successResponse);
+
+        when(notificationManagerRepository.save(any(Notification.class))).thenAnswer(invocation -> {
+            Notification savedNotification = invocation.getArgument(0);
+            assertEquals(NotificationConstants.NOTIFICATION_STATUS_OK, savedNotification.getNotificationStatus());
+            return savedNotification;
+        });
+
+        // Act
+        boolean result = onboardingWebNotification.notify(NOTIFICATION);
+
+        // Verify
+        assertTrue(result, "true");
+        //check that the mapper has been called 1 time
+        verify(notificationMapper, times(1)).notificationToEmailMessageDTO(NOTIFICATION);
+        //check that sendEmail has been called 1 time
+        verify(emailNotificationConnectorMock, times(1)).sendEmail(EMAIL_MESSAGE_DTO);
+        //check that the notificationSent method has called the save method 1 time
+        verify(notificationManagerRepository, times(1)).save(any(Notification.class));
+    }
+
+    @Test
+    void notify_failure() {
+
+        when(notificationMapper.notificationToEmailMessageDTO(NOTIFICATION)).thenReturn(EMAIL_MESSAGE_DTO);
+
+        //sendEmail failure simulation
+        doThrow(new RuntimeException("Email service down")).when(emailNotificationConnectorMock).sendEmail(EMAIL_MESSAGE_DTO);
+
+        when(notificationManagerRepository.save(any(Notification.class))).thenAnswer(invocation -> {
+            Notification savedNotification = invocation.getArgument(0);
+            assertEquals(NotificationConstants.NOTIFICATION_STATUS_KO, savedNotification.getNotificationStatus());
+            assertNotNull(savedNotification.getStatusKoTimestamp());
+            return savedNotification;
+        });
+
+        // Act
+        boolean result = onboardingWebNotification.notify(NOTIFICATION);
+
+        // Verify
+        assertFalse(result, "false");
+        //check that the mapper has been called 1 time
+        verify(notificationMapper, times(1)).notificationToEmailMessageDTO(NOTIFICATION);
+        //check that sendEmail has been called 1 time
+        verify(emailNotificationConnectorMock, times(1)).sendEmail(EMAIL_MESSAGE_DTO);
+        //check that the notificationKo method has called the save method 1 time
+        verify(notificationManagerRepository, times(1)).save(any(Notification.class));
     }
 }
