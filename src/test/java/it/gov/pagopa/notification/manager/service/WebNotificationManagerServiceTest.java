@@ -4,31 +4,47 @@ import it.gov.pagopa.notification.manager.config.EmailNotificationProperties;
 import it.gov.pagopa.notification.manager.connector.EmailNotificationConnector;
 import it.gov.pagopa.notification.manager.dto.EmailMessageDTO;
 import it.gov.pagopa.notification.manager.dto.event.NotificationReminderQueueDTO;
+import it.gov.pagopa.notification.manager.dto.mapper.NotificationMapper;
+import it.gov.pagopa.notification.manager.model.Notification;
+import it.gov.pagopa.notification.manager.repository.NotificationManagerRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
+import org.mockito.Mock;
 import org.mockito.Mockito;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import static it.gov.pagopa.notification.manager.constants.NotificationConstants.EmailTemplates.EMAIL_OUTCOME_THREE_DAY_REMINDER;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
+@ExtendWith(MockitoExtension.class)
 class WebNotificationManagerServiceImplTest {
 
+    @Mock
     private EmailNotificationConnector emailNotificationConnector;
 
+    private EmailNotificationProperties emailNotificationProperties = new EmailNotificationProperties();
+
+    @Mock
     private WebNotificationManagerServiceImpl service;
+
+    @Mock
+    private NotificationManagerRepository notificationManagerRepository;
+    @Mock
+    private NotificationMapper notificationMapper;
+
+    private static final Notification NOTIFICATION = Notification.builder().build();
+
+    private static EmailNotificationProperties.Subject subjectProps = new EmailNotificationProperties.Subject();
+
 
     @BeforeEach
     void setUp() {
-        emailNotificationConnector = Mockito.mock(EmailNotificationConnector.class);
-        EmailNotificationProperties emailNotificationProperties = Mockito.mock(EmailNotificationProperties.class);
-        EmailNotificationProperties.Subject subjectProps = Mockito.mock(EmailNotificationProperties.Subject.class);
-
-        when(emailNotificationProperties.getSubject()).thenReturn(subjectProps);
-        when(subjectProps.getOkThreeDayReminder()).thenReturn("Il tuo bonus scade tra 3 giorni!");
-
-        service = new WebNotificationManagerServiceImpl(emailNotificationConnector, emailNotificationProperties);
+        subjectProps.setOkThreeDayReminder("Il tuo bonus scade tra 3 giorni!");
+        emailNotificationProperties.setSubject(subjectProps);
+        service = new WebNotificationManagerServiceImpl(emailNotificationConnector, emailNotificationProperties, notificationManagerRepository, notificationMapper);
     }
 
     @Test
@@ -37,6 +53,10 @@ class WebNotificationManagerServiceImplTest {
         when(dto.getName()).thenReturn("Mario");
         when(dto.getUserMail()).thenReturn("mario.rossi@example.com");
         when(dto.getUserId()).thenReturn("USER123");
+
+        when(notificationMapper.createNotificationFromNotificationReminderQuequeDTO(any(EmailMessageDTO.class),
+                any(NotificationReminderQueueDTO.class))).thenReturn(NOTIFICATION);
+
 
         service.sendReminderMail(dto);
 
@@ -58,10 +78,9 @@ class WebNotificationManagerServiceImplTest {
     @Test
     void sendReminderMail_doesNotPropagateException() {
         NotificationReminderQueueDTO dto = Mockito.mock(NotificationReminderQueueDTO.class);
-        when(dto.getName()).thenReturn("Luigi");
-        when(dto.getSurname()).thenReturn("Bianchi");
-        when(dto.getUserMail()).thenReturn("luigi.bianchi@example.com");
-        when(dto.getUserId()).thenReturn("USER456");
+
+        when(notificationMapper.createNotificationFromNotificationReminderQuequeDTO(any(EmailMessageDTO.class),
+                any(NotificationReminderQueueDTO.class))).thenReturn(NOTIFICATION);
 
         doThrow(new RuntimeException("SMTP down"))
                 .when(emailNotificationConnector)
@@ -74,6 +93,8 @@ class WebNotificationManagerServiceImplTest {
 
     @Test
     void sendNotification_doesNotPropagateException() {
+        when(notificationMapper.createNotificationFromNotificationReminderQuequeDTO(any(EmailMessageDTO.class),
+                any(NotificationReminderQueueDTO.class))).thenReturn(NOTIFICATION);
         NotificationReminderQueueDTO dto = Mockito.mock(NotificationReminderQueueDTO.class);
         when(dto.getUserId()).thenReturn("USER789");
 

@@ -21,6 +21,8 @@ public class NotificationConstants {
   public static final String NOTIFICATION_STATUS_RECOVER = "RECOVER";
   public static final String OPERATION_TYPE_DELETE_INITIATIVE = "DELETE_INITIATIVE";
 
+  public static final String OPERATION_TYPE_REMINDER = "REMINDER";
+
   private NotificationConstants(){}
 
   public static final class ExceptionCode {

@@ -3,6 +3,7 @@ package it.gov.pagopa.notification.manager.dto.mapper;
 import it.gov.pagopa.notification.manager.dto.EvaluationDTO;
 import it.gov.pagopa.notification.manager.dto.event.NotificationQueueDTO;
 import it.gov.pagopa.notification.manager.dto.event.NotificationRefundQueueDTO;
+import it.gov.pagopa.notification.manager.enums.Channel;
 import it.gov.pagopa.notification.manager.model.Notification;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -61,6 +62,7 @@ class NotificationMapperTest {
           .operationType("ONBOARDING")
           .rejectReasons(List.of())
           .organizationName(ORGANIZATION_NAME)
+          .channel(Channel.IO)
           .build();
 
   private static final Notification NOTIFICATION_QUEUE =

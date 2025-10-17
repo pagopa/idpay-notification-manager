@@ -314,8 +314,13 @@ public class NotificationManagerServiceImpl implements NotificationManagerServic
 
             n.setRetry(n.getRetry() != null ? n.getRetry() + 1 : 1);
 
+            boolean recovered = true;
             try {
-                boolean recovered = this.notify(n);
+                if(n.getChannel() == null || n.getChannel().isAppIo()) {
+                    recovered = this.notify(n);
+                } else if(n.getChannel().isWeb()) {
+                    recovered = onboardingWebNotification.notify(n);
+                }
                 if (recovered) count++;
             } catch (Exception e) {
                 log.error("[NOTIFY][RECOVER] Something went wrong while recovering notification having id {}", n.getId(), e);
