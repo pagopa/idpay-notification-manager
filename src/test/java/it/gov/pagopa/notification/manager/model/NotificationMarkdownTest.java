@@ -17,6 +17,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import static it.gov.pagopa.notification.manager.enums.Channel.IO;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @Slf4j
@@ -25,14 +26,13 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 class NotificationMarkdownTest {
 
   private static final String SUBJECT_OK = "Il tuo Bonus è attivo";
-  private static final String SUBJECT_OK_TYPE2 = "Il tuo Bonus è attivo!";
   private static final String SUBJECT_KO = "Non è stato possibile attivare TESTINITIATIVE01";
   private static final String SUBJECT_KO_TECH = "Abbiamo riscontrato dei problemi";
   private static final String MARKDOWN_OK = """
             ---
             it:
                 cta_1:\s
-                    text: "Vai all'iniziativa"
+                    text: "Vai al bonus"
                     action: "ioit://idpay/initiative/%s"
             en:
                 cta_1:\s
@@ -45,11 +45,6 @@ class NotificationMarkdownTest {
             Ti ricordiamo che per iniziare ad usufruire del bonus devi configurare almeno un metodo di pagamento.
                         
             Puoi trovare maggiori informazioni sul [sito](http://example.com/).""";
-  private static final String MARKDOWN_OK_TYPE2 = """
-                  Buone notizie! Ai soli fini della sperimentazione, hai i requisiti per procedere con l'iniziativa.
-                  Da questo momento puoi visualizzare il bonus nella sezione Portafoglio.
-                 
-                  Per utilizzarlo, devi prima caricare i giustificativi di spesa.""";
   private static final String USER_ID = "USER_ID";
   private static final String INITIATIVE_ID = "TESTINITIATIVE01";
   private static final String INITIATIVE_NAME = "NAMETESTINITIATIVE01";
@@ -58,90 +53,97 @@ class NotificationMarkdownTest {
   private static final LocalDate TEST_DATE_ONLY_DATE = LocalDate.now();
 
   private static final EvaluationDTO EVALUATION_DTO =
-      new EvaluationDTO(
-          USER_ID,
-          INITIATIVE_ID,
-          INITIATIVE_NAME,
-          TEST_DATE_ONLY_DATE,
-          INITIATIVE_ID,
-          ORGANIZATION_NAME,
-          NotificationConstants.STATUS_ONBOARDING_OK,
-          TEST_DATE,
-          TEST_DATE,
-          List.of(),
-          50000L, 1L);
-  private static final EvaluationDTO EVALUATION_DTO_TYPE2 =
           new EvaluationDTO(
                   USER_ID,
                   INITIATIVE_ID,
-                  "test bonus",
+                  INITIATIVE_NAME,
                   TEST_DATE_ONLY_DATE,
                   INITIATIVE_ID,
-                  "COMUNE DI GUIDONIA MONTECELIO",
+                  ORGANIZATION_NAME,
                   NotificationConstants.STATUS_ONBOARDING_OK,
                   TEST_DATE,
                   TEST_DATE,
                   List.of(),
-                  50000L, 1L);
+                  50000L,
+                  1L,
+                  true,
+                  null,
+                  IO,
+                  null,
+                  null,
+                  null,
+                  null
+          );
+
   private static final EvaluationDTO EVALUATION_DTO_KO_PDND =
-      new EvaluationDTO(
-          USER_ID,
-          INITIATIVE_ID,
-          INITIATIVE_ID,
-          TEST_DATE_ONLY_DATE,
-          INITIATIVE_ID,
-          ORGANIZATION_NAME,
-          NotificationConstants.STATUS_ONBOARDING_KO,
-          TEST_DATE,
-          TEST_DATE,
-          List.of(
-              new OnboardingRejectionReason(
-                  OnboardingRejectionReasonType.AUTOMATED_CRITERIA_FAIL,
-                  OnboardingRejectionReasonCode.AUTOMATED_CRITERIA_ISEE_FAIL,
-                  "AUTHORITY",
-                  "LABEL",
-                  "DETAIL")),
-          50000L, 1L);
+          new EvaluationDTO(
+                  USER_ID,
+                  INITIATIVE_ID,
+                  INITIATIVE_ID,
+                  TEST_DATE_ONLY_DATE,
+                  INITIATIVE_ID,
+                  ORGANIZATION_NAME,
+                  NotificationConstants.STATUS_ONBOARDING_KO,
+                  TEST_DATE,
+                  TEST_DATE,
+                  List.of(new OnboardingRejectionReason(OnboardingRejectionReasonType.AUTOMATED_CRITERIA_FAIL, OnboardingRejectionReasonCode.AUTOMATED_CRITERIA_ISEE_FAIL, "AUTHORITY", "LABEL", "DETAIL")),
+                  50000L,
+                  1L,
+                  true,
+                  null,
+                  IO,
+                  null,
+                  null,
+                  null,
+                  null
+          );
 
   private static final EvaluationDTO EVALUATION_DTO_KO_RANKING =
-      new EvaluationDTO(
-          USER_ID,
-          INITIATIVE_ID,
-          INITIATIVE_ID,
-          TEST_DATE_ONLY_DATE,
-          INITIATIVE_ID,
-          ORGANIZATION_NAME,
-          NotificationConstants.STATUS_ONBOARDING_KO,
-          TEST_DATE,
-          TEST_DATE,
-          List.of(
-              new OnboardingRejectionReason(
-                  OnboardingRejectionReasonType.OUT_OF_RANKING,
+          new EvaluationDTO(
+                  USER_ID,
+                  INITIATIVE_ID,
+                  INITIATIVE_ID,
+                  TEST_DATE_ONLY_DATE,
+                  INITIATIVE_ID,
+                  ORGANIZATION_NAME,
+                  NotificationConstants.STATUS_ONBOARDING_KO,
+                  TEST_DATE,
+                  TEST_DATE,
+                  List.of(new OnboardingRejectionReason(OnboardingRejectionReasonType.OUT_OF_RANKING, null, "AUTHORITY", "LABEL", "DETAIL")),
+                  50000L,
+                  1L,
+                  true,
                   null,
-                  "AUTHORITY",
-                  "LABEL",
-                  "DETAIL")),
-          50000L,1L);
+                  IO,
+                  null,
+                  null,
+                  null,
+                  null
+          );
 
   private static final EvaluationDTO EVALUATION_DTO_KO_TECH =
-      new EvaluationDTO(
-          USER_ID,
-          INITIATIVE_ID,
-          INITIATIVE_ID,
-          TEST_DATE_ONLY_DATE,
-          INITIATIVE_ID,
-          ORGANIZATION_NAME,
-          NotificationConstants.STATUS_ONBOARDING_KO,
-          TEST_DATE,
-          TEST_DATE,
-          List.of(
-              new OnboardingRejectionReason(
-                  OnboardingRejectionReasonType.TECHNICAL_ERROR,
+          new EvaluationDTO(
+                  USER_ID,
+                  INITIATIVE_ID,
+                  INITIATIVE_ID,
+                  TEST_DATE_ONLY_DATE,
+                  INITIATIVE_ID,
+                  ORGANIZATION_NAME,
+                  NotificationConstants.STATUS_ONBOARDING_KO,
+                  TEST_DATE,
+                  TEST_DATE,
+                  List.of(new OnboardingRejectionReason(OnboardingRejectionReasonType.TECHNICAL_ERROR, null, "AUTHORITY", "LABEL", "DETAIL")),
+                  50000L,
+                  1L,
+                  true,
                   null,
-                  "AUTHORITY",
-                  "LABEL",
-                  "DETAIL")),
-          50000L, 1L);
+                  IO,
+                  null,
+                  null,
+                  null,
+                  null
+          );
+
 
   @Autowired NotificationMarkdown notificationMarkdown;
 
@@ -149,12 +151,6 @@ class NotificationMarkdownTest {
   void getSubject_status_ok() {
     String actual = notificationMarkdown.getSubject(EVALUATION_DTO);
     assertEquals(SUBJECT_OK, actual);
-  }
-
-  @Test
-  void getSubjectType2_status_ok() {
-    String actual = notificationMarkdown.getSubject(EVALUATION_DTO_TYPE2);
-    assertEquals(SUBJECT_OK_TYPE2, actual);
   }
 
   @Test
@@ -187,13 +183,6 @@ class NotificationMarkdownTest {
   }
 
   @Test
-  void getMarkdownType2_status_ok() {
-      String actual = notificationMarkdown.getMarkdown(EVALUATION_DTO_TYPE2);
-
-    Assertions.assertEquals(MARKDOWN_OK_TYPE2, actual);
-  }
-
-  @Test
   void getMarkdown_status_ko_pdnd() {
     String expectedMarkdown = """
             Purtroppo non è stato possibile aderire a %s per i seguenti motivi:
@@ -205,7 +194,7 @@ class NotificationMarkdownTest {
             Ci scusiamo per il disagio."""
             .formatted(
                     EVALUATION_DTO_KO_TECH.getInitiativeName(),
-                    EVALUATION_DTO_KO_PDND.getOnboardingRejectionReasons().get(0).getDetail());
+                    EVALUATION_DTO_KO_PDND.getOnboardingRejectionReasons().getFirst().getDetail());
     String actual = notificationMarkdown.getMarkdown(EVALUATION_DTO_KO_PDND);
     Assertions.assertEquals(expectedMarkdown, actual);
   }
@@ -415,7 +404,16 @@ class NotificationMarkdownTest {
             TEST_DATE,
             rejectionReasons,
             50000L,
-            1L);
+            1L,
+            true,
+            null,
+            IO,
+            null,
+            null,
+            null,
+            null
+    );
+
   }
 
 }

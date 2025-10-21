@@ -37,7 +37,8 @@ class NotificationManagerRecoverRepositoryImplTest {
     private static final Criteria stuckCriteria = Criteria.where(Notification.Fields.notificationStatus).is(NotificationConstants.NOTIFICATION_STATUS_RECOVER)
             .andOperator(
                     Criteria.where(Notification.Fields.retry).lt(maxRetries),
-                    Criteria.where(Notification.Fields.retryDate).lt(NOW.minusMinutes(minutesBefore))
+                    Criteria.where(Notification.Fields.retryDate).lt(NOW.minusMinutes(minutesBefore)),
+                    Criteria.where(Notification.Fields.operationType).ne(NotificationConstants.OPERATION_TYPE_REMINDER)
             );
     private static final Query STUCK_QUERY = Query.query(stuckCriteria);
     private static final Notification RECOVER_NOTIFICATION = Notification.builder()
@@ -55,6 +56,7 @@ class NotificationManagerRecoverRepositoryImplTest {
             Criteria.where(Notification.Fields.notificationStatus).is(NotificationConstants.NOTIFICATION_STATUS_KO)
                     .andOperator(
                             Criteria.where(Notification.Fields.retry).not().gte(maxRetries),
+                            Criteria.where(Notification.Fields.operationType).ne(NotificationConstants.OPERATION_TYPE_REMINDER),
                             new Criteria().orOperator(
                                     Criteria.where(Notification.Fields.retryDate).isNull(),
                                     Criteria.where(Notification.Fields.retryDate).lt(NOW)

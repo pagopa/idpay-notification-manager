@@ -41,6 +41,7 @@ public class OnboardingRejectionReason {
     INITIATIVE_BUDGET_EXHAUSTED("Budget iniziativa"),
     ISEE_TYPE_FAIL("Tipo ISEE"),
     FAMILY_CRITERIA_FAIL("Criteri di famiglia"),
+    REJECTION_REASON_INITIATIVE_ENDED( "L'iniziativa è terminata"),
 
     //region possible onboarding rejection reason added for robust code
     CONSENSUS_CHECK_TC_FAIL("Mancato consenso dei termini e condizioni"),

@@ -22,6 +22,26 @@ rest-client:
       ttl: 3600
       base-url: ${IO_BACKEND_BASE_URL:}
       serviceCode: backend-io-notification
+    email-notification:
+      service:
+        name: notificationClient
+        base-url: ${NOTIFICATION_MS_BASE_URL:https://api-io.dev.cstar.pagopa.it/idpay-itn/mock/api/privacynotice/v2}
+      template:
+        ok: Email_BEL_EsitoOk
+        rejected: Email_BEL_EsitoOkParziale
+      subject:
+        ok: ${SUBJECT_BEL_OK:Hai ottenuto il bonus!}
+        partial:  ${SUBJECT_BEL_OK_PARTIAL:Hai ottenuto il bonus!}
+        ok-threeDayReminder: ${SUBJECT_OK_THREE_DAY_REMINDER:Il tuo bonus scade tra 3 giorni!}
+        ko-familyUnit: ${SUBJECT_KO_FAMILY_UNIT:Il bonus è stato già richiesto}
+        ko-thanks: '${SUBJECT_OK_THANKS:Bonus Elettrodomestici: tutti i fondi sono stati assegnati}'
+        ko-genericError: ${SUBJECT_KO_GENERIC_ERROR:Non è stato possibile assegnarti il bonus}
+      place-holder:
+        ok: productFileName
+        partial: productFileName
+        rejected: excludedList, motivation
+        supervisioned: suspendedList, motivation
+        approved: ripristinedList
   initiative:
     service:
       name: ms-initiative
@@ -207,18 +227,83 @@ notification:
             ${MARKDOWN_DOUBLE_NEW_LINE:
 
             }
+      double-new-line: |-
+        ${MARKDOWN_DOUBLE_NEW_LINE:
+        
+        }
+      ok-bel: |-
+        ${MARKDOWN_OK_BEL:Buone notizie! Hai ottenuto il %initiativeName% da %rewardAmount%€. sarà valido **per i prossimi 10 giorni**.
+
+        È disponibile ora nella sezione Portafoglio, dove troverai i dettagli dell'importo e la validità.
+
+        **Cosa puoi fare ora?**
+
+        Puoi usarlo per ottenere uno sconto del 30% sul prezzo d'acquisto di un elettrodomestico nuovo ad alta efficienza, fino ad un massimo di %rewardAmount%€.
+
+        **Come fare?**
+
+        Per avere più informazioni su come e dove usare il bonus, [leggi i dettagli](http://www.google.com/).
+
+        **Importante:** ricorda che puoi usare il bonus solo se hai un vecchio elettrodomestico da smaltire. Concorda con il venditore quando e come consegnarlo, ma non smaltirlo autonomamente in discarica.}
+      ok-partial-bel: |-
+        ${MARKDOWN_OK_PARTIAL:Dopo le verifiche con INPS, il tuo ISEE risulta difforme o diverso da quanto dichiarato. Per questo motivo, non è possibile assegnarti il bonus da 200€ che avevi richiesto, ma hai ottenuto comunque il **bonus di 100€.**
+
+        Se ritiene che ci sia un errore, verifica il tuo ISEE direttamente con INPS.
+
+        **Cosa puoi fare ora?**
+
+        Puoi usarlo per ottenere uno sconto del 30% sul prezzo d'acquisto di un elettrodomestico nuovo ad alta efficienza, fino ad un massimo di 100€,
+
+        **Come fare?**
+
+        Per avere più informazioni su come e dove usare il bonus, [leggi i dettagli](http://www.google.com/).
+
+        **Importante:** ricorda che puoi usare il bonus solo se hai un vecchio elettrodomestico da smaltire. Concorda con il venditore quando e come consegnarlo, ma non smaltirlo autonomamente in discarica.}
       ok: |-
         ${MARKDOWN_OK:Buone notizie! Hai ottenuto %initiativeName%. Da questo momento puoi visualizzare il bonus nella sezione Portafoglio dell'app IO.
 
         Ti ricordiamo che per iniziare ad usufruire del bonus devi configurare almeno un metodo di pagamento.
-
+ 
         Puoi trovare maggiori informazioni sul [sito](http://example.com/).}
 
-      ok.type2: |-
-        ${MARKDOWN_OK_CTA_TYPE2:Buone notizie! Ai soli fini della sperimentazione, hai i requisiti per procedere con l'iniziativa.
-        Da questo momento puoi visualizzare il bonus nella sezione Portafoglio.
+      ok-reminder-bel: |-
+        ${MARKDOWN_OK_REMINDER_BEL:Hai già deciso come usare il Bonus Elettrodomestici?
+
+        **Hai ancora 3 giorni** per usare il contributo e sostituire un vecchio elettrodomestico con uno a basso consumo energetico.
         
-        Per utilizzarlo, devi prima caricare i giustificativi di spesa.}
+        **Troppo tardi?**
+        
+        Se non hai fatto in tempo ad usare il bonus, puoi fare nuovamente richiesta. Se ci sono ancora fondi disponibili, la richiesta verrà inserita in lista d'attesa.
+        
+        **Hai domande?**
+        
+        Per avere più dettagli su come e dove usare il bonus, ovare maggiori informazioni [leggi la guida](http://www.google.com/).}
+
+      joined-bel: |-
+        ${MARKDOWN_JOINED_BEL:La tua richiesta per il Bonus Elettrodomestici non può essere elaborata. Un'altra persona che fa parte della tua famiglia ha già presentato richiesta.
+
+        È possibile inviare **una sola richiesta per ogni famiglia anagrafica.**
+
+        Per avere più dettagli sui requisiti del bonus, [leggi come fare](http://www.google.com/).}
+
+      ko-generic-bel: |-
+        ${MARKDOWN_KO_GENERIC_BEL:Purtroppo la tua richiesta per il Bonus Elettrodomestici non è stata accettata.
+
+        Non è stato possibile assegnarti il bonus perché:
+        
+         - %reason%
+
+        **Hai dei dubbi?**
+        
+        Se pensi che ci sia stato un errore, segnalalo a %managedEntity%.}
+
+      ko-thanks-bel: |-
+        ${MARKDOWN_KO_THANKS_BEL:La tua richiesta era in lista d'attesa, ma **tutti i fondi disponibili sono stati assegnati**.
+        Ci dispiace, ma purtroppo non è possibile assegnare il bonus.
+        
+        Grazie per aver mostrato interesse per il **Bonus Elettrodomestici**.
+        
+        Alla prossima iniziativa!}
 
       ok.type3: |-
         ${MARKDOWN_OK_CTA_TYPE3: }
@@ -228,11 +313,22 @@ notification:
         
         Puoi controllare il bonus disponibile direttamente nella pagina dell'iniziativa.}
 
+      ok-cta: |-
+        ${MARKDOWN_OK_CTA:---
+        it:
+            cta_1: 
+                text: "Vai al bonus"
+                action: "ioit://idpay/initiative/%initiativeId%"
+        en:
+            cta_1: 
+                text: "Go to the bonus page"
+                action: "ioit://idpay/initiative/%initiativeId%"
+        ---}
       ok.cta: |-
         ${MARKDOWN_OK_CTA:---
         it:
             cta_1: 
-                text: "Vai all'iniziativa"
+                text: "Vai al bonus"
                 action: "ioit://idpay/initiative/%initiativeId%"
         en:
             cta_1: 
@@ -261,6 +357,12 @@ notification:
           }
     subject:
       ok: ${SUBJECT_OK:Il tuo Bonus è attivo}
+      ok-bel: ${SUBJECT_OK_BEL:Hai ottenuto il bonus!}
+      ok-reminder-bel: ${SUBJECT_OK_REMINDER_BEL:Il tuo bonus scade tra 3 giorni!}
+      ok-partial-bel: ${SUBJECT_OK_PARTIAL_BEL:Hai ottenuto il bonus!}
+      ko-generic-bel: ${SUBJECT_KO_GENERIC_BEL:Non è stato possibile assegnarti il bonus}
+      ko-thanks-bel: '${SUBJECT_KO_THANKS_BEL:Bonus Elettrodomestici: tutti i fondi sono stati assegnati}'
+      joined-bel: ${SUBJECT_JOINED_BEL:Il bonus è stato già richiesto}
       ok.type2: ${SUBJECT_OK_TYPE2:Il tuo Bonus è attivo!}
       ok.type3: ${SUBJECT_OK_TYPE3:}
       demanded: ${SUBJECT_DEMANDED:Attiva il bonus %initiativeName%}
@@ -287,7 +389,7 @@ logging:
     root: ${LOG_LEVEL_ROOT:INFO}
     it.gov.pagopa: ${LOG_LEVEL_PAGOPA:INFO}
     it.gov.pagopa.notification.manager: ${LOG_LEVEL_NOTIFICATION_MANAGER:INFO}
-    org.springframework.integration: ${LOG_LEVEL_SPRING_INTEGRATION:INFO}
+    org.springframework.integration: ${LOG_LEVEL_SPRING_INTEGRATION:WARN}
     org.springframework.security: ${LOG_LEVEL_SPRING_SECURITY:INFO}
     org.springframework.ws: ${LOG_LEVEL_SPRING_WS:INFO}
     org.springframework.cloud: ${LOG_LEVEL_SPRING_CLOUD:WARN}
@@ -295,12 +397,14 @@ logging:
     org.springframework.hateoas: ${LOG_LEVEL_SPRING_HATEOAS:INFO}
     org.springframework.boot: ${LOG_LEVEL_SPRING_BOOT:INFO}
     org.springframework.boot.availability: ${LOG_LEVEL_SPRING_BOOT_AVAILABILITY:DEBUG}
-    org.springframework.kafka: ${LOG_LEVEL_SPRING_KAFKA:INFO}
+    org.springframework.kafka: ${LOG_LEVEL_SPRING_KAFKA:WARN}
     org.springframework.batch: ${LOG_LEVEL_SPRING_BATCH:INFO}
     io.swagger: ${LOG_LEVEL_IO_SWAGGER:WARN}
     javax.persistence: ${LOG_LEVEL_JAVAX_PERSISTENCE:INFO}
     org.hibernate: ${LOG_LEVEL_ORG_HIBERNATE:INFO}
     org.mongodb.driver: ${LOG_LEVEL_MONGODB_DRIVER:WARN}
+    org.apache.kafka: WARN
+    org.springframework.boot.autoconfigure: WARN
 
 util:
   crypto:

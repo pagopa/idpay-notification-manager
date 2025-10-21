@@ -15,6 +15,8 @@ import it.gov.pagopa.notification.manager.model.Notification;
 import it.gov.pagopa.notification.manager.model.NotificationMarkdown;
 import it.gov.pagopa.notification.manager.repository.NotificationManagerRepository;
 import it.gov.pagopa.notification.manager.repository.NotificationManagerRepositoryExtended;
+import it.gov.pagopa.notification.manager.service.onboarding.OnboardingIoNotification;
+import it.gov.pagopa.notification.manager.service.onboarding.OnboardingWebNotification;
 import it.gov.pagopa.notification.manager.utils.AuditUtilities;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
@@ -53,6 +55,8 @@ public class NotificationManagerServiceImpl implements NotificationManagerServic
     private final NotificationMapper notificationMapper;
     private final NotificationMarkdown notificationMarkdown;
     private final AuditUtilities auditUtilities;
+    private final OnboardingIoNotification onboardingIoNotification;
+    private final OnboardingWebNotification onboardingWebNotification;
     @Value("${rest-client.notification.backend-io.ttl}")
     private Long timeToLive;
     @Value("${notification.manager.recover.parallelism}")
@@ -61,7 +65,7 @@ public class NotificationManagerServiceImpl implements NotificationManagerServic
     private ExecutorService executorService;
 
     public NotificationManagerServiceImpl(@Value("${app.delete.paginationSize:100}") int pageSize,
-                                          @Value("${app.delete.delayTime:1000}") long delay, OutcomeProducer outcomeProducer, InitiativeRestConnector initiativeRestConnector, IOBackEndRestConnector ioBackEndRestConnector, NotificationManagerRepository notificationManagerRepository, NotificationManagerRepositoryExtended notificationManagerRepositoryExtended, NotificationDTOMapper notificationDTOMapper, PdvDecryptRestConnector pdvDecryptRestConnector, NotificationMapper notificationMapper, NotificationMarkdown notificationMarkdown, AuditUtilities auditUtilities) {
+                                          @Value("${app.delete.delayTime:1000}") long delay, OutcomeProducer outcomeProducer, InitiativeRestConnector initiativeRestConnector, IOBackEndRestConnector ioBackEndRestConnector, NotificationManagerRepository notificationManagerRepository, NotificationManagerRepositoryExtended notificationManagerRepositoryExtended, NotificationDTOMapper notificationDTOMapper, PdvDecryptRestConnector pdvDecryptRestConnector, NotificationMapper notificationMapper, NotificationMarkdown notificationMarkdown, AuditUtilities auditUtilities, OnboardingIoNotification onboardingIoNotification, OnboardingWebNotification onboardingWebNotification) {
         this.pageSize = pageSize;
         this.delay = delay;
         this.outcomeProducer = outcomeProducer;
@@ -74,6 +78,8 @@ public class NotificationManagerServiceImpl implements NotificationManagerServic
         this.notificationMapper = notificationMapper;
         this.notificationMarkdown = notificationMarkdown;
         this.auditUtilities = auditUtilities;
+        this.onboardingIoNotification = onboardingIoNotification;
+        this.onboardingWebNotification = onboardingWebNotification;
     }
 
     @PostConstruct
@@ -97,27 +103,39 @@ public class NotificationManagerServiceImpl implements NotificationManagerServic
     public void notify(EvaluationDTO evaluationDTO) {
         long startTime = System.currentTimeMillis();
 
-        if(evaluationDTO.getOnboardingRejectionReasons() != null && (evaluationDTO.getOnboardingRejectionReasons().stream()
-                .anyMatch(r -> r.getType() == OnboardingRejectionReason.OnboardingRejectionReasonType.FAMILY_CRITERIA_KO))){
-            log.info("[NOTIFY] Skipping sending message for citizen {} with FAMILY_CRITERIA_KO rejection reason", evaluationDTO.getUserId());
+        if (shouldSkipNotification(evaluationDTO)) {
             return;
         }
 
-        if(NotificationConstants.STATUS_ONBOARDING_DEMANDED.equals(evaluationDTO.getStatus())
-                && NotificationConstants.ORGANIZATION_NAME_TYPE2.equalsIgnoreCase(evaluationDTO.getOrganizationName())
-                && evaluationDTO.getInitiativeName().toLowerCase().contains(NotificationConstants.INITIATIVE_NAME_TYPE2_CHECK)){
-            log.info("[NOTIFY] Skipping sending message for DEMANDED citizen {} of type2 familyUnit", evaluationDTO.getUserId());
-            return;
+        if (evaluationDTO.getChannel().isAppIo()) {
+            processAppIoNotification(evaluationDTO, startTime);
+        } else if (evaluationDTO.getChannel().isWeb()) {
+            onboardingWebNotification.processNotification(evaluationDTO);
+        } else {
+            log.warn("[NOTIFY] Unsupported channel {} for user {}", evaluationDTO.getChannel(), evaluationDTO.getUserId());
         }
+        performanceLog(startTime);
+    }
 
+    private boolean shouldSkipNotification(EvaluationDTO evaluationDTO) {
+        boolean hasFamilyCriteriaKo = evaluationDTO.getOnboardingRejectionReasons() != null &&
+                evaluationDTO.getOnboardingRejectionReasons().stream()
+                        .anyMatch(r -> r.getType() == OnboardingRejectionReason.OnboardingRejectionReasonType.FAMILY_CRITERIA_KO);
+
+        boolean isDemandedType2 = NotificationConstants.STATUS_ONBOARDING_DEMANDED.equals(evaluationDTO.getStatus());
+
+        return hasFamilyCriteriaKo || isDemandedType2;
+    }
+
+    private void processAppIoNotification(EvaluationDTO evaluationDTO, long startTime) {
         Notification notification = notificationMapper.evaluationToNotification(evaluationDTO);
-        InitiativeAdditionalInfoDTO ioTokens = null;
+        InitiativeAdditionalInfoDTO ioTokens;
 
         try {
-            log.info("[NOTIFY] Sending request to INITIATIVE");
             ioTokens = initiativeRestConnector.getIOTokens(evaluationDTO.getInitiativeId());
         } catch (FeignException e) {
-            log.error(NotificationConstants.FEIGN_KO.formatted(e.status(), e.contentUTF8()));
+            notificationKO(notification, startTime);
+            return;
         }
 
         if (ioTokens == null) {
@@ -126,36 +144,21 @@ public class NotificationManagerServiceImpl implements NotificationManagerServic
         }
 
         String fiscalCode = decryptUserToken(evaluationDTO.getUserId());
-
-        if (fiscalCode == null) {
+        if (fiscalCode == null || isNotSenderAllowed(fiscalCode, ioTokens.getPrimaryKey())) {
             notificationKO(notification, startTime);
             return;
         }
 
-        String tokenDecrypt = ioTokens.getPrimaryKey();
-
-        if (isNotSenderAllowed(fiscalCode, tokenDecrypt)) {
-            notificationKO(notification, startTime);
-            return;
-        }
-
-        String subject = notificationMarkdown.getSubject(evaluationDTO);
-        String markdown = notificationMarkdown.getMarkdown(evaluationDTO);
-
-        NotificationDTO notificationDTO =
-                notificationDTOMapper.map(fiscalCode, timeToLive, subject, markdown);
-
-        String notificationId = sendNotification(notificationDTO, tokenDecrypt);
+        evaluationDTO.setIoToken(ioTokens.getPrimaryKey());
+        evaluationDTO.setFiscalCode(fiscalCode);
+        String notificationId = onboardingIoNotification.processNotification(evaluationDTO);
 
         if (notificationId == null) {
             notificationKO(notification, startTime);
             return;
         }
 
-        logNotificationId(notificationId);
-
         notificationSent(notification, notificationId);
-        performanceLog(startTime);
     }
 
     @Override
@@ -195,7 +198,7 @@ public class NotificationManagerServiceImpl implements NotificationManagerServic
         String subject;
         String markdown;
 
-        switch (notification.getOperationType()){
+        switch (notification.getOperationType()) {
             case ONBOARDING -> {
                 subject = notificationMarkdown.getSubject(notification);
                 markdown = notificationMarkdown.getMarkdown(notification);
@@ -216,7 +219,9 @@ public class NotificationManagerServiceImpl implements NotificationManagerServic
                 subject = notificationMarkdown.getSubjectReadmission(notification.getInitiativeName());
                 markdown = notificationMarkdown.getMarkdownReadmission();
             }
-            default -> {return false;}
+            default -> {
+                return false;
+            }
         }
 
         NotificationDTO notificationDTO =
@@ -309,8 +314,13 @@ public class NotificationManagerServiceImpl implements NotificationManagerServic
 
             n.setRetry(n.getRetry() != null ? n.getRetry() + 1 : 1);
 
+            boolean recovered = true;
             try {
-                boolean recovered = this.notify(n);
+                if(n.getChannel() == null || n.getChannel().isAppIo()) {
+                    recovered = this.notify(n);
+                } else if(n.getChannel().isWeb()) {
+                    recovered = onboardingWebNotification.notify(n);
+                }
                 if (recovered) count++;
             } catch (Exception e) {
                 log.error("[NOTIFY][RECOVER] Something went wrong while recovering notification having id {}", n.getId(), e);
@@ -356,7 +366,7 @@ public class NotificationManagerServiceImpl implements NotificationManagerServic
 
             subject = notificationMarkdown.getSubjectCheckIbanKo();
             markdown = notificationMarkdown.getMarkdownCheckIbanKo();
-            
+
         } else if (anyOfNotificationQueueDTO instanceof NotificationRefundQueueDTO notificationRefundOnQueueDTO) {
 
             BigDecimal refund = BigDecimal.valueOf(notificationRefundOnQueueDTO.getRefundReward()).divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_DOWN);
@@ -391,6 +401,17 @@ public class NotificationManagerServiceImpl implements NotificationManagerServic
 
             subject = notificationMarkdown.getSubjectReadmission(notificationReadmissionQueueDTO.getInitiativeName());
             markdown = notificationMarkdown.getMarkdownReadmission();
+
+        } else if (anyOfNotificationQueueDTO instanceof NotificationReminderQueueDTO notificationReminderQueueDTO) {
+
+            notification = notificationMapper.toEntity(notificationReminderQueueDTO);
+
+            ioTokens = getIoTokens(notificationReminderQueueDTO.getInitiativeId());
+
+            fiscalCode = decryptUserToken(notificationReminderQueueDTO.getUserId());
+
+            subject = notificationMarkdown.getSubjectReminderBel();
+            markdown = notificationMarkdown.getMarkdownReminderBel();
 
         } else {
             return;
@@ -468,7 +489,7 @@ public class NotificationManagerServiceImpl implements NotificationManagerServic
     }
 
     private void notificationKO(Notification notification, long startTime) {
-        if(notification == null){
+        if (notification == null) {
             return;
         }
         notification.setNotificationStatus(NotificationConstants.NOTIFICATION_STATUS_KO);

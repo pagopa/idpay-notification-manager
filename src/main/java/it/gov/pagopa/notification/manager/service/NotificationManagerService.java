@@ -12,5 +12,4 @@ public interface NotificationManagerService {
   void sendNotificationFromOperationType(AnyOfNotificationQueueDTO notificationQueueDTO);
   void recoverKoNotifications();
   void processNotification(CommandOperationQueueDTO queueDeleteOperationDTO);
-
 }

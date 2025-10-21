@@ -1,9 +1,11 @@
 package it.gov.pagopa.notification.manager.dto.mapper;
 
 import it.gov.pagopa.notification.manager.constants.NotificationConstants;
+import it.gov.pagopa.notification.manager.dto.EmailMessageDTO;
 import it.gov.pagopa.notification.manager.dto.EvaluationDTO;
 import it.gov.pagopa.notification.manager.dto.event.AnyOfNotificationQueueDTO;
 import it.gov.pagopa.notification.manager.dto.event.NotificationRefundQueueDTO;
+import it.gov.pagopa.notification.manager.dto.event.NotificationReminderQueueDTO;
 import it.gov.pagopa.notification.manager.model.Notification;
 
 import java.math.BigDecimal;
@@ -23,8 +25,21 @@ public class NotificationMapper {
               .operationType(NotificationConstants.AnyNotificationConsumer.SubTypes.ONBOARDING)
               .rejectReasons(evaluationDTO.getOnboardingRejectionReasons())
               .organizationName(evaluationDTO.getOrganizationName())
+              .channel(evaluationDTO.getChannel())
               .build();
     }
+
+    public EmailMessageDTO notificationToEmailMessageDTO(Notification notification) {
+        return EmailMessageDTO.builder()
+                .templateName(notification.getTemplateName())
+                .templateValues(notification.getTemplateValues())
+                .subject(notification.getSubject())
+                .content(notification.getContent())
+                .senderEmail(notification.getSenderEmail())
+                .recipientEmail(notification.getRecipientEmail())
+                .build();
+    }
+
 
     public Notification toEntity(AnyOfNotificationQueueDTO anyOfNotificationQueueDTO){
       Notification notification = Notification.builder().build();
@@ -37,4 +52,28 @@ public class NotificationMapper {
       return notification;
     }
 
+    public Notification createNotificationFromNotificationReminderQuequeDTO(EmailMessageDTO emailMessageDTO,
+                                                                             NotificationReminderQueueDTO notificationReminderQueueDTO){
+
+        Notification notification = toEntity(notificationReminderQueueDTO);
+        notification.setTemplateName(emailMessageDTO.getTemplateName());
+        notification.setTemplateValues(emailMessageDTO.getTemplateValues());
+        notification.setSubject(emailMessageDTO.getSubject());
+        notification.setContent(emailMessageDTO.getContent());
+        notification.setSenderEmail(emailMessageDTO.getSenderEmail());
+        notification.setRecipientEmail(emailMessageDTO.getRecipientEmail());
+        return notification;
+    }
+
+    public Notification createNotificationFromEmailMessageDTO(EmailMessageDTO emailMessageDTO, EvaluationDTO evaluationDTO){
+
+        Notification notification = evaluationToNotification(evaluationDTO);
+        notification.setTemplateName(emailMessageDTO.getTemplateName());
+        notification.setTemplateValues(emailMessageDTO.getTemplateValues());
+        notification.setSubject(emailMessageDTO.getSubject());
+        notification.setContent(emailMessageDTO.getContent());
+        notification.setSenderEmail(emailMessageDTO.getSenderEmail());
+        notification.setRecipientEmail(emailMessageDTO.getRecipientEmail());
+        return notification;
+    }
 }

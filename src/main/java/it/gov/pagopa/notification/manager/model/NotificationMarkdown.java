@@ -5,6 +5,7 @@ import it.gov.pagopa.notification.manager.dto.EvaluationDTO;
 import it.gov.pagopa.notification.manager.dto.OnboardingRejectionReason;
 import it.gov.pagopa.notification.manager.dto.OnboardingRejectionReason.OnboardingRejectionReasonType;
 import lombok.Getter;
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -18,6 +19,8 @@ import java.util.List;
 
 @Component
 @Slf4j
+@Getter
+@Setter
 public class NotificationMarkdown {
   private static final List<OnboardingRejectionReasonType> ONBOARDING_KO_TYPE_GENERIC_MARKDOWN_NO_RETRY =
           List.of(OnboardingRejectionReasonType.AUTOMATED_CRITERIA_FAIL,
@@ -113,22 +116,13 @@ public class NotificationMarkdown {
   @Value("${notification.manager.markdown.ko.rejected.noRetry}")
   private String markdownKoRejectedNoRetry;
 
+  @Value("${notification.manager.subject.ok-reminder-bel}")
+  private String subjectReminderBel;
+  @Value("${notification.manager.markdown.ok-reminder-bel}")
+  private String markdownReminderBel;
+
   @Value("${notification.manager.markdown.ko.generic}")
   private String markdownKoGeneric;
-
-  @Value("${notification.manager.subject.ok.type2}")
-  private String subjectOkType2;
-
-  @Value("${notification.manager.markdown.ok.type2}")
-  private String markdownOkType2;
-
-  public String getSubjectCheckIbanKo() {
-    return this.subjectCheckIbanKo;
-  }
-
-  public String getMarkdownCheckIbanKo() {
-    return this.markdownCheckIbanKo;
-  }
 
   public String getSubjectRefund(String status) {
     return ("ACCEPTED".equals(status)) ? subjectRefundOk : subjectRefundKo;
@@ -146,12 +140,6 @@ public class NotificationMarkdown {
   }
 
   public String getSubject(EvaluationDTO evaluationDTO) {
-    if(NotificationConstants.STATUS_ONBOARDING_OK.equals(evaluationDTO.getStatus())
-            && NotificationConstants.ORGANIZATION_NAME_TYPE2.equalsIgnoreCase(evaluationDTO.getOrganizationName())
-            && evaluationDTO.getInitiativeName().toLowerCase().contains(NotificationConstants.INITIATIVE_NAME_TYPE2_CHECK)){
-      return this.subjectOkType2;
-    }
-
     if(NotificationConstants.STATUS_ONBOARDING_OK.equals(evaluationDTO.getStatus())  || NotificationConstants.STATUS_ONBOARDING_JOINED.equals(evaluationDTO.getStatus())){
       return this.subjectOk;
     }
@@ -165,13 +153,6 @@ public class NotificationMarkdown {
   }
 
   public String getSubject(Notification notification) {
-
-    if(NotificationConstants.STATUS_ONBOARDING_OK.equals(notification.getOnboardingOutcome())
-            && NotificationConstants.ORGANIZATION_NAME_TYPE2.equalsIgnoreCase(notification.getOrganizationName())
-            && notification.getInitiativeName().toLowerCase().contains(NotificationConstants.INITIATIVE_NAME_TYPE2_CHECK)){
-      return this.subjectOkType2;
-    }
-
     return notification.getOnboardingOutcome().equals(NotificationConstants.STATUS_ONBOARDING_OK)||
             notification.getOnboardingOutcome().equals(NotificationConstants.STATUS_ONBOARDING_JOINED)
         ? this.subjectOk
@@ -191,15 +172,6 @@ public class NotificationMarkdown {
   }
 
   public String getMarkdown(EvaluationDTO evaluationDTO) {
-
-    if(NotificationConstants.STATUS_ONBOARDING_OK.equals(evaluationDTO.getStatus())
-            && NotificationConstants.ORGANIZATION_NAME_TYPE2.equalsIgnoreCase(evaluationDTO.getOrganizationName())
-            && evaluationDTO.getInitiativeName().toLowerCase().contains(NotificationConstants.INITIATIVE_NAME_TYPE2_CHECK)){
-      return replaceMessageItem(markdownOkType2,
-              NotificationConstants.INITIATIVE_NAME_KEY,
-              evaluationDTO.getInitiativeName());
-    }
-
     if (NotificationConstants.STATUS_ONBOARDING_OK.equals(evaluationDTO.getStatus())
             || NotificationConstants.STATUS_ONBOARDING_JOINED.equals(evaluationDTO.getStatus())){
       return replaceMessageItem(
@@ -224,14 +196,6 @@ public class NotificationMarkdown {
   }
 
   public String getMarkdown(Notification notification) {
-    if(NotificationConstants.STATUS_ONBOARDING_OK.equals(notification.getOnboardingOutcome())
-            && NotificationConstants.ORGANIZATION_NAME_TYPE2.equalsIgnoreCase(notification.getOrganizationName())
-            && notification.getInitiativeName().toLowerCase().contains(NotificationConstants.INITIATIVE_NAME_TYPE2_CHECK)){
-      return replaceMessageItem(markdownOkType2,
-              NotificationConstants.INITIATIVE_NAME_KEY,
-              notification.getInitiativeName());
-    }
-
     return notification.getOnboardingOutcome().equals(NotificationConstants.STATUS_ONBOARDING_OK) ||
             notification.getOnboardingOutcome().equals(NotificationConstants.STATUS_ONBOARDING_JOINED)
         ? replaceMessageItem(
@@ -364,14 +328,7 @@ public class NotificationMarkdown {
     return replaceMessageItem(this.subjectSuspension, NotificationConstants.INITIATIVE_NAME_KEY, initiativeName);
   }
 
-  public String getMarkdownSuspension() {
-    return this.markdownSuspension;
-  }
   public String getSubjectReadmission(String initiativeName) {
     return replaceMessageItem(this.subjectReadmission, NotificationConstants.INITIATIVE_NAME_KEY, initiativeName);
-  }
-
-  public String getMarkdownReadmission() {
-    return this.markdownReadmission;
   }
 }
