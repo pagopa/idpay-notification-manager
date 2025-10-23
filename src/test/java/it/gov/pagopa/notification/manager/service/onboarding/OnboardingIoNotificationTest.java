@@ -28,6 +28,7 @@ import java.util.Map;
 import static it.gov.pagopa.notification.manager.dto.OnboardingRejectionReason.OnboardingRejectionReasonCode.FAMILY_CRITERIA_FAIL;
 import static it.gov.pagopa.notification.manager.dto.OnboardingRejectionReason.OnboardingRejectionReasonCode.REJECTION_REASON_INITIATIVE_ENDED;
 import static it.gov.pagopa.notification.manager.enums.Channel.IO;
+import static org.mockito.ArgumentMatchers.eq;
 
 @ExtendWith(MockitoExtension.class)
 class OnboardingIoNotificationTest {
@@ -154,7 +155,7 @@ class OnboardingIoNotificationTest {
                                 action: "ioit://idpay/initiative/INITIATIVE_ID"
 
 
-                Buone notizie! Hai ottenuto il INITIATIVE_NAME da 200€. sarà valido **per i prossimi 10 giorni**.
+                Buone notizie! Hai ottenuto il INITIATIVE_NAME da 200€. Sarà valido **per i prossimi 15 giorni**.
 
                 È disponibile ora nella sezione Portafoglio, dove troverai i dettagli dell'importo e la validità.
 
@@ -169,7 +170,7 @@ class OnboardingIoNotificationTest {
                 **Importante:** ricorda che puoi usare il bonus solo se hai un vecchio elettrodomestico da smaltire. Concorda con il venditore quando e come consegnarlo, ma non smaltirlo autonomamente in discarica.""";
 
         Mockito.verify(ioBackEndRestConnectorMock, Mockito.times(1))
-                .notify(Mockito.argThat(notificationDTO -> notificationDTO.getContent().getMarkdown().equals(expectedMarkdown)), Mockito.anyString());
+                .notify(Mockito.argThat(notificationDTO -> notificationDTO.getContent().getMarkdown().equals(expectedMarkdown)), eq("IO_TOKEN"));
 
         Assertions.assertNotNull(result);
         Assertions.assertEquals(MESSAGE_ID, result);
@@ -209,7 +210,7 @@ class OnboardingIoNotificationTest {
                                 action: "ioit://idpay/initiative/INITIATIVE_ID"
 
 
-                Buone notizie! Hai ottenuto il INITIATIVE_NAME da 100€. sarà valido **per i prossimi 10 giorni**.
+                Buone notizie! Hai ottenuto il INITIATIVE_NAME da 100€. Sarà valido **per i prossimi 15 giorni**.
 
                 È disponibile ora nella sezione Portafoglio, dove troverai i dettagli dell'importo e la validità.
 
@@ -265,7 +266,7 @@ class OnboardingIoNotificationTest {
                                 action: "ioit://idpay/initiative/INITIATIVE_ID"
 
 
-                Buone notizie! Hai ottenuto il INITIATIVE_NAME da N.A.€. sarà valido **per i prossimi 10 giorni**.
+                Buone notizie! Hai ottenuto il INITIATIVE_NAME da N.A.€. Sarà valido **per i prossimi 15 giorni**.
 
                 È disponibile ora nella sezione Portafoglio, dove troverai i dettagli dell'importo e la validità.
 
