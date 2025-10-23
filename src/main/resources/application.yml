@@ -232,7 +232,7 @@ notification:
         
         }
       ok-bel: |-
-        ${MARKDOWN_OK_BEL:Buone notizie! Hai ottenuto il %initiativeName% da %rewardAmount%€. sarà valido **per i prossimi 15 giorni**.
+        ${MARKDOWN_OK_BEL:Buone notizie! Hai ottenuto il %initiativeName% da %rewardAmount%€. Sarà valido **per i prossimi 15 giorni**.
 
         È disponibile ora nella sezione Portafoglio, dove troverai i dettagli dell'importo e la validità.
 
