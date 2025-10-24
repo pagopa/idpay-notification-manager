@@ -2,11 +2,8 @@ package it.gov.pagopa.notification.manager.controller.onboarding;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import it.gov.pagopa.notification.manager.constants.NotificationConstants;
-import it.gov.pagopa.notification.manager.controller.WebNotificationManagerController;
 import it.gov.pagopa.notification.manager.dto.EvaluationDTO;
-import it.gov.pagopa.notification.manager.dto.event.NotificationReminderQueueDTO;
-import it.gov.pagopa.notification.manager.enums.Channel;
-import it.gov.pagopa.notification.manager.service.WebNotificationManagerService;
+import it.gov.pagopa.notification.manager.service.onboarding.OnboardingIoNotificationImpl;
 import it.gov.pagopa.notification.manager.service.onboarding.OnboardingWebNotificationImpl;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -16,16 +13,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -45,6 +36,8 @@ class OnboardingNotificationControllerTest {
   private static final LocalDate TEST_DATE = LocalDate.now();
 
   private static final String ORGANIZATION_NAME = "ORGANIZATION_NAME";
+
+  private static final String FISCAL_CODE = "FISCAL_CODE";
   private static final EvaluationDTO EVALUATION_DTO =
           new EvaluationDTO(
                   USER_ID,
@@ -64,13 +57,15 @@ class OnboardingNotificationControllerTest {
                   IO,
                   null,
                   null,
-                  null,
+                  FISCAL_CODE,
                   null
           );
 
 
   @MockBean
   OnboardingWebNotificationImpl onboardingWebNotificationImplMock;
+  @MockBean
+  OnboardingIoNotificationImpl onboardingIoNotificationImplMock;
 
   @Autowired protected MockMvc mvc;
 
@@ -79,15 +74,28 @@ class OnboardingNotificationControllerTest {
 
 
 @Test
-void processNotification_ok() throws Exception {
+void processWebNotification_ok() throws Exception {
 
   Mockito.when(onboardingWebNotificationImplMock.processNotification(EVALUATION_DTO)).thenReturn("OK");
 
 
-  mvc.perform(MockMvcRequestBuilders.put(BASE_URL + "processNotification")
+  mvc.perform(MockMvcRequestBuilders.put(BASE_URL + "processWebNotification")
                   .contentType(MediaType.APPLICATION_JSON)
                   .content(objectMapper.writeValueAsString(EVALUATION_DTO)))
           .andExpect(MockMvcResultMatchers.status().isOk())
           .andReturn();
 }
+
+  @Test
+  void processIoNotification_ok() throws Exception {
+
+    Mockito.when(onboardingIoNotificationImplMock.processNotification(EVALUATION_DTO)).thenReturn("OK");
+
+
+    mvc.perform(MockMvcRequestBuilders.put(BASE_URL + "processIoNotification")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(EVALUATION_DTO)))
+            .andExpect(MockMvcResultMatchers.status().isOk())
+            .andReturn();
+  }
 }
