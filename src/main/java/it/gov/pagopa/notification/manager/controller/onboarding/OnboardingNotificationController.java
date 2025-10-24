@@ -11,8 +11,10 @@ public interface OnboardingNotificationController {
   /**
    * Add a new operation to the Outcomes Queue
    */
-  @PutMapping("/processNotification")
-  ResponseEntity<Void> processNotification(@RequestBody EvaluationDTO body);
+  @PutMapping("/processWebNotification")
+  ResponseEntity<Void> processWebNotification(@RequestBody EvaluationDTO body);
 
+  @PutMapping("/processIoNotification")
+  ResponseEntity<Void> processIoNotification(@RequestBody EvaluationDTO body);
 
 }
