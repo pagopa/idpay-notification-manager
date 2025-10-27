@@ -134,17 +134,20 @@ public class NotificationManagerServiceImpl implements NotificationManagerServic
         try {
             ioTokens = initiativeRestConnector.getIOTokens(evaluationDTO.getInitiativeId());
         } catch (FeignException e) {
+            log.error("[NOTIFY][ONBOARDING_STATUS] Failed to retrieve ioTokens from initiative service.");
             notificationKO(notification, startTime);
             return;
         }
 
         if (ioTokens == null) {
+            log.error("[NOTIFY][ONBOARDING_STATUS] ioTokens must not be null");
             notificationKO(notification, startTime);
             return;
         }
 
         String fiscalCode = decryptUserToken(evaluationDTO.getUserId());
         if (fiscalCode == null || isNotSenderAllowed(fiscalCode, ioTokens.getPrimaryKey())) {
+            log.error("[NOTIFY][ONBOARDING_STATUS] Invalid fiscal code or notifications not allowed for this user.");
             notificationKO(notification, startTime);
             return;
         }
@@ -154,6 +157,7 @@ public class NotificationManagerServiceImpl implements NotificationManagerServic
         String notificationId = onboardingIoNotification.processNotification(evaluationDTO);
 
         if (notificationId == null) {
+            log.error("[NOTIFY][ONBOARDING_STATUS] Failed to send onboarding status notification.");
             notificationKO(notification, startTime);
             return;
         }
