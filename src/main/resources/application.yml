@@ -377,7 +377,7 @@ notification:
       suspension: ${SUBJECT_SUSPENSION:Sospensione temporanea da iniziativa %initiativeName%}
       readmission: ${SUBJECT_READMISSION:Riammissione a iniziativa %initiativeName%}
     recover:
-      schedule: ${SCHEDULE_RECOVER_KO_NOTIFICATION:0 0 * ? * *} # every hour
+      schedule: ${SCHEDULE_RECOVER_KO_NOTIFICATION:0 0 0/6 ? * *} # every six hours
       parallelism: ${RECOVER_PARALLELISM_THREADS:7}
       minutes-before: ${STUCK_RECOVERS_MINUTES_BEFORE:1440}
       max-retries: ${RECOVER_MAX_RETRIES:3}
