@@ -110,7 +110,7 @@ public class OnboardingIoNotificationImpl extends BaseOnboardingNotification<Not
         try {
             NotificationResource notificationResource =
                     ioBackEndRestConnector.notify(notificationToSend, evaluationDTO.getIoToken());
-            log.info("[NOTIFY] Notification sent");
+            log.info("[NOTIFY] [ONBOARDING_STATUS_OK] Notification sent with id {}", notificationResource.getId());
             return notificationResource.getId();
         } catch (FeignException e) {
             log.error("[NOTIFY] [{}] Cannot send notification: {}", e.status(), e.contentUTF8());
