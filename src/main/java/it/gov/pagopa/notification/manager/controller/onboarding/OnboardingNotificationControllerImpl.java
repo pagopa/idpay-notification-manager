@@ -37,6 +37,4 @@ public class OnboardingNotificationControllerImpl implements OnboardingNotificat
     return new ResponseEntity<>(HttpStatus.OK);
   }
 
-
-  
 }
