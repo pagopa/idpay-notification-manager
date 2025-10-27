@@ -73,6 +73,7 @@ public class OnboardingIoNotificationImpl extends BaseOnboardingNotification<Not
 
     @Override
     protected NotificationDTO generateOnboardingOkNotification(boolean isPartial, EvaluationDTO evaluationDTO) {
+        log.info("[NOTIFY][ONBOARDING_STATUS_OK] Starting onboarding notification process. Beneficiary reward is{} partial.", isPartial ? "" : " not");
         String subject = isPartial ? notificationProperties.getSubject().getOkPartialBel() : notificationProperties.getSubject().getOkBel();
         String markdown = replaceMessageItem(
                 notificationProperties.getMarkdown().getOkCta(),
@@ -109,7 +110,7 @@ public class OnboardingIoNotificationImpl extends BaseOnboardingNotification<Not
         try {
             NotificationResource notificationResource =
                     ioBackEndRestConnector.notify(notificationToSend, evaluationDTO.getIoToken());
-            log.info("[NOTIFY] Notification sent");
+            log.info("[NOTIFY] [ONBOARDING_STATUS_OK] Notification sent with id {}", notificationResource.getId());
             return notificationResource.getId();
         } catch (FeignException e) {
             log.error("[NOTIFY] [{}] Cannot send notification: {}", e.status(), e.contentUTF8());
