@@ -246,7 +246,7 @@ notification:
 
         **Importante:** ricorda che puoi usare il bonus solo se hai un vecchio elettrodomestico da smaltire. Concorda con il venditore quando e come consegnarlo, ma non smaltirlo autonomamente in discarica.
         
-        **[Dove puoi spenderlo?] (https://bonuselettrodomestici.it/lista-punti-vendita)**}
+        **[Dove puoi spenderlo?](https://bonuselettrodomestici.it/lista-punti-vendita)**}
       ok-partial-bel: |-
         ${MARKDOWN_OK_PARTIAL:Dopo le verifiche con INPS, il tuo ISEE risulta difforme o diverso da quanto dichiarato. Per questo motivo, non è possibile assegnarti il bonus da 200€ che avevi richiesto, ma hai ottenuto comunque il **bonus di 100€.**
 
@@ -262,7 +262,7 @@ notification:
 
         **Importante:** ricorda che puoi usare il bonus solo se hai un vecchio elettrodomestico da smaltire. Concorda con il venditore quando e come consegnarlo, ma non smaltirlo autonomamente in discarica.
         
-        **[Dove puoi spenderlo?] (https://bonuselettrodomestici.it/lista-punti-vendita)**}
+        **[Dove puoi spenderlo?](https://bonuselettrodomestici.it/lista-punti-vendita)**}
       ok: |-
         ${MARKDOWN_OK:Buone notizie! Hai ottenuto %initiativeName%. Da questo momento puoi visualizzare il bonus nella sezione Portafoglio dell'app IO.
 
