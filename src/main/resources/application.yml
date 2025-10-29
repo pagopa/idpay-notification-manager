@@ -244,9 +244,7 @@ notification:
 
         Per avere più informazioni su come e dove usare il bonus, [leggi i dettagli](https://ioapp.it/bonus-elettrodomestici).
 
-        **Importante:** ricorda che puoi usare il bonus solo se hai un vecchio elettrodomestico da smaltire. Concorda con il venditore quando e come consegnarlo, ma non smaltirlo autonomamente in discarica.
-        
-        [Dove puoi spenderlo?](https://bonuselettrodomestici.it/lista-punti-vendita)}
+        **Importante:** ricorda che puoi usare il bonus solo se hai un vecchio elettrodomestico da smaltire. Concorda con il venditore quando e come consegnarlo, ma non smaltirlo autonomamente in discarica.}
       ok-partial-bel: |-
         ${MARKDOWN_OK_PARTIAL:Dopo le verifiche con INPS, il tuo ISEE risulta difforme o diverso da quanto dichiarato. Per questo motivo, non è possibile assegnarti il bonus da 200€ che avevi richiesto, ma hai ottenuto comunque il **bonus di 100€.**
 
@@ -260,9 +258,7 @@ notification:
 
         Per avere più informazioni su come e dove usare il bonus, [leggi i dettagli](https://ioapp.it/bonus-elettrodomestici).
 
-        **Importante:** ricorda che puoi usare il bonus solo se hai un vecchio elettrodomestico da smaltire. Concorda con il venditore quando e come consegnarlo, ma non smaltirlo autonomamente in discarica.
-        
-        [Dove puoi spenderlo?](https://bonuselettrodomestici.it/lista-punti-vendita)}
+        **Importante:** ricorda che puoi usare il bonus solo se hai un vecchio elettrodomestico da smaltire. Concorda con il venditore quando e come consegnarlo, ma non smaltirlo autonomamente in discarica.}
       ok: |-
         ${MARKDOWN_OK:Buone notizie! Hai ottenuto %initiativeName%. Da questo momento puoi visualizzare il bonus nella sezione Portafoglio dell'app IO.
 
@@ -323,10 +319,16 @@ notification:
             cta_1: 
                 text: "Vai al bonus"
                 action: "ioit://idpay/initiative/%initiativeId%"
+            cta_2: 
+                text: "Dove puoi spenderlo?"
+                action: "iohandledlink://https://bonuselettrodomestici.it/lista-punti-vendita"
         en:
             cta_1: 
                 text: "Go to the bonus page"
                 action: "ioit://idpay/initiative/%initiativeId%"
+            cta_2: 
+                text: "Where can you spend it?"
+                action: "iohandledlink://https://bonuselettrodomestici.it/lista-punti-vendita"
         ---}
       ok.cta: |-
         ${MARKDOWN_OK_CTA:---
@@ -334,10 +336,16 @@ notification:
             cta_1: 
                 text: "Vai al bonus"
                 action: "ioit://idpay/initiative/%initiativeId%"
+            cta_2: 
+                text: "Dove puoi spenderlo?"
+                action: "iohandledlink://https://bonuselettrodomestici.it/lista-punti-vendita"
         en:
             cta_1: 
                 text: "Go to the bonus page"
                 action: "ioit://idpay/initiative/%initiativeId%"
+            cta_2: 
+                text: "Where can you spend it?"
+                action: "iohandledlink://https://bonuselettrodomestici.it/lista-punti-vendita"
         ---}
       demanded: |-
         ${MARKDOWN_DEMANDED:Buone notizie! Grazie ad un tuo familiare puoi ottenere %initiativeName%.
