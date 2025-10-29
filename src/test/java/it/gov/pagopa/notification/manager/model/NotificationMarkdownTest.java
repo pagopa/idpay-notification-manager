@@ -35,15 +35,15 @@ class NotificationMarkdownTest {
                     text: "Vai al bonus"
                     action: "ioit://idpay/initiative/%s"
                 cta_2:\s
-                  text: "Dove puoi spenderlo?"
-                  action: "iohandledlink://https://bonuselettrodomestici.it/lista-punti-vendita"
+                    text: "Dove puoi spenderlo?"
+                    action: "iohandledlink://https://bonuselettrodomestici.it/lista-punti-vendita"
             en:
                 cta_1:\s
                     text: "Go to the bonus page"
                     action: "ioit://idpay/initiative/%s"
-                 cta_2:\s
-                  text: "Dove puoi spenderlo?"
-                  action: "iohandledlink://https://bonuselettrodomestici.it/lista-punti-vendita"
+                cta_2:\s
+                    text: "Where can you spend it?"
+                    action: "iohandledlink://https://bonuselettrodomestici.it/lista-punti-vendita"
             ---
                         
             Buone notizie! Hai ottenuto %s. Da questo momento puoi visualizzare il bonus nella sezione Portafoglio dell'app IO.
