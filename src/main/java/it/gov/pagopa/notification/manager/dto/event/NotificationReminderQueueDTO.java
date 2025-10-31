@@ -7,6 +7,8 @@ import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 
+import java.time.LocalDate;
+
 @Data
 @EqualsAndHashCode(callSuper = true)
 @SuperBuilder
@@ -18,5 +20,6 @@ public class NotificationReminderQueueDTO extends NotificationQueueDTO {
     private String name;
     private String surname;
     private String userMail;
-    private String voucherEndDate;
+    private LocalDate voucherEndDate;
+    private int expiringDay;
 }

@@ -13,7 +13,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 
 import static it.gov.pagopa.notification.manager.constants.NotificationConstants.EmailTemplates.EMAIL_OUTCOME_THREE_DAY_REMINDER;
@@ -39,9 +41,13 @@ public class WebNotificationManagerServiceImpl implements  WebNotificationManage
 
     @Override
     public void sendReminderMail(NotificationReminderQueueDTO notificationQueueDTO) {
+
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd MMMM yyyy").withLocale(Locale.ITALIAN);
+
         Map<String, String> templateValues = new HashMap<>();
         templateValues.put("name", notificationQueueDTO.getName());
-        templateValues.put("voucherEndDate", notificationQueueDTO.getVoucherEndDate().toString());
+        templateValues.put("voucherEndDate", notificationQueueDTO.getVoucherEndDate().format(formatter));
+        templateValues.put("expiringDay",String.valueOf(notificationQueueDTO.getExpiringDay()));
 
         EmailMessageDTO emailMessageDTO = EmailMessageDTO.builder()
                 .templateName(EMAIL_OUTCOME_THREE_DAY_REMINDER)
