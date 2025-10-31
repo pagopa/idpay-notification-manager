@@ -18,4 +18,5 @@ public class NotificationReminderQueueDTO extends NotificationQueueDTO {
     private String name;
     private String surname;
     private String userMail;
+    private String voucherEndDate;
 }

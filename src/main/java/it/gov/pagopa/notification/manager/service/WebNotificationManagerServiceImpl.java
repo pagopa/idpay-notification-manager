@@ -41,6 +41,7 @@ public class WebNotificationManagerServiceImpl implements  WebNotificationManage
     public void sendReminderMail(NotificationReminderQueueDTO notificationQueueDTO) {
         Map<String, String> templateValues = new HashMap<>();
         templateValues.put("name", notificationQueueDTO.getName());
+        templateValues.put("voucherEndDate", notificationQueueDTO.getVoucherEndDate().toString());
 
         EmailMessageDTO emailMessageDTO = EmailMessageDTO.builder()
                 .templateName(EMAIL_OUTCOME_THREE_DAY_REMINDER)
