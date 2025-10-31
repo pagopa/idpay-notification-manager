@@ -277,14 +277,14 @@ notification:
         
         **Hai domande?**
         
-        Per avere più dettagli su come e dove usare il bonus, ovare maggiori informazioni [leggi la guida](http://www.google.com/).}
+        Per avere più dettagli su come e dove usare il bonus, o avere maggiori informazioni [leggi la guida](https://bonuselettrodomestici.it).}
 
       joined-bel: |-
         ${MARKDOWN_JOINED_BEL:La tua richiesta per il Bonus Elettrodomestici non può essere elaborata. Un'altra persona che fa parte della tua famiglia ha già presentato richiesta.
 
         È possibile inviare **una sola richiesta per ogni famiglia anagrafica.**
 
-        Per avere più dettagli sui requisiti del bonus, [leggi come fare](http://www.google.com/).}
+        Per avere più dettagli sui requisiti del bonus, [leggi come fare](https://bonuselettrodomestici.it).}
 
       ko-generic-bel: |-
         ${MARKDOWN_KO_GENERIC_BEL:Purtroppo la tua richiesta per il Bonus Elettrodomestici non è stata accettata.
