@@ -15,6 +15,9 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+
 import static it.gov.pagopa.notification.manager.constants.NotificationConstants.EmailTemplates.EMAIL_OUTCOME_THREE_DAY_REMINDER;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -53,6 +56,7 @@ class WebNotificationManagerServiceImplTest {
         when(dto.getName()).thenReturn("Mario");
         when(dto.getUserMail()).thenReturn("mario.rossi@example.com");
         when(dto.getUserId()).thenReturn("USER123");
+        when(dto.getVoucherEndDate()).thenReturn(LocalDate.now());
 
         when(notificationMapper.createNotificationFromNotificationReminderQuequeDTO(any(EmailMessageDTO.class),
                 any(NotificationReminderQueueDTO.class))).thenReturn(NOTIFICATION);
@@ -78,6 +82,8 @@ class WebNotificationManagerServiceImplTest {
     @Test
     void sendReminderMail_doesNotPropagateException() {
         NotificationReminderQueueDTO dto = Mockito.mock(NotificationReminderQueueDTO.class);
+
+        when(dto.getVoucherEndDate()).thenReturn(LocalDate.now());
 
         when(notificationMapper.createNotificationFromNotificationReminderQuequeDTO(any(EmailMessageDTO.class),
                 any(NotificationReminderQueueDTO.class))).thenReturn(NOTIFICATION);
