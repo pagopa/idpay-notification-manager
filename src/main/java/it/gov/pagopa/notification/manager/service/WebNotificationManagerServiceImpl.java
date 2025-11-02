@@ -11,6 +11,7 @@ import it.gov.pagopa.notification.manager.model.Notification;
 import it.gov.pagopa.notification.manager.repository.NotificationManagerRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -47,17 +48,24 @@ public class WebNotificationManagerServiceImpl implements  WebNotificationManage
         Map<String, String> templateValues = new HashMap<>();
         templateValues.put("name", notificationQueueDTO.getName());
         templateValues.put("voucherEndDate", notificationQueueDTO.getVoucherEndDate().format(formatter));
-        templateValues.put("expiringDay",String.valueOf(notificationQueueDTO.getExpiringDay()));
 
         EmailMessageDTO emailMessageDTO = EmailMessageDTO.builder()
                 .templateName(EMAIL_OUTCOME_THREE_DAY_REMINDER)
                 .recipientEmail(notificationQueueDTO.getUserMail())
                 .senderEmail(null)
                 .templateValues(templateValues)
-                .subject(emailNotificationProperties.getSubject().getOkThreeDayReminder())
+                .subject(replaceMessageItem(emailNotificationProperties.getSubject().getOkThreeDayReminder(),
+                        NotificationConstants.EXPIRING_DAY_KEY,
+                        String.valueOf(notificationQueueDTO.getExpiringDay())))
                 .content(null)
                 .build();
         sendNotification(emailMessageDTO, notificationQueueDTO);
+    }
+
+    private String replaceMessageItem(String message, String key, String value) {
+        return message.replace(
+                NotificationConstants.MARKDOWN_TAG + key + NotificationConstants.MARKDOWN_TAG,
+                StringUtils.hasLength(value) ? value : NotificationConstants.MARKDOWN_NA);
     }
 
     void sendNotification(EmailMessageDTO notificationToSend, NotificationReminderQueueDTO notificationQueueDTO) {
