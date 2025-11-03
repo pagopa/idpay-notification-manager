@@ -15,6 +15,9 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+
 import static it.gov.pagopa.notification.manager.constants.NotificationConstants.EmailTemplates.EMAIL_OUTCOME_THREE_DAY_REMINDER;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -42,7 +45,7 @@ class WebNotificationManagerServiceImplTest {
 
     @BeforeEach
     void setUp() {
-        subjectProps.setOkThreeDayReminder("Il tuo bonus scade tra 3 giorni!");
+        subjectProps.setOkThreeDayReminder("Il tuo bonus sta per scadere!");
         emailNotificationProperties.setSubject(subjectProps);
         service = new WebNotificationManagerServiceImpl(emailNotificationConnector, emailNotificationProperties, notificationManagerRepository, notificationMapper);
     }
@@ -53,6 +56,7 @@ class WebNotificationManagerServiceImplTest {
         when(dto.getName()).thenReturn("Mario");
         when(dto.getUserMail()).thenReturn("mario.rossi@example.com");
         when(dto.getUserId()).thenReturn("USER123");
+        when(dto.getVoucherEndDate()).thenReturn(LocalDate.now());
 
         when(notificationMapper.createNotificationFromNotificationReminderQuequeDTO(any(EmailMessageDTO.class),
                 any(NotificationReminderQueueDTO.class))).thenReturn(NOTIFICATION);
@@ -67,7 +71,7 @@ class WebNotificationManagerServiceImplTest {
         assertNotNull(sent);
         assertEquals(EMAIL_OUTCOME_THREE_DAY_REMINDER, sent.getTemplateName(), "Template name errato");
         assertEquals("mario.rossi@example.com", sent.getRecipientEmail(), "Recipient errato");
-        assertEquals("Il tuo bonus scade tra 3 giorni!", sent.getSubject(), "Subject errato");
+        assertEquals("Il tuo bonus sta per scadere!", sent.getSubject(), "Subject errato");
         assertNull(sent.getSenderEmail(), "Sender email deve essere null");
         assertNull(sent.getContent(), "Content deve essere null");
 
@@ -78,6 +82,8 @@ class WebNotificationManagerServiceImplTest {
     @Test
     void sendReminderMail_doesNotPropagateException() {
         NotificationReminderQueueDTO dto = Mockito.mock(NotificationReminderQueueDTO.class);
+
+        when(dto.getVoucherEndDate()).thenReturn(LocalDate.now());
 
         when(notificationMapper.createNotificationFromNotificationReminderQuequeDTO(any(EmailMessageDTO.class),
                 any(NotificationReminderQueueDTO.class))).thenReturn(NOTIFICATION);
