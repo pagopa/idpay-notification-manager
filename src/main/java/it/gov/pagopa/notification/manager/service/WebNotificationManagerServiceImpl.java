@@ -54,18 +54,10 @@ public class WebNotificationManagerServiceImpl implements  WebNotificationManage
                 .recipientEmail(notificationQueueDTO.getUserMail())
                 .senderEmail(null)
                 .templateValues(templateValues)
-                .subject(replaceMessageItem(emailNotificationProperties.getSubject().getOkThreeDayReminder(),
-                        NotificationConstants.EXPIRING_DAY_KEY,
-                        String.valueOf(notificationQueueDTO.getExpiringDay())))
+                .subject(emailNotificationProperties.getSubject().getOkThreeDayReminder())
                 .content(null)
                 .build();
         sendNotification(emailMessageDTO, notificationQueueDTO);
-    }
-
-    private String replaceMessageItem(String message, String key, String value) {
-        return message.replace(
-                NotificationConstants.MARKDOWN_TAG + key + NotificationConstants.MARKDOWN_TAG,
-                StringUtils.hasLength(value) ? value : NotificationConstants.MARKDOWN_NA);
     }
 
     void sendNotification(EmailMessageDTO notificationToSend, NotificationReminderQueueDTO notificationQueueDTO) {

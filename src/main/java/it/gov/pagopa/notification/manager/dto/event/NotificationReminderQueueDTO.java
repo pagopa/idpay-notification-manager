@@ -21,5 +21,4 @@ public class NotificationReminderQueueDTO extends NotificationQueueDTO {
     private String surname;
     private String userMail;
     private LocalDate voucherEndDate;
-    private int expiringDay;
 }
