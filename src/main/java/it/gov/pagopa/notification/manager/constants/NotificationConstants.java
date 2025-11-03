@@ -10,6 +10,7 @@ public class NotificationConstants {
   public static final String REWARD_AMOUNT_KEY = "rewardAmount";
   public static final String REASON_KEY = "reason";
   public static final String MANAGED_ENTITY_KEY = "managedEntity";
+  public static final String EXPIRING_DAY_KEY = "expiringDay";
   public static final String MARKDOWN_TAG = "%";
   public static final String MARKDOWN_NA = "N.A.";
   public static final String STATUS_ONBOARDING_KO = "ONBOARDING_KO";
