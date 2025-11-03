@@ -45,7 +45,7 @@ class WebNotificationManagerServiceImplTest {
 
     @BeforeEach
     void setUp() {
-        subjectProps.setOkThreeDayReminder("Il tuo bonus scade tra 3 giorni!");
+        subjectProps.setOkThreeDayReminder("Il tuo bonus sta per scadere!");
         emailNotificationProperties.setSubject(subjectProps);
         service = new WebNotificationManagerServiceImpl(emailNotificationConnector, emailNotificationProperties, notificationManagerRepository, notificationMapper);
     }
@@ -71,7 +71,7 @@ class WebNotificationManagerServiceImplTest {
         assertNotNull(sent);
         assertEquals(EMAIL_OUTCOME_THREE_DAY_REMINDER, sent.getTemplateName(), "Template name errato");
         assertEquals("mario.rossi@example.com", sent.getRecipientEmail(), "Recipient errato");
-        assertEquals("Il tuo bonus scade tra 3 giorni!", sent.getSubject(), "Subject errato");
+        assertEquals("Il tuo bonus sta per scadere!", sent.getSubject(), "Subject errato");
         assertNull(sent.getSenderEmail(), "Sender email deve essere null");
         assertNull(sent.getContent(), "Content deve essere null");
 
