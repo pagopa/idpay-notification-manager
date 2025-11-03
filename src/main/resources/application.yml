@@ -32,7 +32,7 @@ rest-client:
       subject:
         ok: ${SUBJECT_BEL_OK:Hai ottenuto il bonus!}
         partial:  ${SUBJECT_BEL_OK_PARTIAL:Hai ottenuto il bonus!}
-        ok-threeDayReminder: ${SUBJECT_OK_THREE_DAY_REMINDER:Il tuo bonus scade tra 3 giorni!}
+        ok-threeDayReminder: ${SUBJECT_OK_THREE_DAY_REMINDER:Il tuo bonus sta per scadere!}
         ko-familyUnit: ${SUBJECT_KO_FAMILY_UNIT:Il bonus è stato già richiesto}
         ko-thanks: '${SUBJECT_OK_THANKS:Bonus Elettrodomestici: tutti i fondi sono stati assegnati}'
         ko-genericError: ${SUBJECT_KO_GENERIC_ERROR:Non è stato possibile assegnarti il bonus}
@@ -277,14 +277,14 @@ notification:
         
         **Hai domande?**
         
-        Per avere più dettagli su come e dove usare il bonus, ovare maggiori informazioni [leggi la guida](http://www.google.com/).}
+        Per avere più dettagli su come e dove usare il bonus, o avere maggiori informazioni [leggi la guida](https://bonuselettrodomestici.it).}
 
       joined-bel: |-
         ${MARKDOWN_JOINED_BEL:La tua richiesta per il Bonus Elettrodomestici non può essere elaborata. Un'altra persona che fa parte della tua famiglia ha già presentato richiesta.
 
         È possibile inviare **una sola richiesta per ogni famiglia anagrafica.**
 
-        Per avere più dettagli sui requisiti del bonus, [leggi come fare](http://www.google.com/).}
+        Per avere più dettagli sui requisiti del bonus, [leggi come fare](https://bonuselettrodomestici.it).}
 
       ko-generic-bel: |-
         ${MARKDOWN_KO_GENERIC_BEL:Purtroppo la tua richiesta per il Bonus Elettrodomestici non è stata accettata.
@@ -370,7 +370,7 @@ notification:
     subject:
       ok: ${SUBJECT_OK:Il tuo Bonus è attivo}
       ok-bel: ${SUBJECT_OK_BEL:Hai ottenuto il bonus!}
-      ok-reminder-bel: ${SUBJECT_OK_REMINDER_BEL:Il tuo bonus scade tra 3 giorni!}
+      ok-reminder-bel: ${SUBJECT_OK_REMINDER_BEL:Il tuo bonus sta per scadere!}
       ok-partial-bel: ${SUBJECT_OK_PARTIAL_BEL:Hai ottenuto il bonus!}
       ko-generic-bel: ${SUBJECT_KO_GENERIC_BEL:Non è stato possibile assegnarti il bonus}
       ko-thanks-bel: '${SUBJECT_KO_THANKS_BEL:Bonus Elettrodomestici: tutti i fondi sono stati assegnati}'
