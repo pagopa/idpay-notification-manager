@@ -55,7 +55,7 @@ public class OnboardingIoNotificationImpl extends BaseOnboardingNotification<Not
         final boolean initiativeEnded = firstReason != null
                 && REJECTION_REASON_INITIATIVE_ENDED.equals(firstReason.getCode());
 
-        final String markdown = initiativeEnded ? EMAIL_OUTCOME_THANKS : EMAIL_OUTCOME_GENERIC_ERROR;
+        final String markdown = initiativeEnded ? notificationProperties.getMarkdown().getKoThanksBel() : notificationProperties.getMarkdown().getKoGenericBel();
         final String subject  = initiativeEnded
                 ? notificationProperties.getSubject().getKoThanksBel()
                 : notificationProperties.getSubject().getKoGenericBel();
@@ -64,7 +64,6 @@ public class OnboardingIoNotificationImpl extends BaseOnboardingNotification<Not
 
         if (!initiativeEnded && firstReason != null) {
             placeholders = Map.of(
-                    NotificationConstants.REASON_KEY, firstReason.getDetail() != null ? firstReason.getDetail() : "REASON",
                     NotificationConstants.MANAGED_ENTITY_KEY, firstReason.getAuthorityLabel() != null ? firstReason.getAuthorityLabel() : "HELPDESK"
             );
         }
