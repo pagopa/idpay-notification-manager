@@ -64,7 +64,7 @@ public class OnboardingIoNotificationImpl extends BaseOnboardingNotification<Not
 
         if (!initiativeEnded && firstReason != null) {
             placeholders = Map.of(
-                    NotificationConstants.MANAGED_ENTITY_KEY, firstReason.getAuthorityLabel() != null ? firstReason.getAuthorityLabel() : "HELPDESK"
+                    NotificationConstants.MANAGED_ENTITY_KEY, firstReason.getAuthority() != null ? firstReason.getAuthority() : "Assistenza"
             );
         }
         return createNotification(evaluationDTO, subject, markdown, placeholders);
