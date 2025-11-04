@@ -55,7 +55,9 @@ public class OnboardingIoNotificationImpl extends BaseOnboardingNotification<Not
         final boolean initiativeEnded = firstReason != null
                 && REJECTION_REASON_INITIATIVE_ENDED.equals(firstReason.getCode());
 
-        final String markdown = initiativeEnded ? notificationProperties.getMarkdown().getKoThanksBel() : notificationProperties.getMarkdown().getKoGenericBel();
+        final String markdown = initiativeEnded
+                ? notificationProperties.getMarkdown().getKoThanksBel()
+                : notificationProperties.getMarkdown().getKoGenericBel();
         final String subject  = initiativeEnded
                 ? notificationProperties.getSubject().getKoThanksBel()
                 : notificationProperties.getSubject().getKoGenericBel();
