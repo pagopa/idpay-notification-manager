@@ -286,8 +286,7 @@ class OnboardingWebNotificationTest {
         EvaluationDTO evaluationDTO = getEvaluationDto();
         OnboardingRejectionReason rr = OnboardingRejectionReason.builder()
                 .code(ISEE_TYPE_FAIL)
-                .detail(null)
-                .authorityLabel(null)
+                .authority(null)
                 .build();
         evaluationDTO.setOnboardingRejectionReasons(List.of(rr));
 
@@ -303,8 +302,7 @@ class OnboardingWebNotificationTest {
         assertEquals(EMAIL_OUTCOME_GENERIC_ERROR, dto.getTemplateName());
         assertTrue(dto.getTemplateValues().containsKey("name"));
         assertEquals(evaluationDTO.getName(), dto.getTemplateValues().get("name"));
-        assertEquals("REASON", dto.getTemplateValues().get("reason"));
-        assertEquals("HELPDESK", dto.getTemplateValues().get("managedEntity"));
+        assertEquals("Assistenza", dto.getTemplateValues().get("managedEntity"));
     }
 
     @Test
@@ -313,8 +311,7 @@ class OnboardingWebNotificationTest {
         EvaluationDTO evaluationDTO = getEvaluationDto();
         OnboardingRejectionReason rr = OnboardingRejectionReason.builder()
                 .code(ISEE_TYPE_FAIL)
-                .detail("ISEE non valido")
-                .authorityLabel("INPS")
+                .authority("INPS")
                 .build();
         evaluationDTO.setOnboardingRejectionReasons(List.of(rr));
 
@@ -329,7 +326,6 @@ class OnboardingWebNotificationTest {
         assertEquals("SUBJ_KO_GENERIC", dto.getSubject());
         assertEquals(EMAIL_OUTCOME_GENERIC_ERROR, dto.getTemplateName());
         assertEquals(evaluationDTO.getName(), dto.getTemplateValues().get("name"));
-        assertEquals("ISEE non valido", dto.getTemplateValues().get("reason"));
         assertEquals("INPS", dto.getTemplateValues().get("managedEntity"));
     }
 
