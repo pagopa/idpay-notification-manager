@@ -61,7 +61,9 @@ public class OnboardingWebNotificationImpl extends BaseOnboardingNotification<Em
         templateValues.put("name", evaluationDTO.getName());
 
         if (!initiativeEnded && firstReason != null) {
-            templateValues.put("managedEntity", firstReason.getAuthority() != null ? firstReason.getAuthority() : "Assistenza");
+            templateValues.put("managedEntity", firstReason.getAuthority() != null
+                    ? firstReason.getAuthority()
+                    : "Assistenza");
         }
 
         return createNotification(evaluationDTO, subject, template, templateValues);

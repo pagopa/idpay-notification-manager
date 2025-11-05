@@ -66,7 +66,9 @@ public class OnboardingIoNotificationImpl extends BaseOnboardingNotification<Not
 
         if (!initiativeEnded && firstReason != null) {
             placeholders = Map.of(
-                    NotificationConstants.MANAGED_ENTITY_KEY, firstReason.getAuthority() != null ? firstReason.getAuthority() : "Assistenza"
+                    NotificationConstants.MANAGED_ENTITY_KEY, firstReason.getAuthority() != null
+                            ? firstReason.getAuthority()
+                            : "[Assistenza](https://bonus.assistenza.pagopa.it/requests/new?product=prod-bonus-ed)"
             );
         }
         return createNotification(evaluationDTO, subject, markdown, placeholders);
