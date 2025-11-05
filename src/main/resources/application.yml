@@ -289,9 +289,7 @@ notification:
       ko-generic-bel: |-
         ${MARKDOWN_KO_GENERIC_BEL:Purtroppo la tua richiesta per il Bonus Elettrodomestici non è stata accettata.
 
-        Non è stato possibile assegnarti il bonus perché:
-        
-         - %reason%
+        La verifica dei requisiti non è andata a buon fine a causa di problemi di comunicazione con gli enti competenti
 
         **Hai dei dubbi?**
         
