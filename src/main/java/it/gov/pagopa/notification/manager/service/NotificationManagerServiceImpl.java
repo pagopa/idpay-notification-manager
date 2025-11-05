@@ -504,9 +504,10 @@ public class NotificationManagerServiceImpl implements NotificationManagerServic
     }
 
     private void notificationSent(Notification notification, String notificationId) {
-        notification.setNotificationId(notificationId);
-        notification.setNotificationStatus(NotificationConstants.NOTIFICATION_STATUS_OK);
-        notificationManagerRepository.save(notification);
+        //notification.setNotificationId(notificationId);
+        //notification.setNotificationStatus(NotificationConstants.NOTIFICATION_STATUS_OK);
+        //notificationManagerRepository.save(notification);
+        log.info("[SENT_NOTIFICATION_OK] - notificationId: " + notificationId  +" userId: " + notification.getUserId() + "initiaiveId: "  + notification.getInitiativeId());
     }
 
     private void performanceLog(long startTime) {

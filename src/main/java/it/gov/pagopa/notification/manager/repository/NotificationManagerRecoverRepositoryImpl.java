@@ -41,7 +41,7 @@ public class NotificationManagerRecoverRepositoryImpl implements NotificationMan
     private Notification findNewKo(LocalDateTime startTime) {
         Criteria criteria = Criteria.where(Notification.Fields.notificationStatus).is(NotificationConstants.NOTIFICATION_STATUS_KO)
                 .andOperator(
-                        Criteria.where(Notification.Fields.retry).not().gte(maxRetries),
+                        Criteria.where(Notification.Fields.retry).lt(maxRetries),
                         Criteria.where(Notification.Fields.operationType).ne(NotificationConstants.OPERATION_TYPE_REMINDER),
                         new Criteria().orOperator(
                                 Criteria.where(Notification.Fields.retryDate).isNull(),
