@@ -42,8 +42,8 @@ public class NotificationManagerRecoverRepositoryImpl implements NotificationMan
         Criteria criteria = Criteria.where(Notification.Fields.notificationStatus).is(NotificationConstants.NOTIFICATION_STATUS_KO)
                 .andOperator(
                         new Criteria().orOperator(
-                                Criteria.where(Notification.Fields.retry).isNull()),
-                                Criteria.where(Notification.Fields.retry).lt(maxRetries),
+                                Criteria.where(Notification.Fields.retry).isNull(),
+                                Criteria.where(Notification.Fields.retry).lt(maxRetries)),
                         new Criteria().orOperator(
                                 Criteria.where(Notification.Fields.retryDate).isNull(),
                                 Criteria.where(Notification.Fields.retryDate).lt(startTime)
