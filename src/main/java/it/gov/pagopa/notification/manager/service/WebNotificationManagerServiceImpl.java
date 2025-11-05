@@ -63,33 +63,36 @@ public class WebNotificationManagerServiceImpl implements  WebNotificationManage
     void sendNotification(EmailMessageDTO notificationToSend, NotificationReminderQueueDTO notificationQueueDTO) {
         long startTime = System.currentTimeMillis();
         String sanitizedUserId = sanitizeString(notificationQueueDTO.getUserId());
+        String sanitizedInitiativeId = sanitizeString(notificationQueueDTO.getUserId());
         try {
             emailNotificationConnector.sendEmail(notificationToSend);
-            saveNotification(notificationToSend, notificationQueueDTO, NotificationConstants.NOTIFICATION_STATUS_OK, null, startTime);
+            performanceLog(startTime);
+            //saveNotification(notificationToSend, notificationQueueDTO, NotificationConstants.NOTIFICATION_STATUS_OK, null, startTime);
         } catch (Exception e) {
-            log.error("[NOTIFY] Failed to send email notification for user {}", sanitizedUserId, e);
-            saveNotification(notificationToSend, notificationQueueDTO, NotificationConstants.NOTIFICATION_STATUS_KO, LocalDateTime.now(), startTime);
+            log.error("[NOTIFY] Failed to send email notification for user {} and initiative {}", sanitizedUserId, sanitizedInitiativeId, e);
+            performanceLog(startTime);
+            //saveNotification(notificationToSend, notificationQueueDTO, NotificationConstants.NOTIFICATION_STATUS_KO, LocalDateTime.now(), startTime);
         }
     }
 
-    private void saveNotification(EmailMessageDTO emailMessageDTO,
-                                  NotificationReminderQueueDTO notificationReminderQueueDTO,
-                                  String notificationStatus,
-                                  LocalDateTime statusKoTimeStamp,
-                                  long startTime){
-        if (notificationReminderQueueDTO == null) {
-            return;
-        }
-        Notification notification = notificationMapper.createNotificationFromNotificationReminderQuequeDTO(emailMessageDTO,
-                notificationReminderQueueDTO);
-        notification.setNotificationStatus(notificationStatus);
-        if(statusKoTimeStamp != null){
-            notification.setStatusKoTimestamp(statusKoTimeStamp);
-        }
-
-        notificationManagerRepository.save(notification);
-        performanceLog(startTime);
-    }
+    //private void saveNotification(EmailMessageDTO emailMessageDTO,
+    //                              NotificationReminderQueueDTO notificationReminderQueueDTO,
+    //                              String notificationStatus,
+    //                              LocalDateTime statusKoTimeStamp,
+    //                              long startTime){
+    //    if (notificationReminderQueueDTO == null) {
+    //        return;
+    //    }
+    //    Notification notification = notificationMapper.createNotificationFromNotificationReminderQuequeDTO(emailMessageDTO,
+    //            notificationReminderQueueDTO);
+    //    notification.setNotificationStatus(notificationStatus);
+    //    if(statusKoTimeStamp != null){
+    //        notification.setStatusKoTimestamp(statusKoTimeStamp);
+    //    }
+//
+    //    notificationManagerRepository.save(notification);
+    //    performanceLog(startTime);
+    //}
 
     private void performanceLog(long startTime) {
         performanceLog(startTime, "NOTIFY");
