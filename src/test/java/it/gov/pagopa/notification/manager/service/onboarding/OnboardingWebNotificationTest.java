@@ -79,7 +79,8 @@ class OnboardingWebNotificationTest {
         onboardingWebNotification = new OnboardingWebNotificationImpl(emailNotificationConnectorMock,
                 emailNotificationPropertiesMock,
                 notificationManagerRepository,
-                notificationMapper);
+                notificationMapper,
+                null);
     }
 
     private EvaluationDTO getEvaluationDto(){

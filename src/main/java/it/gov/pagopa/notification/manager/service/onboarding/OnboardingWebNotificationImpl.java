@@ -1,14 +1,18 @@
 package it.gov.pagopa.notification.manager.service.onboarding;
 
 import it.gov.pagopa.notification.manager.config.EmailNotificationProperties;
+import it.gov.pagopa.notification.manager.config.NotificationProperties;
 import it.gov.pagopa.notification.manager.connector.EmailNotificationConnector;
+import it.gov.pagopa.notification.manager.connector.IOBackEndRestConnector;
 import it.gov.pagopa.notification.manager.constants.NotificationConstants;
 import it.gov.pagopa.notification.manager.dto.EmailMessageDTO;
 import it.gov.pagopa.notification.manager.dto.EvaluationDTO;
+import it.gov.pagopa.notification.manager.dto.mapper.NotificationDTOMapper;
 import it.gov.pagopa.notification.manager.dto.mapper.NotificationMapper;
 import it.gov.pagopa.notification.manager.model.Notification;
 import it.gov.pagopa.notification.manager.repository.NotificationManagerRepository;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -28,12 +32,18 @@ public class OnboardingWebNotificationImpl extends BaseOnboardingNotification<Em
     private final NotificationManagerRepository notificationManagerRepository;
     private final NotificationMapper notificationMapper;
 
+    private final String assistedLink;
+
     public OnboardingWebNotificationImpl(EmailNotificationConnector emailNotificationConnector,
-                                         EmailNotificationProperties emailNotificationProperties, NotificationManagerRepository notificationManagerRepository, NotificationMapper notificationMapper) {
+                                         EmailNotificationProperties emailNotificationProperties,
+                                         NotificationManagerRepository notificationManagerRepository,
+                                         NotificationMapper notificationMapper,
+                                         @Value("notification.manager.email.assisted-link") String assistedLink){
         this.emailNotificationConnector = emailNotificationConnector;
         this.emailNotificationProperties = emailNotificationProperties;
         this.notificationManagerRepository = notificationManagerRepository;
         this.notificationMapper = notificationMapper;
+        this.assistedLink = assistedLink;
     }
 
 
@@ -52,7 +62,9 @@ public class OnboardingWebNotificationImpl extends BaseOnboardingNotification<Em
         final boolean initiativeEnded = firstReason != null
                 && REJECTION_REASON_INITIATIVE_ENDED.equals(firstReason.getCode());
 
-        final String template = initiativeEnded ? EMAIL_OUTCOME_THANKS : EMAIL_OUTCOME_GENERIC_ERROR;
+        final String template = initiativeEnded
+                ? EMAIL_OUTCOME_THANKS
+                : EMAIL_OUTCOME_GENERIC_ERROR;
         final String subject = initiativeEnded
                 ? emailNotificationProperties.getSubject().getKoThanks()
                 : emailNotificationProperties.getSubject().getKoGenericError();
@@ -64,6 +76,9 @@ public class OnboardingWebNotificationImpl extends BaseOnboardingNotification<Em
             templateValues.put("managedEntity", firstReason.getAuthority() != null
                     ? firstReason.getAuthority()
                     : "Assistenza");
+            if(templateValues.get("managedEntity") != null && templateValues.get("managedEntity").equalsIgnoreCase("Assistenza")){
+                templateValues.put("assistedLink", assistedLink);
+            }
         }
 
         return createNotification(evaluationDTO, subject, template, templateValues);
