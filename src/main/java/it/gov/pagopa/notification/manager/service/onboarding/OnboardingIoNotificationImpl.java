@@ -110,10 +110,14 @@ public class OnboardingIoNotificationImpl extends BaseOnboardingNotification<Not
 
     @Override
     String sendNotification(NotificationDTO notificationToSend, EvaluationDTO evaluationDTO) {
+        String sanitizedUserId = sanitizeString(evaluationDTO.getUserId());
+        String sanitizedInitiativeId = sanitizeString(evaluationDTO.getInitiativeId());
         try {
             NotificationResource notificationResource =
                     ioBackEndRestConnector.notify(notificationToSend, evaluationDTO.getIoToken());
-            log.info("[NOTIFY] [ONBOARDING_STATUS_OK] Notification sent with id {}", notificationResource.getId());
+            String sanitizedNotificationId = sanitizeString(notificationResource.getId());
+            log.info("[NOTIFY] [SENT_NOTIFICATION_OK] -  Notification {} sent to user {} and initiative {}",
+                    sanitizedNotificationId, sanitizedUserId, sanitizedInitiativeId);
             return notificationResource.getId();
         } catch (FeignException e) {
             log.error("[NOTIFY] [{}] Cannot send notification: {}", e.status(), e.contentUTF8());
@@ -132,5 +136,9 @@ public class OnboardingIoNotificationImpl extends BaseOnboardingNotification<Not
         return message.replace(
                 NotificationConstants.MARKDOWN_TAG + key + NotificationConstants.MARKDOWN_TAG,
                 StringUtils.hasLength(value) ? value : NotificationConstants.MARKDOWN_NA);
+    }
+
+    public static String sanitizeString(String str){
+        return str == null? null: str.replaceAll("[\\r\\n]", "").replaceAll("[^\\w\\s-]", "");
     }
 }

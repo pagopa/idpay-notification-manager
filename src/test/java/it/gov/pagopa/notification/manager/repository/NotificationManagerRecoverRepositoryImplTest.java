@@ -55,14 +55,16 @@ class NotificationManagerRecoverRepositoryImplTest {
     private static final Query NEW_KO_QUERY = Query.query(
             Criteria.where(Notification.Fields.notificationStatus).is(NotificationConstants.NOTIFICATION_STATUS_KO)
                     .andOperator(
-                            Criteria.where(Notification.Fields.retry).not().gte(maxRetries),
-                            Criteria.where(Notification.Fields.operationType).ne(NotificationConstants.OPERATION_TYPE_REMINDER),
+                            new Criteria().orOperator(
+                                    Criteria.where(Notification.Fields.retry).isNull(),
+                                    Criteria.where(Notification.Fields.retry).lt(maxRetries)),
                             new Criteria().orOperator(
                                     Criteria.where(Notification.Fields.retryDate).isNull(),
                                     Criteria.where(Notification.Fields.retryDate).lt(NOW)
                             )
                     )
     );
+
     private static final Notification KO_NOTIFICATION = Notification.builder()
             .notificationDate(NOW)
             .initiativeId("INITIATIVEID")
