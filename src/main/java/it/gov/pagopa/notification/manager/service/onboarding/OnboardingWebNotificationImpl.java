@@ -32,6 +32,9 @@ public class OnboardingWebNotificationImpl extends BaseOnboardingNotification<Em
     private final NotificationManagerRepository notificationManagerRepository;
     private final NotificationMapper notificationMapper;
 
+    private static final String MANAGED_ENTITY = "managedEntity";
+
+
     private final String assistedLink;
 
     public OnboardingWebNotificationImpl(EmailNotificationConnector emailNotificationConnector,
@@ -73,10 +76,10 @@ public class OnboardingWebNotificationImpl extends BaseOnboardingNotification<Em
         templateValues.put("name", evaluationDTO.getName());
 
         if (!initiativeEnded && firstReason != null) {
-            templateValues.put("managedEntity", firstReason.getAuthority() != null
+            templateValues.put(MANAGED_ENTITY, firstReason.getAuthority() != null
                     ? firstReason.getAuthority()
                     : "Assistenza");
-            if(templateValues.get("managedEntity") != null && templateValues.get("managedEntity").equalsIgnoreCase("Assistenza")){
+            if(templateValues.get(MANAGED_ENTITY) != null && templateValues.get(MANAGED_ENTITY).equalsIgnoreCase("Assistenza")){
                 templateValues.put("assistedLink", assistedLink);
             }
         }
