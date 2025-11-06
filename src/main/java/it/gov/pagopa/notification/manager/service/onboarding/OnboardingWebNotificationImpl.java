@@ -38,7 +38,7 @@ public class OnboardingWebNotificationImpl extends BaseOnboardingNotification<Em
                                          EmailNotificationProperties emailNotificationProperties,
                                          NotificationManagerRepository notificationManagerRepository,
                                          NotificationMapper notificationMapper,
-                                         @Value("notification.manager.email.assisted-link") String assistedLink){
+                                         @Value("${notification.manager.email.assisted-link}") String assistedLink){
         this.emailNotificationConnector = emailNotificationConnector;
         this.emailNotificationProperties = emailNotificationProperties;
         this.notificationManagerRepository = notificationManagerRepository;

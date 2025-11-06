@@ -35,7 +35,7 @@ public class OnboardingIoNotificationImpl extends BaseOnboardingNotification<Not
             NotificationDTOMapper notificationDTOMapper,
             IOBackEndRestConnector ioBackEndRestConnector,
             @Value("${rest-client.notification.backend-io.ttl}") Long timeToLive,
-            @Value("notification.manager.email.assisted-link") String assistedLink) {
+            @Value("${notification.manager.email.assisted-link}") String assistedLink) {
         this.notificationProperties = notificationProperties;
         this.notificationDTOMapper = notificationDTOMapper;
         this.ioBackEndRestConnector = ioBackEndRestConnector;
