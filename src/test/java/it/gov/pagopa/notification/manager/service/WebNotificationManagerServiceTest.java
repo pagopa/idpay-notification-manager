@@ -4,9 +4,6 @@ import it.gov.pagopa.notification.manager.config.EmailNotificationProperties;
 import it.gov.pagopa.notification.manager.connector.EmailNotificationConnector;
 import it.gov.pagopa.notification.manager.dto.EmailMessageDTO;
 import it.gov.pagopa.notification.manager.dto.event.NotificationReminderQueueDTO;
-import it.gov.pagopa.notification.manager.dto.mapper.NotificationMapper;
-import it.gov.pagopa.notification.manager.model.Notification;
-import it.gov.pagopa.notification.manager.repository.NotificationManagerRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -16,7 +13,6 @@ import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
 
 import static it.gov.pagopa.notification.manager.constants.NotificationConstants.EmailTemplates.EMAIL_OUTCOME_THREE_DAY_REMINDER;
 import static org.junit.jupiter.api.Assertions.*;
@@ -33,11 +29,6 @@ class WebNotificationManagerServiceImplTest {
     @Mock
     private WebNotificationManagerServiceImpl service;
 
-    @Mock
-    private NotificationManagerRepository notificationManagerRepository;
-    @Mock
-    private NotificationMapper notificationMapper;
-
     private static EmailNotificationProperties.Subject subjectProps = new EmailNotificationProperties.Subject();
 
 
@@ -45,7 +36,7 @@ class WebNotificationManagerServiceImplTest {
     void setUp() {
         subjectProps.setOkThreeDayReminder("Il tuo bonus sta per scadere!");
         emailNotificationProperties.setSubject(subjectProps);
-        service = new WebNotificationManagerServiceImpl(emailNotificationConnector, emailNotificationProperties, notificationManagerRepository, notificationMapper);
+        service = new WebNotificationManagerServiceImpl(emailNotificationConnector, emailNotificationProperties);
     }
 
     @Test

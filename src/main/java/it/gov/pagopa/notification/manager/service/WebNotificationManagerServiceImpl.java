@@ -29,9 +29,8 @@ public class WebNotificationManagerServiceImpl implements  WebNotificationManage
     private final EmailNotificationProperties emailNotificationProperties;
 
     public WebNotificationManagerServiceImpl(EmailNotificationConnector emailNotificationConnector,
-                                             EmailNotificationProperties emailNotificationProperties,
-                                             NotificationManagerRepository notificationManagerRepository,
-                                             NotificationMapper notificationMapper) {
+                                             EmailNotificationProperties emailNotificationProperties
+    ) {
         this.emailNotificationConnector = emailNotificationConnector;
         this.emailNotificationProperties = emailNotificationProperties;
     }
