@@ -124,11 +124,7 @@ class OnboardingWebNotificationTest {
                 .when(emailNotificationConnectorMock)
                 .sendEmail(Mockito.any(EmailMessageDTO.class));
 
-        //when(notificationMapper.createNotificationFromEmailMessageDTO(any(EmailMessageDTO.class),
-        //        any(EvaluationDTO.class))).thenReturn(NOTIFICATION);
-
         onboardingWebNotification.processNotification(evaluationDTO);
-
 
         Mockito.verify(emailNotificationConnectorMock, Mockito.times(1))
                 .sendEmail(Mockito.argThat(email ->
@@ -151,9 +147,6 @@ class OnboardingWebNotificationTest {
         Mockito.doAnswer(invocation -> null)
                 .when(emailNotificationConnectorMock)
                 .sendEmail(Mockito.any(EmailMessageDTO.class));
-
-        //when(notificationMapper.createNotificationFromEmailMessageDTO(any(EmailMessageDTO.class),
-        //        any(EvaluationDTO.class))).thenReturn(NOTIFICATION);
 
         onboardingWebNotification.processNotification(evaluationDTO);
 
@@ -178,9 +171,6 @@ class OnboardingWebNotificationTest {
                 .when(emailNotificationConnectorMock)
                 .sendEmail(Mockito.any(EmailMessageDTO.class));
 
-        //when(notificationMapper.createNotificationFromEmailMessageDTO(any(EmailMessageDTO.class),
-        //        any(EvaluationDTO.class))).thenReturn(NOTIFICATION);
-
         onboardingWebNotification.processNotification(evaluationDTO);
 
         Mockito.verify(emailNotificationConnectorMock, Mockito.times(1))
@@ -203,9 +193,6 @@ class OnboardingWebNotificationTest {
         Mockito.doAnswer(invocation -> null)
                 .when(emailNotificationConnectorMock)
                 .sendEmail(Mockito.any(EmailMessageDTO.class));
-
-        //when(notificationMapper.createNotificationFromEmailMessageDTO(any(EmailMessageDTO.class),
-        //        any(EvaluationDTO.class))).thenReturn(NOTIFICATION);
 
         onboardingWebNotification.processNotification(evaluationDTO);
 
@@ -357,12 +344,6 @@ class OnboardingWebNotificationTest {
         Mockito.when(emailNotificationConnectorMock.sendEmail(EMAIL_MESSAGE_DTO))
                 .thenReturn(successResponse);
 
-        //when(notificationManagerRepository.save(any(Notification.class))).thenAnswer(invocation -> {
-        //    Notification savedNotification = invocation.getArgument(0);
-        //    assertEquals(NotificationConstants.NOTIFICATION_STATUS_OK, savedNotification.getNotificationStatus());
-        //    return savedNotification;
-        //});
-
         // Act
         boolean result = onboardingWebNotification.notify(NOTIFICATION);
 
@@ -372,8 +353,6 @@ class OnboardingWebNotificationTest {
         verify(notificationMapper, times(1)).notificationToEmailMessageDTO(NOTIFICATION);
         //check that sendEmail has been called 1 time
         verify(emailNotificationConnectorMock, times(1)).sendEmail(EMAIL_MESSAGE_DTO);
-        //check that the notificationSent method has called the save method 1 time
-       //verify(notificationManagerRepository, times(1)).deleteById(any(String.class));
     }
 
     @Test

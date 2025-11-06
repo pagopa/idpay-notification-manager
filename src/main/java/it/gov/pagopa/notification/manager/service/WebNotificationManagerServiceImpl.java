@@ -27,8 +27,6 @@ public class WebNotificationManagerServiceImpl implements  WebNotificationManage
 
     private final EmailNotificationConnector emailNotificationConnector;
     private final EmailNotificationProperties emailNotificationProperties;
-    private final NotificationManagerRepository notificationManagerRepository;
-    private final NotificationMapper notificationMapper;
 
     public WebNotificationManagerServiceImpl(EmailNotificationConnector emailNotificationConnector,
                                              EmailNotificationProperties emailNotificationProperties,
@@ -36,8 +34,6 @@ public class WebNotificationManagerServiceImpl implements  WebNotificationManage
                                              NotificationMapper notificationMapper) {
         this.emailNotificationConnector = emailNotificationConnector;
         this.emailNotificationProperties = emailNotificationProperties;
-        this.notificationManagerRepository = notificationManagerRepository;
-        this.notificationMapper = notificationMapper;
     }
 
     @Override
@@ -68,32 +64,11 @@ public class WebNotificationManagerServiceImpl implements  WebNotificationManage
             emailNotificationConnector.sendEmail(notificationToSend);
             performanceLog(startTime);
             log.info("[NOTIFY] ReminderMail sent to user {} and initiative {}", sanitizedUserId, sanitizedInitiativeId);
-            //saveNotification(notificationToSend, notificationQueueDTO, NotificationConstants.NOTIFICATION_STATUS_OK, null, startTime);
         } catch (Exception e) {
             log.error("[NOTIFY] Failed to send email notification for user {} and initiative {}", sanitizedUserId, sanitizedInitiativeId, e);
             performanceLog(startTime);
-            //saveNotification(notificationToSend, notificationQueueDTO, NotificationConstants.NOTIFICATION_STATUS_KO, LocalDateTime.now(), startTime);
         }
     }
-
-    //private void saveNotification(EmailMessageDTO emailMessageDTO,
-    //                              NotificationReminderQueueDTO notificationReminderQueueDTO,
-    //                              String notificationStatus,
-    //                              LocalDateTime statusKoTimeStamp,
-    //                              long startTime){
-    //    if (notificationReminderQueueDTO == null) {
-    //        return;
-    //    }
-    //    Notification notification = notificationMapper.createNotificationFromNotificationReminderQuequeDTO(emailMessageDTO,
-    //            notificationReminderQueueDTO);
-    //    notification.setNotificationStatus(notificationStatus);
-    //    if(statusKoTimeStamp != null){
-    //        notification.setStatusKoTimestamp(statusKoTimeStamp);
-    //    }
-//
-    //    notificationManagerRepository.save(notification);
-    //    performanceLog(startTime);
-    //}
 
     private void performanceLog(long startTime) {
         performanceLog(startTime, "NOTIFY");

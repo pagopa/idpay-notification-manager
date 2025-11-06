@@ -457,7 +457,6 @@ class NotificationManagerServiceTest {
         when(onboardingIoNotification.processNotification(any())).thenReturn("ID");
 
         assertDoesNotThrow(() -> notificationManagerService.notify(EVALUATION_DTO));
-//        verify(notificationManagerRepository, times(1)).save(NOTIFICATION);
     }
 
     @Test
@@ -640,7 +639,6 @@ class NotificationManagerServiceTest {
         when(ioBackEndRestConnector.notify(NOTIFICATION_DTO, TOKEN)).thenReturn(NOTIFICATION_RESOURCE);
 
         assertDoesNotThrow(() -> notificationManagerService.sendNotificationFromOperationType(NOTIFICATION_IBAN_QUEUE_DTO));
-//        verify(notificationManagerRepository, times(1)).save(NOTIFICATION);
     }
 
     @Test
@@ -689,7 +687,6 @@ class NotificationManagerServiceTest {
         when(ioBackEndRestConnector.notify(NOTIFICATION_DTO, TOKEN)).thenReturn(NOTIFICATION_RESOURCE);
 
         assertDoesNotThrow(() -> notificationManagerService.sendNotificationFromOperationType(NOTIFICATION_CITIZEN_ON_QUEUE_DTO));
-        //verify(notificationManagerRepository, times(1)).save(NOTIFICATION);
     }
 
     @Test
@@ -838,7 +835,6 @@ class NotificationManagerServiceTest {
         when(ioBackEndRestConnector.notify(NOTIFICATION_DTO, TOKEN)).thenReturn(NOTIFICATION_RESOURCE);
 
         assertDoesNotThrow(() -> notificationManagerService.sendNotificationFromOperationType(NOTIFICATION_REFUND_QUEUE_DTO));
-        //verify(notificationManagerRepository, times(1)).save(NOTIFICATION);
     }
 
     @Test
@@ -875,7 +871,6 @@ class NotificationManagerServiceTest {
         }
 
         checkKoNotifications();
-        //verify(notificationManagerRepository, times(6)).save(any(Notification.class));
     }
 
     @Test
@@ -1003,7 +998,6 @@ class NotificationManagerServiceTest {
         when(ioBackEndRestConnector.notify(NOTIFICATION_DTO, TOKEN)).thenReturn(NOTIFICATION_RESOURCE);
 
         assertDoesNotThrow(() -> notificationManagerService.sendNotificationFromOperationType(NOTIFICATION_SUSPENSION_QUEUE_DTO));
-//        verify(notificationManagerRepository, times(1)).save(NOTIFICATION_SUSPENSION);
     }
 
     @Test
@@ -1020,7 +1014,6 @@ class NotificationManagerServiceTest {
         when(ioBackEndRestConnector.notify(NOTIFICATION_DTO, TOKEN)).thenReturn(NOTIFICATION_RESOURCE);
 
         assertDoesNotThrow(() -> notificationManagerService.sendNotificationFromOperationType(NOTIFICATION_READMISSION_QUEUE_DTO));
-        //verify(notificationManagerRepository, times(1)).save(NOTIFICATION_READMISSION);
     }
 
     @ParameterizedTest
@@ -1141,7 +1134,7 @@ class NotificationManagerServiceTest {
         when(ioBackEndRestConnector.notify(NOTIFICATION_DTO, TOKEN)).thenReturn(NOTIFICATION_RESOURCE);
 
         notificationManagerService.sendNotificationFromOperationType(dto);
-        //verify(notificationManagerRepository, times(1)).save(notification);
+        verify(notificationManagerRepository, never()).save(any());
     }
 
     @Test

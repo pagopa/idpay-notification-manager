@@ -107,7 +107,6 @@ public class OnboardingWebNotificationImpl extends BaseOnboardingNotification<Em
         String sanitizedInitiativeId = sanitizeString(evaluationDTO.getInitiativeId());
         try {
             emailNotificationConnector.sendEmail(notificationToSend);
- //           saveNotification(notificationToSend, evaluationDTO, NotificationConstants.NOTIFICATION_STATUS_OK, null, startTime);
             performanceLog(startTime, "NOTIFY");
             log.info("[NOTIFY] OnboardingMail sent to user {} and initiative {}", sanitizedUserId, sanitizedInitiativeId);
         } catch (Exception e) {
@@ -128,7 +127,6 @@ public class OnboardingWebNotificationImpl extends BaseOnboardingNotification<Em
             if(notification.getId() != null){
                 notificationManagerRepository.deleteById(notification.getId());
             }
-            //finalizeAndSave(notification, NotificationConstants.NOTIFICATION_STATUS_OK, null);
             log.info("[NOTIFY] OnboardingMail re-sent for user {} and initiative {}", sanitizedUserId, sanitizedInitiativeId);
             performanceLog(startTime, "NOTIFY");
             return true;
