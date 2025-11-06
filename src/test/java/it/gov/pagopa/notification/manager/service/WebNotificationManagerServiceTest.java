@@ -58,8 +58,8 @@ class WebNotificationManagerServiceImplTest {
         when(dto.getUserId()).thenReturn("USER123");
         when(dto.getVoucherEndDate()).thenReturn(LocalDate.now());
 
-        when(notificationMapper.createNotificationFromNotificationReminderQuequeDTO(any(EmailMessageDTO.class),
-                any(NotificationReminderQueueDTO.class))).thenReturn(NOTIFICATION);
+        //when(notificationMapper.createNotificationFromNotificationReminderQuequeDTO(any(EmailMessageDTO.class),
+        //        any(NotificationReminderQueueDTO.class))).thenReturn(NOTIFICATION);
 
 
         service.sendReminderMail(dto);
@@ -85,8 +85,8 @@ class WebNotificationManagerServiceImplTest {
 
         when(dto.getVoucherEndDate()).thenReturn(LocalDate.now());
 
-        when(notificationMapper.createNotificationFromNotificationReminderQuequeDTO(any(EmailMessageDTO.class),
-                any(NotificationReminderQueueDTO.class))).thenReturn(NOTIFICATION);
+        //when(notificationMapper.createNotificationFromNotificationReminderQuequeDTO(any(EmailMessageDTO.class),
+        //        any(NotificationReminderQueueDTO.class))).thenReturn(NOTIFICATION);
 
         doThrow(new RuntimeException("SMTP down"))
                 .when(emailNotificationConnector)
@@ -99,8 +99,8 @@ class WebNotificationManagerServiceImplTest {
 
     @Test
     void sendNotification_doesNotPropagateException() {
-        when(notificationMapper.createNotificationFromNotificationReminderQuequeDTO(any(EmailMessageDTO.class),
-                any(NotificationReminderQueueDTO.class))).thenReturn(NOTIFICATION);
+       //when(notificationMapper.createNotificationFromNotificationReminderQuequeDTO(any(EmailMessageDTO.class),
+       //        any(NotificationReminderQueueDTO.class))).thenReturn(NOTIFICATION);
         NotificationReminderQueueDTO dto = Mockito.mock(NotificationReminderQueueDTO.class);
         when(dto.getUserId()).thenReturn("USER789");
 
