@@ -289,7 +289,7 @@ notification:
       ko-generic-bel: |-
         ${MARKDOWN_KO_GENERIC_BEL:Purtroppo la tua richiesta per il Bonus Elettrodomestici non è stata accettata.
 
-        La verifica dei requisiti non è andata a buon fine a causa di problemi di comunicazione con gli enti competenti
+        La verifica dei requisiti non è andata a buon fine a causa di problemi di comunicazione con gli enti competenti.
 
         **Hai dei dubbi?**
         
@@ -391,6 +391,8 @@ notification:
       parallelism: ${RECOVER_PARALLELISM_THREADS:7}
       minutes-before: ${STUCK_RECOVERS_MINUTES_BEFORE:1440}
       max-retries: ${RECOVER_MAX_RETRIES:3}
+    email:
+      assisted-link: ${ASSISTED_LINK:https://bonuselettrodomestici.it/utente/assistenza}
     threads:
       schedule-max-number: ${THREADS_SCHEDULE_MAX_NUMBER:1}
 

@@ -112,7 +112,12 @@ class OnboardingIoNotificationTest {
 
     @BeforeEach
     void setUp() {
-        onboardingIoNotification = new OnboardingIoNotificationImpl(notificationPropertiesMock, notificationDTOMapper, ioBackEndRestConnectorMock, 10L);
+        onboardingIoNotification = new OnboardingIoNotificationImpl(
+                notificationPropertiesMock,
+                notificationDTOMapper,
+                ioBackEndRestConnectorMock,
+                10L,
+                null);
     }
 
     private EvaluationDTO getEvaluationDto(){
