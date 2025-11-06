@@ -178,8 +178,8 @@ class OnboardingWebNotificationTest {
                 .when(emailNotificationConnectorMock)
                 .sendEmail(Mockito.any(EmailMessageDTO.class));
 
-        when(notificationMapper.createNotificationFromEmailMessageDTO(any(EmailMessageDTO.class),
-                any(EvaluationDTO.class))).thenReturn(NOTIFICATION);
+        //when(notificationMapper.createNotificationFromEmailMessageDTO(any(EmailMessageDTO.class),
+        //        any(EvaluationDTO.class))).thenReturn(NOTIFICATION);
 
         onboardingWebNotification.processNotification(evaluationDTO);
 
