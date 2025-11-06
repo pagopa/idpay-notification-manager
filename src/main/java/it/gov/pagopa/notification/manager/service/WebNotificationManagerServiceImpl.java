@@ -67,6 +67,7 @@ public class WebNotificationManagerServiceImpl implements  WebNotificationManage
         try {
             emailNotificationConnector.sendEmail(notificationToSend);
             performanceLog(startTime);
+            log.info("[NOTIFY] ReminderMail sent to user {} and initiative {}", sanitizedUserId, sanitizedInitiativeId);
             //saveNotification(notificationToSend, notificationQueueDTO, NotificationConstants.NOTIFICATION_STATUS_OK, null, startTime);
         } catch (Exception e) {
             log.error("[NOTIFY] Failed to send email notification for user {} and initiative {}", sanitizedUserId, sanitizedInitiativeId, e);

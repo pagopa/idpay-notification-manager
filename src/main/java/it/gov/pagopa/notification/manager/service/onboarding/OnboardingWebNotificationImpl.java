@@ -104,11 +104,14 @@ public class OnboardingWebNotificationImpl extends BaseOnboardingNotification<Em
     String sendNotification(EmailMessageDTO notificationToSend, EvaluationDTO evaluationDTO) {
         long startTime = System.currentTimeMillis();
         String sanitizedUserId = sanitizeString(evaluationDTO.getUserId());
+        String sanitizedInitiativeId = sanitizeString(evaluationDTO.getInitiativeId());
         try {
             emailNotificationConnector.sendEmail(notificationToSend);
-            saveNotification(notificationToSend, evaluationDTO, NotificationConstants.NOTIFICATION_STATUS_OK, null, startTime);
+ //           saveNotification(notificationToSend, evaluationDTO, NotificationConstants.NOTIFICATION_STATUS_OK, null, startTime);
+            performanceLog(startTime, "NOTIFY");
+            log.info("[NOTIFY] OnboardingMail sent to user {} and initiative {}", sanitizedUserId, sanitizedInitiativeId);
         } catch (Exception e) {
-            log.error("[NOTIFY] Failed to send email notification for user {}", sanitizedUserId, e);
+            log.error("[NOTIFY] Failed to send email notification for user {} and initiative {}", sanitizedUserId, sanitizedInitiativeId, e);
             saveNotification(notificationToSend, evaluationDTO, NotificationConstants.NOTIFICATION_STATUS_KO, LocalDateTime.now(), startTime);
         }
         return null;
@@ -117,14 +120,20 @@ public class OnboardingWebNotificationImpl extends BaseOnboardingNotification<Em
 
     public boolean notify(Notification notification) {
         long startTime = System.currentTimeMillis();
+        String sanitizedUserId = sanitizeString(notification.getUserId());
+        String sanitizedInitiativeId = sanitizeString(notification.getInitiativeId());
         try {
             EmailMessageDTO emailMessageDTO = notificationMapper.notificationToEmailMessageDTO(notification);
             emailNotificationConnector.sendEmail(emailMessageDTO);
-            finalizeAndSave(notification, NotificationConstants.NOTIFICATION_STATUS_OK, null);
+            if(notification.getId() != null){
+                notificationManagerRepository.deleteById(notification.getId());
+            }
+            //finalizeAndSave(notification, NotificationConstants.NOTIFICATION_STATUS_OK, null);
+            log.info("[NOTIFY] OnboardingMail re-sent for user {} and initiative {}", sanitizedUserId, sanitizedInitiativeId);
             performanceLog(startTime, "NOTIFY");
             return true;
         } catch (Exception e) {
-            log.error("[NOTIFY] Failed to send email notification for user {}", notification.getUserId(), e);
+            log.error("[NOTIFY] Failed to re-send OnboardingMail for user {} and initiative {}", sanitizedUserId, sanitizedInitiativeId, e);
             finalizeAndSave(notification, NotificationConstants.NOTIFICATION_STATUS_KO, LocalDateTime.now());
             performanceLog(startTime, "NOTIFY");
             return false;
