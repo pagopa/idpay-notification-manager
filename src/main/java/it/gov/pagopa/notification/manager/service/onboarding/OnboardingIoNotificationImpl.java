@@ -27,17 +27,20 @@ public class OnboardingIoNotificationImpl extends BaseOnboardingNotification<Not
     private final NotificationDTOMapper notificationDTOMapper;
     private final IOBackEndRestConnector ioBackEndRestConnector;
 
-
     private final Long timeToLive;
+
+    private final String assistedLink;
 
     public OnboardingIoNotificationImpl(NotificationProperties notificationProperties,
             NotificationDTOMapper notificationDTOMapper,
             IOBackEndRestConnector ioBackEndRestConnector,
-            @Value("${rest-client.notification.backend-io.ttl}") Long timeToLive) {
+            @Value("${rest-client.notification.backend-io.ttl}") Long timeToLive,
+            @Value("${notification.manager.email.assisted-link}") String assistedLink) {
         this.notificationProperties = notificationProperties;
         this.notificationDTOMapper = notificationDTOMapper;
         this.ioBackEndRestConnector = ioBackEndRestConnector;
         this.timeToLive = timeToLive;
+        this.assistedLink = assistedLink;
     }
 
     @Override
@@ -68,7 +71,7 @@ public class OnboardingIoNotificationImpl extends BaseOnboardingNotification<Not
             placeholders = Map.of(
                     NotificationConstants.MANAGED_ENTITY_KEY, firstReason.getAuthority() != null
                             ? firstReason.getAuthority()
-                            : "[Assistenza](https://bonus.assistenza.pagopa.it/requests/new?product=prod-bonus-ed)"
+                            : "[Assistenza](" + assistedLink + ")"
             );
         }
         return createNotification(evaluationDTO, subject, markdown, placeholders);

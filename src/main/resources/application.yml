@@ -246,7 +246,9 @@ notification:
 
         **Importante:** ricorda che puoi usare il bonus solo se hai un vecchio elettrodomestico da smaltire. Concorda con il venditore quando e come consegnarlo, ma non smaltirlo autonomamente in discarica.}
       ok-partial-bel: |-
-        ${MARKDOWN_OK_PARTIAL:Dopo le verifiche con INPS, il tuo ISEE risulta difforme o diverso da quanto dichiarato. Per questo motivo, non è possibile assegnarti il bonus da 200€ che avevi richiesto, ma hai ottenuto comunque il **bonus di 100€.**
+        ${MARKDOWN_OK_PARTIAL:Dopo le verifiche con INPS, il tuo ISEE risulta difforme o diverso da quanto dichiarato. Sarà valido **per i prossimi 15 giorni**.
+        
+        Per questo motivo, non è possibile assegnarti il bonus da 200€ che avevi richiesto, ma hai ottenuto comunque il **bonus di 100€.**
 
         Se ritiene che ci sia un errore, verifica il tuo ISEE direttamente con INPS.
 
@@ -289,7 +291,7 @@ notification:
       ko-generic-bel: |-
         ${MARKDOWN_KO_GENERIC_BEL:Purtroppo la tua richiesta per il Bonus Elettrodomestici non è stata accettata.
 
-        La verifica dei requisiti non è andata a buon fine a causa di problemi di comunicazione con gli enti competenti
+        La verifica dei requisiti non è andata a buon fine a causa di problemi di comunicazione con gli enti competenti.
 
         **Hai dei dubbi?**
         
@@ -391,6 +393,8 @@ notification:
       parallelism: ${RECOVER_PARALLELISM_THREADS:7}
       minutes-before: ${STUCK_RECOVERS_MINUTES_BEFORE:1440}
       max-retries: ${RECOVER_MAX_RETRIES:3}
+    email:
+      assisted-link: ${ASSISTED_LINK:https://bonuselettrodomestici.it/utente/assistenza}
     threads:
       schedule-max-number: ${THREADS_SCHEDULE_MAX_NUMBER:1}
 
