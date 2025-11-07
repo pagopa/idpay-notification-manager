@@ -162,7 +162,8 @@ public class NotificationManagerServiceImpl implements NotificationManagerServic
             return;
         }
 
-        notificationSent(notification);
+        logNotificationId(notificationId);
+//        notificationSent(notification);
     }
 
     @Override
@@ -240,7 +241,7 @@ public class NotificationManagerServiceImpl implements NotificationManagerServic
 
         logNotificationId(notificationId);
 
-        notificationSent(notification);
+//        notificationSent(notification);
         performanceLog(startTime);
 
         return true;
@@ -445,7 +446,7 @@ public class NotificationManagerServiceImpl implements NotificationManagerServic
 
         logNotificationId(notificationId);
 
-        notificationSent(notification);
+//        notificationSent(notification);
 
         performanceLog(startTime);
     }
