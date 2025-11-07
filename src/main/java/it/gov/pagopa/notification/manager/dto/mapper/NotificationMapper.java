@@ -52,18 +52,17 @@ public class NotificationMapper {
       return notification;
     }
 
-    public Notification createNotificationFromNotificationReminderQuequeDTO(EmailMessageDTO emailMessageDTO,
-                                                                             NotificationReminderQueueDTO notificationReminderQueueDTO){
-
-        Notification notification = toEntity(notificationReminderQueueDTO);
-        notification.setTemplateName(emailMessageDTO.getTemplateName());
-        notification.setTemplateValues(emailMessageDTO.getTemplateValues());
-        notification.setSubject(emailMessageDTO.getSubject());
-        notification.setContent(emailMessageDTO.getContent());
-        notification.setSenderEmail(emailMessageDTO.getSenderEmail());
-        notification.setRecipientEmail(emailMessageDTO.getRecipientEmail());
-        return notification;
-    }
+    //public Notification createNotificationFromNotificationReminderQuequeDTO(EmailMessageDTO emailMessageDTO,
+    //                                                                         NotificationReminderQueueDTO notificationReminderQueueDTO){
+//
+    //    Notification notification = toEntity(notificationReminderQueueDTO);
+    //    notification.setTemplateName(emailMessageDTO.getTemplateName());
+    //    notification.setTemplateValues(emailMessageDTO.getTemplateValues());
+    //    notification.setSubject(emailMessageDTO.getSubject());
+    //    notification.setSenderEmail(emailMessageDTO.getSenderEmail());
+    //    notification.setRecipientEmail(emailMessageDTO.getRecipientEmail());
+    //    return notification;
+    //}
 
     public Notification createNotificationFromEmailMessageDTO(EmailMessageDTO emailMessageDTO, EvaluationDTO evaluationDTO){
 
@@ -71,7 +70,6 @@ public class NotificationMapper {
         notification.setTemplateName(emailMessageDTO.getTemplateName());
         notification.setTemplateValues(emailMessageDTO.getTemplateValues());
         notification.setSubject(emailMessageDTO.getSubject());
-        notification.setContent(emailMessageDTO.getContent());
         notification.setSenderEmail(emailMessageDTO.getSenderEmail());
         notification.setRecipientEmail(emailMessageDTO.getRecipientEmail());
         return notification;

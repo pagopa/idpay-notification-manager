@@ -61,7 +61,7 @@ microservice-chart:
       cpu: "300m"
 
   envConfig:
-    MONGODB_DBNAME: idpay
+    MONGODB_DBNAME: idpay-beneficiari
     APPLICATIONINSIGHTS_ROLE_NAME: "idpaynotificationmanager"
     KAFKA_COMMANDS_GROUP_IN: "idpay-commands-notification-consumer-group"
     APPLICATIONINSIGHTS_INSTRUMENTATION_LOGGING_LEVEL: "OFF"
