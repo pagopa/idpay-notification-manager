@@ -457,6 +457,7 @@ class NotificationManagerServiceTest {
         when(onboardingIoNotification.processNotification(any())).thenReturn("ID");
 
         assertDoesNotThrow(() -> notificationManagerService.notify(EVALUATION_DTO));
+        verifyNoMoreInteractions(notificationManagerRepository);
     }
 
     @Test

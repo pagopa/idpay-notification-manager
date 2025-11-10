@@ -162,7 +162,7 @@ public class NotificationManagerServiceImpl implements NotificationManagerServic
             return;
         }
 
-        notificationSent(notification);
+        logNotificationId(notificationId);
     }
 
     @Override
@@ -445,8 +445,6 @@ public class NotificationManagerServiceImpl implements NotificationManagerServic
 
         logNotificationId(notificationId);
 
-        notificationSent(notification);
-
         performanceLog(startTime);
     }
 
@@ -507,7 +505,9 @@ public class NotificationManagerServiceImpl implements NotificationManagerServic
     }
 
     private void notificationSent(Notification notification) {
-        notificationManagerRepository.deleteById(notification.getId());
+        if(notification.getId() != null) {
+            notificationManagerRepository.deleteById(notification.getId());
+        }
     }
 
     private void performanceLog(long startTime) {
