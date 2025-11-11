@@ -69,7 +69,7 @@ class OnboardingIoNotificationTest {
     private static final String MARKDOWN_OK_PARTIAL_BEL = """
             Dopo le verifiche con INPS, il tuo ISEE risulta difforme o diverso da quanto dichiarato. Per questo motivo, non è possibile assegnarti il bonus da 200€ che avevi richiesto, ma hai ottenuto comunque il **bonus di 100€.**
 
-            Se ritiene che ci sia un errore, verifica il tuo ISEE direttamente con INPS.
+            Se ritieni che ci sia un errore, verifica il tuo ISEE direttamente con INPS.
 
             **Cosa puoi fare ora?**
 
@@ -346,7 +346,7 @@ class OnboardingIoNotificationTest {
 
                 Dopo le verifiche con INPS, il tuo ISEE risulta difforme o diverso da quanto dichiarato. Per questo motivo, non è possibile assegnarti il bonus da 200€ che avevi richiesto, ma hai ottenuto comunque il **bonus di 100€.**
 
-                Se ritiene che ci sia un errore, verifica il tuo ISEE direttamente con INPS.
+                Se ritieni che ci sia un errore, verifica il tuo ISEE direttamente con INPS.
 
                 **Cosa puoi fare ora?**
 
