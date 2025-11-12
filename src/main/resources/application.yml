@@ -271,7 +271,7 @@ notification:
       ok-reminder-bel: |-
         ${MARKDOWN_OK_REMINDER_BEL:Hai già deciso come usare il Bonus Elettrodomestici?
 
-        Hai tempo **fino alle 23:59 del giorno 11 dicembre 2025** per usare il contributo e sostituire un vecchio elettrodomestico con uno a basso consumo energetico.
+        Hai tempo **fino alle 23:59 del giorno %voucherEndDate%** per usare il contributo e sostituire un vecchio elettrodomestico con uno a basso consumo energetico.
         
         **Troppo tardi?**
         
