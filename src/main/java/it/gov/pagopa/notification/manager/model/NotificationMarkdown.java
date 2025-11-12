@@ -120,6 +120,8 @@ public class NotificationMarkdown {
   private String subjectReminderBel;
   @Value("${notification.manager.markdown.ok-reminder-bel}")
   private String markdownReminderBel;
+  @Value("${notification.manager.markdown.ok-cta}")
+  private String markdownOkCtaBel;
 
   @Value("${notification.manager.markdown.ko.generic}")
   private String markdownKoGeneric;
@@ -330,5 +332,12 @@ public class NotificationMarkdown {
 
   public String getSubjectReadmission(String initiativeName) {
     return replaceMessageItem(this.subjectReadmission, NotificationConstants.INITIATIVE_NAME_KEY, initiativeName);
+  }
+
+  public String getMarkdownReminder(String initiativeId){
+    return replaceMessageItem(this.markdownOkCtaBel, NotificationConstants.INITIATIVE_ID_KEY, initiativeId)
+            .concat(this.markdownDoubleNewLine)
+            .concat(this.markdownReminderBel);
+
   }
 }

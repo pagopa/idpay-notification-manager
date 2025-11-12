@@ -397,6 +397,42 @@ class NotificationMarkdownTest {
     Assertions.assertEquals(expectedMarkdown, actual);
   }
 
+  @Test
+  void getMarkdown_reminder(){
+    String expectedMarkdown = """
+            ---
+            it:
+                cta_1:\s
+                    text: "Vai al bonus"
+                    action: "ioit://idpay/initiative/INITIATIVE_ID"
+                cta_2:\s
+                    text: "Dove puoi spenderlo?"
+                    action: "iohandledlink://https://bonuselettrodomestici.it/lista-punti-vendita"
+            en:
+                cta_1:\s
+                    text: "Go to the bonus page"
+                    action: "ioit://idpay/initiative/INITIATIVE_ID"
+                cta_2:\s
+                    text: "Where can you spend it?"
+                    action: "iohandledlink://https://bonuselettrodomestici.it/lista-punti-vendita"
+            ---
+                        
+            Hai già deciso come usare il Bonus Elettrodomestici?
+            
+            Hai tempo **fino alle 23:59 del giorno 11 dicembre 2025** per usare il contributo e sostituire un vecchio elettrodomestico con uno a basso consumo energetico.
+            
+            **Troppo tardi?**
+            
+            Se non hai fatto in tempo ad usare il bonus, puoi fare nuovamente richiesta. Se ci sono ancora fondi disponibili, la richiesta verrà inserita in lista d'attesa.
+            
+            **Hai domande?**
+            
+            Per avere più dettagli su come e dove usare il bonus, [leggi la guida](https://bonuselettrodomestici.it).""";
+
+    String actual = notificationMarkdown.getMarkdownReminder("INITIATIVE_ID");
+    Assertions.assertEquals(expectedMarkdown, actual);
+  }
+
   private EvaluationDTO getEvaluationDto(String status, List<OnboardingRejectionReason> rejectionReasons){
     return new EvaluationDTO(
             USER_ID,
