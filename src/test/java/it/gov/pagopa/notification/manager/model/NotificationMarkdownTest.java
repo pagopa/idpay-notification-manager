@@ -15,7 +15,9 @@ import org.springframework.test.context.ContextConfiguration;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.Locale;
 
 import static it.gov.pagopa.notification.manager.enums.Channel.IO;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -399,6 +401,11 @@ class NotificationMarkdownTest {
 
   @Test
   void getMarkdown_reminder(){
+    DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd MMMM yyyy").withLocale(Locale.ITALIAN);
+
+    LocalDate now = LocalDate.now();
+
+
     String expectedMarkdown = """
             ---
             it:
@@ -419,7 +426,7 @@ class NotificationMarkdownTest {
                         
             Hai già deciso come usare il Bonus Elettrodomestici?
             
-            Hai tempo **fino alle 23:59 del giorno 11 dicembre 2025** per usare il contributo e sostituire un vecchio elettrodomestico con uno a basso consumo energetico.
+            Hai tempo **fino alle 23:59 del giorno %s** per usare il contributo e sostituire un vecchio elettrodomestico con uno a basso consumo energetico.
             
             **Troppo tardi?**
             
@@ -427,9 +434,9 @@ class NotificationMarkdownTest {
             
             **Hai domande?**
             
-            Per avere più dettagli su come e dove usare il bonus, [leggi la guida](https://bonuselettrodomestici.it).""";
+            Per avere più dettagli su come e dove usare il bonus, [leggi la guida](https://bonuselettrodomestici.it).""".formatted(now.format(formatter));
 
-    String actual = notificationMarkdown.getMarkdownReminder("INITIATIVE_ID");
+    String actual = notificationMarkdown.getMarkdownReminder("INITIATIVE_ID", now);
     Assertions.assertEquals(expectedMarkdown, actual);
   }
 
