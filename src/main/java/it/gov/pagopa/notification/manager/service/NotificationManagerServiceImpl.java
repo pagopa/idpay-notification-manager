@@ -415,7 +415,7 @@ public class NotificationManagerServiceImpl implements NotificationManagerServic
             fiscalCode = decryptUserToken(notificationReminderQueueDTO.getUserId());
 
             subject = notificationMarkdown.getSubjectReminderBel();
-            markdown = notificationMarkdown.getMarkdownReminder(notificationReminderQueueDTO.getInitiativeId());
+            markdown = notificationMarkdown.getMarkdownReminder(notificationReminderQueueDTO.getInitiativeId(), notificationReminderQueueDTO.getVoucherEndDate());
 
         } else {
             return;

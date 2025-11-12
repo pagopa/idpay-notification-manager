@@ -1129,7 +1129,7 @@ class NotificationManagerServiceTest {
         when(ioBackEndRestConnector.getProfile(argThat(fc -> FISCAL_CODE.equals(fc.getFiscalCode())), eq(TOKEN)))
                 .thenReturn(PROFILE_RESOURCE);
         when(notificationMarkdown.getSubjectReminderBel()).thenReturn(SUBJECT);
-        when(notificationMarkdown.getMarkdownReminder(dto.getInitiativeId())).thenReturn(MARKDOWN);
+        when(notificationMarkdown.getMarkdownReminder(dto.getInitiativeId(), dto.getVoucherEndDate())).thenReturn(MARKDOWN);
         when(notificationDTOMapper.map(eq(FISCAL_CODE), anyLong(), anyString(), anyString()))
                 .thenReturn(NOTIFICATION_DTO);
         when(ioBackEndRestConnector.notify(NOTIFICATION_DTO, TOKEN)).thenReturn(NOTIFICATION_RESOURCE);

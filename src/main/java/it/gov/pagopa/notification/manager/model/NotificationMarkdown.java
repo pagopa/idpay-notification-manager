@@ -14,14 +14,18 @@ import org.springframework.util.StringUtils;
 import java.math.BigDecimal;
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 @Component
 @Slf4j
 @Getter
 @Setter
 public class NotificationMarkdown {
+  private static final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd MMMM yyyy").withLocale(Locale.ITALIAN);
   private static final List<OnboardingRejectionReasonType> ONBOARDING_KO_TYPE_GENERIC_MARKDOWN_NO_RETRY =
           List.of(OnboardingRejectionReasonType.AUTOMATED_CRITERIA_FAIL,
                   OnboardingRejectionReasonType.CONSENSUS_MISSED,
@@ -334,10 +338,11 @@ public class NotificationMarkdown {
     return replaceMessageItem(this.subjectReadmission, NotificationConstants.INITIATIVE_NAME_KEY, initiativeName);
   }
 
-  public String getMarkdownReminder(String initiativeId){
+  public String getMarkdownReminder(String initiativeId, LocalDate voucherEndDate){
+
     return replaceMessageItem(this.markdownOkCtaBel, NotificationConstants.INITIATIVE_ID_KEY, initiativeId)
             .concat(this.markdownDoubleNewLine)
-            .concat(this.markdownReminderBel);
+            .concat(replaceMessageItem(this.markdownReminderBel, NotificationConstants.VOUCHER_END_DATE_KEY, voucherEndDate.format(formatter)));
 
   }
 }
