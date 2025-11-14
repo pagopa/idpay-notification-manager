@@ -62,6 +62,7 @@ public class NotificationManagerServiceImpl implements NotificationManagerServic
     @Value("${notification.manager.recover.parallelism}")
     private int parallelism;
 
+    private final static String LOG_NOTIFICATION_KO = "[NOTIFY] [SENT_NOTIFICATION_KO] -  Failed to send notification for user {} and initiative {}";
     private ExecutorService executorService;
 
     public NotificationManagerServiceImpl(@Value("${app.delete.paginationSize:100}") int pageSize,
@@ -152,8 +153,7 @@ public class NotificationManagerServiceImpl implements NotificationManagerServic
         String fiscalCode = decryptUserToken(evaluationDTO.getUserId());
         if (fiscalCode == null || isNotSenderAllowed(fiscalCode, ioTokens.getPrimaryKey())) {
             log.error("[NOTIFY][ONBOARDING_STATUS] Invalid fiscal code or notifications not allowed for this user.");
-            log.error("[NOTIFY] [SENT_NOTIFICATION_KO] -  Failed to send notification for user {} and initiative {}",
-                    sanitizedUserId, sanitizedInitiativeId);
+            log.error(LOG_NOTIFICATION_KO, sanitizedUserId, sanitizedInitiativeId);
 
             //notificationKO(notification, startTime);
             return;
@@ -198,8 +198,7 @@ public class NotificationManagerServiceImpl implements NotificationManagerServic
 
         if (fiscalCode == null) {
             //notificationKO(notification, startTime);
-            log.error("[NOTIFY] [SENT_NOTIFICATION_KO] -  Failed to send notification for user {} and initiative {}",
-                    sanitizedUserId, sanitizedInitiativeId);
+            log.error(LOG_NOTIFICATION_KO, sanitizedUserId, sanitizedInitiativeId);
             return false;
         }
 
@@ -510,8 +509,7 @@ public class NotificationManagerServiceImpl implements NotificationManagerServic
         notification.setNotificationStatus(NotificationConstants.NOTIFICATION_STATUS_KO);
         notification.setStatusKoTimestamp(LocalDateTime.now());
         notificationManagerRepository.save(notification);
-        log.error("[NOTIFY] [SENT_NOTIFICATION_KO] -  Failed to send notification for user {} and initiative {}",
-                sanitizedUserId, sanitizedInitiativeId);
+        log.error(LOG_NOTIFICATION_KO, sanitizedUserId, sanitizedInitiativeId);
         performanceLog(startTime);
     }
 
