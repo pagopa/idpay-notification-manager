@@ -8,7 +8,8 @@ mongo:
       enabled: ${MONGO_REQUEST_RATE_TOO_LARGE_BATCH_ENABLED:true}
       max-retry: ${MONGO_REQUEST_RATE_TOO_LARGE_BATCH_MAX_RETRY:5}
       max-millis-elapsed: ${MONGO_REQUEST_RATE_TOO_LARGE_BATCH_MAX_MILLIS_ELAPSED:0}
-
+server:
+  port: ${NOTIFICATION_MANAGER_PORT:8080}
 rest-client:
   decrypt:
     api-key: ${PDV_DECRYPT_API_KEY:}
@@ -242,7 +243,7 @@ notification:
 
         **Come fare?**
 
-        Per avere più informazioni su come e dove usare il bonus, [leggi i dettagli](https://ioapp.it/bonus-elettrodomestici).
+        Per avere più informazioni su come e dove usare il bonus, [leggi i dettagli](https://assistenza.ioapp.it/hc/it/articles/40429655391505-Come-e-dove-spendere-il-Bonus-Elettrodomestici).
 
         **Importante:** ricorda che puoi usare il bonus solo se hai un vecchio elettrodomestico da smaltire. Concorda con il venditore quando e come consegnarlo, ma non smaltirlo autonomamente in discarica.}
       ok-partial-bel: |-
@@ -258,7 +259,7 @@ notification:
 
         **Come fare?**
 
-        Per avere più informazioni su come e dove usare il bonus, [leggi i dettagli](https://ioapp.it/bonus-elettrodomestici).
+        Per avere più informazioni su come e dove usare il bonus, [leggi i dettagli](https://assistenza.ioapp.it/hc/it/articles/40429655391505-Come-e-dove-spendere-il-Bonus-Elettrodomestici).
 
         **Importante:** ricorda che puoi usare il bonus solo se hai un vecchio elettrodomestico da smaltire. Concorda con il venditore quando e come consegnarlo, ma non smaltirlo autonomamente in discarica.}
       ok: |-
@@ -279,14 +280,14 @@ notification:
         
         **Hai domande?**
         
-        Per avere più dettagli su come e dove usare il bonus, [leggi la guida](https://bonuselettrodomestici.it).}
+        Per avere più dettagli su come e dove usare il bonus, [leggi la guida](https://assistenza.ioapp.it/hc/it/articles/40429655391505-Come-e-dove-spendere-il-Bonus-Elettrodomestici).}
 
       joined-bel: |-
         ${MARKDOWN_JOINED_BEL:La tua richiesta per il Bonus Elettrodomestici non può essere elaborata. Un'altra persona che fa parte della tua famiglia ha già presentato richiesta.
 
         È possibile inviare **una sola richiesta per ogni famiglia anagrafica.**
 
-        Per avere più dettagli sui requisiti del bonus, [leggi come fare](https://bonuselettrodomestici.it).}
+        Per avere più dettagli sui requisiti del bonus, [leggi come fare](https://assistenza.ioapp.it/hc/it/articles/38962008319761-Cos-%C3%A8-e-come-richiedere-il-Bonus-Elettrodomestici).}
 
       ko-generic-bel: |-
         ${MARKDOWN_KO_GENERIC_BEL:Purtroppo la tua richiesta per il Bonus Elettrodomestici non è stata accettata.
