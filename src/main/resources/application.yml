@@ -285,7 +285,7 @@ notification:
       joined-bel: |-
         ${MARKDOWN_JOINED_BEL:La tua richiesta per il Bonus Elettrodomestici non può essere elaborata. Un'altra persona che fa parte della tua famiglia ha già presentato richiesta.
 
-        È possibile inviare **una sola richiesta per ogni famiglia anagrafica.**
+        È possibile ottenere **un solo bonus per famiglia anagrafica.**
 
         Per avere più dettagli sui requisiti del bonus, [leggi come fare](https://assistenza.ioapp.it/hc/it/articles/38962008319761-Cos-%C3%A8-e-come-richiedere-il-Bonus-Elettrodomestici).}
 
