@@ -102,6 +102,8 @@ public class NotificationManagerServiceImpl implements NotificationManagerServic
 
     @Override
     public void notify(EvaluationDTO evaluationDTO) {
+        String sanitizedUserId = sanitizeString(evaluationDTO.getUserId());
+        String sanitizedChannel = sanitizeString(evaluationDTO.getChannel().toString());
         long startTime = System.currentTimeMillis();
 
         if (shouldSkipNotification(evaluationDTO)) {
@@ -114,7 +116,7 @@ public class NotificationManagerServiceImpl implements NotificationManagerServic
             onboardingWebNotification.processNotification(evaluationDTO);
             processAppIoNotification(evaluationDTO, startTime);
         } else {
-            log.warn("[NOTIFY] Unsupported channel {} for user {}", evaluationDTO.getChannel(), evaluationDTO.getUserId());
+            log.warn("[NOTIFY] Unsupported channel {} for user {}", sanitizedChannel, sanitizedUserId);
         }
         performanceLog(startTime);
     }
