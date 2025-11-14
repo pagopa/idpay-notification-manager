@@ -20,4 +20,7 @@ public interface NotificationManagerController {
   @PutMapping("/")
   ResponseEntity<Void> addNotification(@RequestBody EvaluationDTO body);
 
+  @PutMapping("/notify")
+  ResponseEntity<Void> notify(@RequestBody EvaluationDTO body);
+
 }
