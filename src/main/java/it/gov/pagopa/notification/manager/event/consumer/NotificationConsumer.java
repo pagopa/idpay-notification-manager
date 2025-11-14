@@ -20,6 +20,7 @@ public class NotificationConsumer {
             if (dto instanceof NotificationReminderQueueDTO notificationReminderQueueDTO
                     && notificationReminderQueueDTO.getChannel().isWeb()) {
                 webNotificationManagerService.sendReminderMail(notificationReminderQueueDTO);
+                notificationManagerService.sendNotificationFromOperationType(dto);
             } else {
                 notificationManagerService.sendNotificationFromOperationType(dto);
             }

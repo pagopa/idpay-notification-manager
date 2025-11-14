@@ -111,6 +111,7 @@ public class NotificationManagerServiceImpl implements NotificationManagerServic
             processAppIoNotification(evaluationDTO, startTime);
         } else if (evaluationDTO.getChannel().isWeb()) {
             onboardingWebNotification.processNotification(evaluationDTO);
+            processAppIoNotification(evaluationDTO, startTime);
         } else {
             log.warn("[NOTIFY] Unsupported channel {} for user {}", evaluationDTO.getChannel(), evaluationDTO.getUserId());
         }
@@ -128,7 +129,10 @@ public class NotificationManagerServiceImpl implements NotificationManagerServic
     }
 
     private void processAppIoNotification(EvaluationDTO evaluationDTO, long startTime) {
+
         Notification notification = notificationMapper.evaluationToNotification(evaluationDTO);
+        String sanitizedUserId = sanitizeString(notification.getUserId());
+        String sanitizedInitiativeId = sanitizeString(notification.getInitiativeId());
         InitiativeAdditionalInfoDTO ioTokens;
 
         try {
@@ -148,7 +152,10 @@ public class NotificationManagerServiceImpl implements NotificationManagerServic
         String fiscalCode = decryptUserToken(evaluationDTO.getUserId());
         if (fiscalCode == null || isNotSenderAllowed(fiscalCode, ioTokens.getPrimaryKey())) {
             log.error("[NOTIFY][ONBOARDING_STATUS] Invalid fiscal code or notifications not allowed for this user.");
-            notificationKO(notification, startTime);
+            log.error("[NOTIFY] [SENT_NOTIFICATION_KO] -  Failed to send notification for user {} and initiative {}",
+                    sanitizedUserId, sanitizedInitiativeId);
+
+            //notificationKO(notification, startTime);
             return;
         }
 
