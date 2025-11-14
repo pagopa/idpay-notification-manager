@@ -4,9 +4,6 @@ import it.gov.pagopa.notification.manager.config.EmailNotificationProperties;
 import it.gov.pagopa.notification.manager.connector.EmailNotificationConnector;
 import it.gov.pagopa.notification.manager.dto.EmailMessageDTO;
 import it.gov.pagopa.notification.manager.dto.event.NotificationReminderQueueDTO;
-import it.gov.pagopa.notification.manager.dto.mapper.NotificationMapper;
-import it.gov.pagopa.notification.manager.model.Notification;
-import it.gov.pagopa.notification.manager.repository.NotificationManagerRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -14,6 +11,8 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
+
+import java.time.LocalDate;
 
 import static it.gov.pagopa.notification.manager.constants.NotificationConstants.EmailTemplates.EMAIL_OUTCOME_THREE_DAY_REMINDER;
 import static org.junit.jupiter.api.Assertions.*;
@@ -30,21 +29,14 @@ class WebNotificationManagerServiceImplTest {
     @Mock
     private WebNotificationManagerServiceImpl service;
 
-    @Mock
-    private NotificationManagerRepository notificationManagerRepository;
-    @Mock
-    private NotificationMapper notificationMapper;
-
-    private static final Notification NOTIFICATION = Notification.builder().build();
-
     private static EmailNotificationProperties.Subject subjectProps = new EmailNotificationProperties.Subject();
 
 
     @BeforeEach
     void setUp() {
-        subjectProps.setOkThreeDayReminder("Il tuo bonus scade tra 3 giorni!");
+        subjectProps.setOkThreeDayReminder("Il tuo bonus sta per scadere!");
         emailNotificationProperties.setSubject(subjectProps);
-        service = new WebNotificationManagerServiceImpl(emailNotificationConnector, emailNotificationProperties, notificationManagerRepository, notificationMapper);
+        service = new WebNotificationManagerServiceImpl(emailNotificationConnector, emailNotificationProperties);
     }
 
     @Test
@@ -53,10 +45,7 @@ class WebNotificationManagerServiceImplTest {
         when(dto.getName()).thenReturn("Mario");
         when(dto.getUserMail()).thenReturn("mario.rossi@example.com");
         when(dto.getUserId()).thenReturn("USER123");
-
-        when(notificationMapper.createNotificationFromNotificationReminderQuequeDTO(any(EmailMessageDTO.class),
-                any(NotificationReminderQueueDTO.class))).thenReturn(NOTIFICATION);
-
+        when(dto.getVoucherEndDate()).thenReturn(LocalDate.now());
 
         service.sendReminderMail(dto);
 
@@ -67,7 +56,7 @@ class WebNotificationManagerServiceImplTest {
         assertNotNull(sent);
         assertEquals(EMAIL_OUTCOME_THREE_DAY_REMINDER, sent.getTemplateName(), "Template name errato");
         assertEquals("mario.rossi@example.com", sent.getRecipientEmail(), "Recipient errato");
-        assertEquals("Il tuo bonus scade tra 3 giorni!", sent.getSubject(), "Subject errato");
+        assertEquals("Il tuo bonus sta per scadere!", sent.getSubject(), "Subject errato");
         assertNull(sent.getSenderEmail(), "Sender email deve essere null");
         assertNull(sent.getContent(), "Content deve essere null");
 
@@ -79,8 +68,7 @@ class WebNotificationManagerServiceImplTest {
     void sendReminderMail_doesNotPropagateException() {
         NotificationReminderQueueDTO dto = Mockito.mock(NotificationReminderQueueDTO.class);
 
-        when(notificationMapper.createNotificationFromNotificationReminderQuequeDTO(any(EmailMessageDTO.class),
-                any(NotificationReminderQueueDTO.class))).thenReturn(NOTIFICATION);
+        when(dto.getVoucherEndDate()).thenReturn(LocalDate.now());
 
         doThrow(new RuntimeException("SMTP down"))
                 .when(emailNotificationConnector)
@@ -93,8 +81,6 @@ class WebNotificationManagerServiceImplTest {
 
     @Test
     void sendNotification_doesNotPropagateException() {
-        when(notificationMapper.createNotificationFromNotificationReminderQuequeDTO(any(EmailMessageDTO.class),
-                any(NotificationReminderQueueDTO.class))).thenReturn(NOTIFICATION);
         NotificationReminderQueueDTO dto = Mockito.mock(NotificationReminderQueueDTO.class);
         when(dto.getUserId()).thenReturn("USER789");
 

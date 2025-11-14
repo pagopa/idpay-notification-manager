@@ -15,7 +15,9 @@ import org.springframework.test.context.ContextConfiguration;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.Locale;
 
 import static it.gov.pagopa.notification.manager.enums.Channel.IO;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -34,10 +36,16 @@ class NotificationMarkdownTest {
                 cta_1:\s
                     text: "Vai al bonus"
                     action: "ioit://idpay/initiative/%s"
+                cta_2:\s
+                    text: "Dove puoi spenderlo?"
+                    action: "iohandledlink://https://bonuselettrodomestici.it/lista-punti-vendita"
             en:
                 cta_1:\s
                     text: "Go to the bonus page"
                     action: "ioit://idpay/initiative/%s"
+                cta_2:\s
+                    text: "Where can you spend it?"
+                    action: "iohandledlink://https://bonuselettrodomestici.it/lista-punti-vendita"
             ---
                         
             Buone notizie! Hai ottenuto %s. Da questo momento puoi visualizzare il bonus nella sezione Portafoglio dell'app IO.
@@ -388,6 +396,47 @@ class NotificationMarkdownTest {
                     IseeTypeRejection.getAuthorityLabel(), IseeTypeRejection.getDetail());
 
     String actual = notificationMarkdown.getMarkdown(evaluationDto);
+    Assertions.assertEquals(expectedMarkdown, actual);
+  }
+
+  @Test
+  void getMarkdown_reminder(){
+    DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd MMMM yyyy").withLocale(Locale.ITALIAN);
+
+    LocalDate now = LocalDate.now();
+
+
+    String expectedMarkdown = """
+            ---
+            it:
+                cta_1:\s
+                    text: "Vai al bonus"
+                    action: "ioit://idpay/initiative/INITIATIVE_ID"
+                cta_2:\s
+                    text: "Dove puoi spenderlo?"
+                    action: "iohandledlink://https://bonuselettrodomestici.it/lista-punti-vendita"
+            en:
+                cta_1:\s
+                    text: "Go to the bonus page"
+                    action: "ioit://idpay/initiative/INITIATIVE_ID"
+                cta_2:\s
+                    text: "Where can you spend it?"
+                    action: "iohandledlink://https://bonuselettrodomestici.it/lista-punti-vendita"
+            ---
+                        
+            Hai già deciso come usare il Bonus Elettrodomestici?
+            
+            Hai tempo **fino alle 23:59 del giorno %s** per usare il contributo e sostituire un vecchio elettrodomestico con uno a basso consumo energetico.
+            
+            **Troppo tardi?**
+            
+            Se non hai fatto in tempo ad usare il bonus, puoi fare nuovamente richiesta. Se ci sono ancora fondi disponibili, la richiesta verrà inserita in lista d'attesa.
+            
+            **Hai domande?**
+            
+            Per avere più dettagli su come e dove usare il bonus, [leggi la guida](https://bonuselettrodomestici.it).""".formatted(now.format(formatter));
+
+    String actual = notificationMarkdown.getMarkdownReminder("INITIATIVE_ID", now);
     Assertions.assertEquals(expectedMarkdown, actual);
   }
 

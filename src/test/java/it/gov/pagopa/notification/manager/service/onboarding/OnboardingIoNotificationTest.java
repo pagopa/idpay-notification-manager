@@ -62,14 +62,14 @@ class OnboardingIoNotificationTest {
 
             **Come fare?**
 
-            Per avere più informazioni su come e dove usare il bonus, [leggi i dettagli](http://www.google.com/).
+            Per avere più informazioni su come e dove usare il bonus, [leggi i dettagli](https://ioapp.it/bonus-elettrodomestici).
 
             **Importante:** ricorda che puoi usare il bonus solo se hai un vecchio elettrodomestico da smaltire. Concorda con il venditore quando e come consegnarlo, ma non smaltirlo autonomamente in discarica.""";
 
     private static final String MARKDOWN_OK_PARTIAL_BEL = """
             Dopo le verifiche con INPS, il tuo ISEE risulta difforme o diverso da quanto dichiarato. Per questo motivo, non è possibile assegnarti il bonus da 200€ che avevi richiesto, ma hai ottenuto comunque il **bonus di 100€.**
 
-            Se ritiene che ci sia un errore, verifica il tuo ISEE direttamente con INPS.
+            Se ritieni che ci sia un errore, verifica il tuo ISEE direttamente con INPS.
 
             **Cosa puoi fare ora?**
 
@@ -77,9 +77,26 @@ class OnboardingIoNotificationTest {
 
             **Come fare?**
 
-            Per avere più informazioni su come e dove usare il bonus, [leggi i dettagli](http://www.google.com/).
+            Per avere più informazioni su come e dove usare il bonus, [leggi i dettagli](https://ioapp.it/bonus-elettrodomestici).
 
             **Importante:** ricorda che puoi usare il bonus solo se hai un vecchio elettrodomestico da smaltire. Concorda con il venditore quando e come consegnarlo, ma non smaltirlo autonomamente in discarica.""";
+
+    private static final String MARKDOWN_KO_THANKS_BEL = """
+            La tua richiesta era in lista d'attesa, ma **tutti i fondi disponibili sono stati assegnati**.
+            Ci dispiace, ma purtroppo non è possibile assegnare il bonus.
+            
+                    Grazie per aver mostrato interesse per il **Bonus Elettrodomestici**.
+            
+            Alla prossima iniziativa!""";
+
+    private static final String MARKDOWN_KO_GENERIC_BEL = """
+            Purtroppo la tua richiesta per il Bonus Elettrodomestici non è stata accettata.
+                                                                                                                                                                                                                  
+            La verifica dei requisiti non è andata a buon fine a causa di problemi di comunicazione con gli enti competenti
+            
+            **Hai dei dubbi?**
+            
+            Se pensi che ci sia stato un errore, segnalalo a %managedEntity%.""";
 
     private static final String SUBJECT_OK = "Hai ottenuto il bonus!";
     private static final String SUBJECT_OK_PARTIAL = "Hai ottenuto il bonus!";
@@ -95,7 +112,12 @@ class OnboardingIoNotificationTest {
 
     @BeforeEach
     void setUp() {
-        onboardingIoNotification = new OnboardingIoNotificationImpl(notificationPropertiesMock, notificationDTOMapper, ioBackEndRestConnectorMock, 10L);
+        onboardingIoNotification = new OnboardingIoNotificationImpl(
+                notificationPropertiesMock,
+                notificationDTOMapper,
+                ioBackEndRestConnectorMock,
+                10L,
+                null);
     }
 
     private EvaluationDTO getEvaluationDto(){
@@ -165,7 +187,7 @@ class OnboardingIoNotificationTest {
 
                 **Come fare?**
 
-                Per avere più informazioni su come e dove usare il bonus, [leggi i dettagli](http://www.google.com/).
+                Per avere più informazioni su come e dove usare il bonus, [leggi i dettagli](https://ioapp.it/bonus-elettrodomestici).
 
                 **Importante:** ricorda che puoi usare il bonus solo se hai un vecchio elettrodomestico da smaltire. Concorda con il venditore quando e come consegnarlo, ma non smaltirlo autonomamente in discarica.""";
 
@@ -220,7 +242,7 @@ class OnboardingIoNotificationTest {
 
                 **Come fare?**
 
-                Per avere più informazioni su come e dove usare il bonus, [leggi i dettagli](http://www.google.com/).
+                Per avere più informazioni su come e dove usare il bonus, [leggi i dettagli](https://ioapp.it/bonus-elettrodomestici).
 
                 **Importante:** ricorda che puoi usare il bonus solo se hai un vecchio elettrodomestico da smaltire. Concorda con il venditore quando e come consegnarlo, ma non smaltirlo autonomamente in discarica.""";
 
@@ -276,7 +298,7 @@ class OnboardingIoNotificationTest {
 
                 **Come fare?**
 
-                Per avere più informazioni su come e dove usare il bonus, [leggi i dettagli](http://www.google.com/).
+                Per avere più informazioni su come e dove usare il bonus, [leggi i dettagli](https://ioapp.it/bonus-elettrodomestici).
 
                 **Importante:** ricorda che puoi usare il bonus solo se hai un vecchio elettrodomestico da smaltire. Concorda con il venditore quando e come consegnarlo, ma non smaltirlo autonomamente in discarica.""";
 
@@ -324,7 +346,7 @@ class OnboardingIoNotificationTest {
 
                 Dopo le verifiche con INPS, il tuo ISEE risulta difforme o diverso da quanto dichiarato. Per questo motivo, non è possibile assegnarti il bonus da 200€ che avevi richiesto, ma hai ottenuto comunque il **bonus di 100€.**
 
-                Se ritiene che ci sia un errore, verifica il tuo ISEE direttamente con INPS.
+                Se ritieni che ci sia un errore, verifica il tuo ISEE direttamente con INPS.
 
                 **Cosa puoi fare ora?**
 
@@ -332,7 +354,7 @@ class OnboardingIoNotificationTest {
 
                 **Come fare?**
 
-                Per avere più informazioni su come e dove usare il bonus, [leggi i dettagli](http://www.google.com/).
+                Per avere più informazioni su come e dove usare il bonus, [leggi i dettagli](https://ioapp.it/bonus-elettrodomestici).
 
                 **Importante:** ricorda che puoi usare il bonus solo se hai un vecchio elettrodomestico da smaltire. Concorda con il venditore quando e come consegnarlo, ma non smaltirlo autonomamente in discarica.""";
 
@@ -416,6 +438,9 @@ class OnboardingIoNotificationTest {
                 .build();
         evaluationDTO.setOnboardingRejectionReasons(List.of(reason));
 
+        NotificationProperties.Markdown markdownMock = Mockito.mock(NotificationProperties.Markdown.class);
+        Mockito.when(notificationPropertiesMock.getMarkdown()).thenReturn(markdownMock);
+        Mockito.when(markdownMock.getKoThanksBel()).thenReturn(MARKDOWN_KO_THANKS_BEL);
         NotificationProperties.Subject subjectMock = Mockito.mock(NotificationProperties.Subject.class);
         Mockito.when(notificationPropertiesMock.getSubject()).thenReturn(subjectMock);
         Mockito.when(subjectMock.getKoThanksBel()).thenReturn("SUBJECT_KO_THANKS_BEL");
@@ -430,6 +455,10 @@ class OnboardingIoNotificationTest {
     @Test
     void processOnboardingKo_whenGeneric_withReason_buildsPlaceholdersAndSubject() {
         EvaluationDTO evaluationDTO = getEvaluationDto();
+
+        NotificationProperties.Markdown markdownMock = Mockito.mock(NotificationProperties.Markdown.class);
+        Mockito.when(notificationPropertiesMock.getMarkdown()).thenReturn(markdownMock);
+        Mockito.when(markdownMock.getKoGenericBel()).thenReturn(MARKDOWN_KO_GENERIC_BEL);
         OnboardingRejectionReason reason = OnboardingRejectionReason
                 .builder()
                 .code(FAMILY_CRITERIA_FAIL)

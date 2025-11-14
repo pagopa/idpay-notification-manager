@@ -27,17 +27,20 @@ public class OnboardingIoNotificationImpl extends BaseOnboardingNotification<Not
     private final NotificationDTOMapper notificationDTOMapper;
     private final IOBackEndRestConnector ioBackEndRestConnector;
 
-
     private final Long timeToLive;
+
+    private final String assistedLink;
 
     public OnboardingIoNotificationImpl(NotificationProperties notificationProperties,
             NotificationDTOMapper notificationDTOMapper,
             IOBackEndRestConnector ioBackEndRestConnector,
-            @Value("${rest-client.notification.backend-io.ttl}") Long timeToLive) {
+            @Value("${rest-client.notification.backend-io.ttl}") Long timeToLive,
+            @Value("${notification.manager.email.assisted-link}") String assistedLink) {
         this.notificationProperties = notificationProperties;
         this.notificationDTOMapper = notificationDTOMapper;
         this.ioBackEndRestConnector = ioBackEndRestConnector;
         this.timeToLive = timeToLive;
+        this.assistedLink = assistedLink;
     }
 
     @Override
@@ -55,7 +58,9 @@ public class OnboardingIoNotificationImpl extends BaseOnboardingNotification<Not
         final boolean initiativeEnded = firstReason != null
                 && REJECTION_REASON_INITIATIVE_ENDED.equals(firstReason.getCode());
 
-        final String markdown = initiativeEnded ? EMAIL_OUTCOME_THANKS : EMAIL_OUTCOME_GENERIC_ERROR;
+        final String markdown = initiativeEnded
+                ? notificationProperties.getMarkdown().getKoThanksBel()
+                : notificationProperties.getMarkdown().getKoGenericBel();
         final String subject  = initiativeEnded
                 ? notificationProperties.getSubject().getKoThanksBel()
                 : notificationProperties.getSubject().getKoGenericBel();
@@ -64,8 +69,9 @@ public class OnboardingIoNotificationImpl extends BaseOnboardingNotification<Not
 
         if (!initiativeEnded && firstReason != null) {
             placeholders = Map.of(
-                    NotificationConstants.REASON_KEY, firstReason.getDetail() != null ? firstReason.getDetail() : "REASON",
-                    NotificationConstants.MANAGED_ENTITY_KEY, firstReason.getAuthorityLabel() != null ? firstReason.getAuthorityLabel() : "HELPDESK"
+                    NotificationConstants.MANAGED_ENTITY_KEY, firstReason.getAuthority() != null
+                            ? firstReason.getAuthority()
+                            : "[Assistenza](" + assistedLink + ")"
             );
         }
         return createNotification(evaluationDTO, subject, markdown, placeholders);
@@ -107,10 +113,14 @@ public class OnboardingIoNotificationImpl extends BaseOnboardingNotification<Not
 
     @Override
     String sendNotification(NotificationDTO notificationToSend, EvaluationDTO evaluationDTO) {
+        String sanitizedUserId = sanitizeString(evaluationDTO.getUserId());
+        String sanitizedInitiativeId = sanitizeString(evaluationDTO.getInitiativeId());
         try {
             NotificationResource notificationResource =
                     ioBackEndRestConnector.notify(notificationToSend, evaluationDTO.getIoToken());
-            log.info("[NOTIFY] [ONBOARDING_STATUS_OK] Notification sent with id {}", notificationResource.getId());
+            String sanitizedNotificationId = sanitizeString(notificationResource.getId());
+            log.info("[NOTIFY] [SENT_NOTIFICATION_OK] -  Notification {} sent to user {} and initiative {}",
+                    sanitizedNotificationId, sanitizedUserId, sanitizedInitiativeId);
             return notificationResource.getId();
         } catch (FeignException e) {
             log.error("[NOTIFY] [{}] Cannot send notification: {}", e.status(), e.contentUTF8());
@@ -129,5 +139,9 @@ public class OnboardingIoNotificationImpl extends BaseOnboardingNotification<Not
         return message.replace(
                 NotificationConstants.MARKDOWN_TAG + key + NotificationConstants.MARKDOWN_TAG,
                 StringUtils.hasLength(value) ? value : NotificationConstants.MARKDOWN_NA);
+    }
+
+    public static String sanitizeString(String str){
+        return str == null? null: str.replaceAll("[\\r\\n]", "").replaceAll("[^\\w\\s-]", "");
     }
 }

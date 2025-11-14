@@ -162,7 +162,7 @@ public class NotificationManagerServiceImpl implements NotificationManagerServic
             return;
         }
 
-        notificationSent(notification, notificationId);
+        logNotificationId(notificationId);
     }
 
     @Override
@@ -240,7 +240,7 @@ public class NotificationManagerServiceImpl implements NotificationManagerServic
 
         logNotificationId(notificationId);
 
-        notificationSent(notification, notificationId);
+        notificationSent(notification);
         performanceLog(startTime);
 
         return true;
@@ -415,7 +415,7 @@ public class NotificationManagerServiceImpl implements NotificationManagerServic
             fiscalCode = decryptUserToken(notificationReminderQueueDTO.getUserId());
 
             subject = notificationMarkdown.getSubjectReminderBel();
-            markdown = notificationMarkdown.getMarkdownReminderBel();
+            markdown = notificationMarkdown.getMarkdownReminder(notificationReminderQueueDTO.getInitiativeId(), notificationReminderQueueDTO.getVoucherEndDate());
 
         } else {
             return;
@@ -444,8 +444,6 @@ public class NotificationManagerServiceImpl implements NotificationManagerServic
         }
 
         logNotificationId(notificationId);
-
-        notificationSent(notification, notificationId);
 
         performanceLog(startTime);
     }
@@ -493,20 +491,23 @@ public class NotificationManagerServiceImpl implements NotificationManagerServic
     }
 
     private void notificationKO(Notification notification, long startTime) {
+        String sanitizedUserId = sanitizeString(notification.getUserId());
+        String sanitizedInitiativeId = sanitizeString(notification.getInitiativeId());
         if (notification == null) {
             return;
         }
         notification.setNotificationStatus(NotificationConstants.NOTIFICATION_STATUS_KO);
         notification.setStatusKoTimestamp(LocalDateTime.now());
         notificationManagerRepository.save(notification);
-
+        log.error("[NOTIFY] [SENT_NOTIFICATION_KO] -  Failed to send notification for user {} and initiative {}",
+                sanitizedUserId, sanitizedInitiativeId);
         performanceLog(startTime);
     }
 
-    private void notificationSent(Notification notification, String notificationId) {
-        notification.setNotificationId(notificationId);
-        notification.setNotificationStatus(NotificationConstants.NOTIFICATION_STATUS_OK);
-        notificationManagerRepository.save(notification);
+    private void notificationSent(Notification notification) {
+        if(notification.getId() != null) {
+            notificationManagerRepository.deleteById(notification.getId());
+        }
     }
 
     private void performanceLog(long startTime) {
@@ -522,5 +523,9 @@ public class NotificationManagerServiceImpl implements NotificationManagerServic
 
     private static void logNotificationId(String notificationId) {
         log.info("[NOTIFY] Notification ID: {}", notificationId);
+    }
+
+    public static String sanitizeString(String str){
+        return str == null? null: str.replaceAll("[\\r\\n]", "").replaceAll("[^\\w\\s-]", "");
     }
 }

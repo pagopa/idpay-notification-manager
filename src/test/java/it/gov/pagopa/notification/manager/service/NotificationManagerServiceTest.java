@@ -457,7 +457,7 @@ class NotificationManagerServiceTest {
         when(onboardingIoNotification.processNotification(any())).thenReturn("ID");
 
         assertDoesNotThrow(() -> notificationManagerService.notify(EVALUATION_DTO));
-        verify(notificationManagerRepository, times(1)).save(NOTIFICATION);
+        verifyNoMoreInteractions(notificationManagerRepository);
     }
 
     @Test
@@ -640,7 +640,6 @@ class NotificationManagerServiceTest {
         when(ioBackEndRestConnector.notify(NOTIFICATION_DTO, TOKEN)).thenReturn(NOTIFICATION_RESOURCE);
 
         assertDoesNotThrow(() -> notificationManagerService.sendNotificationFromOperationType(NOTIFICATION_IBAN_QUEUE_DTO));
-        verify(notificationManagerRepository, times(1)).save(NOTIFICATION);
     }
 
     @Test
@@ -689,7 +688,6 @@ class NotificationManagerServiceTest {
         when(ioBackEndRestConnector.notify(NOTIFICATION_DTO, TOKEN)).thenReturn(NOTIFICATION_RESOURCE);
 
         assertDoesNotThrow(() -> notificationManagerService.sendNotificationFromOperationType(NOTIFICATION_CITIZEN_ON_QUEUE_DTO));
-        verify(notificationManagerRepository, times(1)).save(NOTIFICATION);
     }
 
     @Test
@@ -809,7 +807,11 @@ class NotificationManagerServiceTest {
 
     @Test
     void sendNotificationFromOperationType_checkiban_notification_Null_ioTokens_null() {
-        when(notificationMapper.toEntity(NOTIFICATION_IBAN_QUEUE_DTO)).thenReturn(null);
+        Notification dto = Mockito.mock(Notification.class);
+
+        when(dto.getUserId()).thenReturn(null);
+        when(dto.getInitiativeId()).thenReturn(null);
+        when(notificationMapper.toEntity(NOTIFICATION_IBAN_QUEUE_DTO)).thenReturn(dto);
         when(initiativeRestConnector.getIOTokens(INITIATIVE_ID)).thenReturn(null);
         when(pdvDecryptRestConnector.getPii(TEST_TOKEN)).thenReturn(FISCAL_CODE_RESOURCE);
         when(notificationMarkdown.getMarkdownInitiativePublishing()).thenReturn(SUBJECT);
@@ -834,7 +836,6 @@ class NotificationManagerServiceTest {
         when(ioBackEndRestConnector.notify(NOTIFICATION_DTO, TOKEN)).thenReturn(NOTIFICATION_RESOURCE);
 
         assertDoesNotThrow(() -> notificationManagerService.sendNotificationFromOperationType(NOTIFICATION_REFUND_QUEUE_DTO));
-        verify(notificationManagerRepository, times(1)).save(NOTIFICATION);
     }
 
     @Test
@@ -871,7 +872,6 @@ class NotificationManagerServiceTest {
         }
 
         checkKoNotifications();
-        verify(notificationManagerRepository, times(6)).save(any(Notification.class));
     }
 
     @Test
@@ -999,7 +999,6 @@ class NotificationManagerServiceTest {
         when(ioBackEndRestConnector.notify(NOTIFICATION_DTO, TOKEN)).thenReturn(NOTIFICATION_RESOURCE);
 
         assertDoesNotThrow(() -> notificationManagerService.sendNotificationFromOperationType(NOTIFICATION_SUSPENSION_QUEUE_DTO));
-        verify(notificationManagerRepository, times(1)).save(NOTIFICATION_SUSPENSION);
     }
 
     @Test
@@ -1016,7 +1015,6 @@ class NotificationManagerServiceTest {
         when(ioBackEndRestConnector.notify(NOTIFICATION_DTO, TOKEN)).thenReturn(NOTIFICATION_RESOURCE);
 
         assertDoesNotThrow(() -> notificationManagerService.sendNotificationFromOperationType(NOTIFICATION_READMISSION_QUEUE_DTO));
-        verify(notificationManagerRepository, times(1)).save(NOTIFICATION_READMISSION);
     }
 
     @ParameterizedTest
@@ -1131,13 +1129,13 @@ class NotificationManagerServiceTest {
         when(ioBackEndRestConnector.getProfile(argThat(fc -> FISCAL_CODE.equals(fc.getFiscalCode())), eq(TOKEN)))
                 .thenReturn(PROFILE_RESOURCE);
         when(notificationMarkdown.getSubjectReminderBel()).thenReturn(SUBJECT);
-        when(notificationMarkdown.getMarkdownReminderBel()).thenReturn(MARKDOWN);
+        when(notificationMarkdown.getMarkdownReminder(dto.getInitiativeId(), dto.getVoucherEndDate())).thenReturn(MARKDOWN);
         when(notificationDTOMapper.map(eq(FISCAL_CODE), anyLong(), anyString(), anyString()))
                 .thenReturn(NOTIFICATION_DTO);
         when(ioBackEndRestConnector.notify(NOTIFICATION_DTO, TOKEN)).thenReturn(NOTIFICATION_RESOURCE);
 
         notificationManagerService.sendNotificationFromOperationType(dto);
-        verify(notificationManagerRepository, times(1)).save(notification);
+        verify(notificationManagerRepository, never()).save(any());
     }
 
     @Test

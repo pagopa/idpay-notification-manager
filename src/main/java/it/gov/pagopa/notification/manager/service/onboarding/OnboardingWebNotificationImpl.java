@@ -1,14 +1,18 @@
 package it.gov.pagopa.notification.manager.service.onboarding;
 
 import it.gov.pagopa.notification.manager.config.EmailNotificationProperties;
+import it.gov.pagopa.notification.manager.config.NotificationProperties;
 import it.gov.pagopa.notification.manager.connector.EmailNotificationConnector;
+import it.gov.pagopa.notification.manager.connector.IOBackEndRestConnector;
 import it.gov.pagopa.notification.manager.constants.NotificationConstants;
 import it.gov.pagopa.notification.manager.dto.EmailMessageDTO;
 import it.gov.pagopa.notification.manager.dto.EvaluationDTO;
+import it.gov.pagopa.notification.manager.dto.mapper.NotificationDTOMapper;
 import it.gov.pagopa.notification.manager.dto.mapper.NotificationMapper;
 import it.gov.pagopa.notification.manager.model.Notification;
 import it.gov.pagopa.notification.manager.repository.NotificationManagerRepository;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -28,12 +32,21 @@ public class OnboardingWebNotificationImpl extends BaseOnboardingNotification<Em
     private final NotificationManagerRepository notificationManagerRepository;
     private final NotificationMapper notificationMapper;
 
+    private static final String MANAGED_ENTITY = "managedEntity";
+
+
+    private final String assistedLink;
+
     public OnboardingWebNotificationImpl(EmailNotificationConnector emailNotificationConnector,
-                                         EmailNotificationProperties emailNotificationProperties, NotificationManagerRepository notificationManagerRepository, NotificationMapper notificationMapper) {
+                                         EmailNotificationProperties emailNotificationProperties,
+                                         NotificationManagerRepository notificationManagerRepository,
+                                         NotificationMapper notificationMapper,
+                                         @Value("${notification.manager.email.assisted-link}") String assistedLink){
         this.emailNotificationConnector = emailNotificationConnector;
         this.emailNotificationProperties = emailNotificationProperties;
         this.notificationManagerRepository = notificationManagerRepository;
         this.notificationMapper = notificationMapper;
+        this.assistedLink = assistedLink;
     }
 
 
@@ -52,7 +65,9 @@ public class OnboardingWebNotificationImpl extends BaseOnboardingNotification<Em
         final boolean initiativeEnded = firstReason != null
                 && REJECTION_REASON_INITIATIVE_ENDED.equals(firstReason.getCode());
 
-        final String template = initiativeEnded ? EMAIL_OUTCOME_THANKS : EMAIL_OUTCOME_GENERIC_ERROR;
+        final String template = initiativeEnded
+                ? EMAIL_OUTCOME_THANKS
+                : EMAIL_OUTCOME_GENERIC_ERROR;
         final String subject = initiativeEnded
                 ? emailNotificationProperties.getSubject().getKoThanks()
                 : emailNotificationProperties.getSubject().getKoGenericError();
@@ -61,8 +76,12 @@ public class OnboardingWebNotificationImpl extends BaseOnboardingNotification<Em
         templateValues.put("name", evaluationDTO.getName());
 
         if (!initiativeEnded && firstReason != null) {
-            templateValues.put("reason", firstReason.getDetail() != null ? firstReason.getDetail() : "REASON");
-            templateValues.put("managedEntity", firstReason.getAuthorityLabel() != null ? firstReason.getAuthorityLabel() : "HELPDESK");
+            templateValues.put(MANAGED_ENTITY, firstReason.getAuthority() != null
+                    ? firstReason.getAuthority()
+                    : "Assistenza");
+            if(templateValues.get(MANAGED_ENTITY) != null && templateValues.get(MANAGED_ENTITY).equalsIgnoreCase("Assistenza")){
+                templateValues.put("assistedLink", assistedLink);
+            }
         }
 
         return createNotification(evaluationDTO, subject, template, templateValues);
@@ -103,11 +122,13 @@ public class OnboardingWebNotificationImpl extends BaseOnboardingNotification<Em
     String sendNotification(EmailMessageDTO notificationToSend, EvaluationDTO evaluationDTO) {
         long startTime = System.currentTimeMillis();
         String sanitizedUserId = sanitizeString(evaluationDTO.getUserId());
+        String sanitizedInitiativeId = sanitizeString(evaluationDTO.getInitiativeId());
         try {
             emailNotificationConnector.sendEmail(notificationToSend);
-            saveNotification(notificationToSend, evaluationDTO, NotificationConstants.NOTIFICATION_STATUS_OK, null, startTime);
+            performanceLog(startTime, "NOTIFY");
+            log.info("[NOTIFY] OnboardingMail sent to user {} and initiative {}", sanitizedUserId, sanitizedInitiativeId);
         } catch (Exception e) {
-            log.error("[NOTIFY] Failed to send email notification for user {}", sanitizedUserId, e);
+            log.error("[NOTIFY] Failed to send email notification for user {} and initiative {}", sanitizedUserId, sanitizedInitiativeId, e);
             saveNotification(notificationToSend, evaluationDTO, NotificationConstants.NOTIFICATION_STATUS_KO, LocalDateTime.now(), startTime);
         }
         return null;
@@ -116,14 +137,19 @@ public class OnboardingWebNotificationImpl extends BaseOnboardingNotification<Em
 
     public boolean notify(Notification notification) {
         long startTime = System.currentTimeMillis();
+        String sanitizedUserId = sanitizeString(notification.getUserId());
+        String sanitizedInitiativeId = sanitizeString(notification.getInitiativeId());
         try {
             EmailMessageDTO emailMessageDTO = notificationMapper.notificationToEmailMessageDTO(notification);
             emailNotificationConnector.sendEmail(emailMessageDTO);
-            finalizeAndSave(notification, NotificationConstants.NOTIFICATION_STATUS_OK, null);
+            if(notification.getId() != null){
+                notificationManagerRepository.deleteById(notification.getId());
+            }
+            log.info("[NOTIFY] OnboardingMail re-sent for user {} and initiative {}", sanitizedUserId, sanitizedInitiativeId);
             performanceLog(startTime, "NOTIFY");
             return true;
         } catch (Exception e) {
-            log.error("[NOTIFY] Failed to send email notification for user {}", notification.getUserId(), e);
+            log.error("[NOTIFY] Failed to re-send OnboardingMail for user {} and initiative {}", sanitizedUserId, sanitizedInitiativeId, e);
             finalizeAndSave(notification, NotificationConstants.NOTIFICATION_STATUS_KO, LocalDateTime.now());
             performanceLog(startTime, "NOTIFY");
             return false;
