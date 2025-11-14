@@ -434,7 +434,7 @@ class NotificationMarkdownTest {
             
             **Hai domande?**
             
-            Per avere più dettagli su come e dove usare il bonus, [leggi la guida](https://bonuselettrodomestici.it).""".formatted(now.format(formatter));
+            Per avere più dettagli su come e dove usare il bonus, [leggi la guida](https://assistenza.ioapp.it/hc/it/articles/40429655391505-Come-e-dove-spendere-il-Bonus-Elettrodomestici).""".formatted(now.format(formatter));
 
     String actual = notificationMarkdown.getMarkdownReminder("INITIATIVE_ID", now);
     Assertions.assertEquals(expectedMarkdown, actual);
