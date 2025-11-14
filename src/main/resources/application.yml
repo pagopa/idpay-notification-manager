@@ -8,7 +8,8 @@ mongo:
       enabled: ${MONGO_REQUEST_RATE_TOO_LARGE_BATCH_ENABLED:true}
       max-retry: ${MONGO_REQUEST_RATE_TOO_LARGE_BATCH_MAX_RETRY:5}
       max-millis-elapsed: ${MONGO_REQUEST_RATE_TOO_LARGE_BATCH_MAX_MILLIS_ELAPSED:0}
-
+server:
+  port: ${NOTIFICATION_MANAGER_PORT:8080}
 rest-client:
   decrypt:
     api-key: ${PDV_DECRYPT_API_KEY:}
