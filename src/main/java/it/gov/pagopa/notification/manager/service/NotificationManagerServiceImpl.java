@@ -174,6 +174,8 @@ public class NotificationManagerServiceImpl implements NotificationManagerServic
 
     @Override
     public boolean notify(Notification notification) {
+        String sanitizedUserId = sanitizeString(notification.getUserId());
+        String sanitizedInitiativeId = sanitizeString(notification.getInitiativeId());
         long startTime = System.currentTimeMillis();
 
         notification.setNotificationDate(LocalDateTime.now());
@@ -195,7 +197,9 @@ public class NotificationManagerServiceImpl implements NotificationManagerServic
         String fiscalCode = decryptUserToken(notification.getUserId());
 
         if (fiscalCode == null) {
-            notificationKO(notification, startTime);
+            //notificationKO(notification, startTime);
+            log.error("[NOTIFY] [SENT_NOTIFICATION_KO] -  Failed to send notification for user {} and initiative {}",
+                    sanitizedUserId, sanitizedInitiativeId);
             return false;
         }
 
