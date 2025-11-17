@@ -62,7 +62,7 @@ class OnboardingIoNotificationTest {
 
             **Come fare?**
 
-            Per avere più informazioni su come e dove usare il bonus, [leggi i dettagli](https://ioapp.it/bonus-elettrodomestici).
+            Per avere più informazioni su come e dove usare il bonus, [leggi i dettagli](https://assistenza.ioapp.it/hc/it/articles/40429655391505-Come-e-dove-spendere-il-Bonus-Elettrodomestici).
 
             **Importante:** ricorda che puoi usare il bonus solo se hai un vecchio elettrodomestico da smaltire. Concorda con il venditore quando e come consegnarlo, ma non smaltirlo autonomamente in discarica.""";
 
@@ -77,7 +77,7 @@ class OnboardingIoNotificationTest {
 
             **Come fare?**
 
-            Per avere più informazioni su come e dove usare il bonus, [leggi i dettagli](https://ioapp.it/bonus-elettrodomestici).
+            Per avere più informazioni su come e dove usare il bonus, [leggi i dettagli](https://assistenza.ioapp.it/hc/it/articles/40429655391505-Come-e-dove-spendere-il-Bonus-Elettrodomestici).
 
             **Importante:** ricorda che puoi usare il bonus solo se hai un vecchio elettrodomestico da smaltire. Concorda con il venditore quando e come consegnarlo, ma non smaltirlo autonomamente in discarica.""";
 
@@ -187,7 +187,7 @@ class OnboardingIoNotificationTest {
 
                 **Come fare?**
 
-                Per avere più informazioni su come e dove usare il bonus, [leggi i dettagli](https://ioapp.it/bonus-elettrodomestici).
+                Per avere più informazioni su come e dove usare il bonus, [leggi i dettagli](https://assistenza.ioapp.it/hc/it/articles/40429655391505-Come-e-dove-spendere-il-Bonus-Elettrodomestici).
 
                 **Importante:** ricorda che puoi usare il bonus solo se hai un vecchio elettrodomestico da smaltire. Concorda con il venditore quando e come consegnarlo, ma non smaltirlo autonomamente in discarica.""";
 
@@ -242,7 +242,7 @@ class OnboardingIoNotificationTest {
 
                 **Come fare?**
 
-                Per avere più informazioni su come e dove usare il bonus, [leggi i dettagli](https://ioapp.it/bonus-elettrodomestici).
+                Per avere più informazioni su come e dove usare il bonus, [leggi i dettagli](https://assistenza.ioapp.it/hc/it/articles/40429655391505-Come-e-dove-spendere-il-Bonus-Elettrodomestici).
 
                 **Importante:** ricorda che puoi usare il bonus solo se hai un vecchio elettrodomestico da smaltire. Concorda con il venditore quando e come consegnarlo, ma non smaltirlo autonomamente in discarica.""";
 
@@ -298,7 +298,7 @@ class OnboardingIoNotificationTest {
 
                 **Come fare?**
 
-                Per avere più informazioni su come e dove usare il bonus, [leggi i dettagli](https://ioapp.it/bonus-elettrodomestici).
+                Per avere più informazioni su come e dove usare il bonus, [leggi i dettagli](https://assistenza.ioapp.it/hc/it/articles/40429655391505-Come-e-dove-spendere-il-Bonus-Elettrodomestici).
 
                 **Importante:** ricorda che puoi usare il bonus solo se hai un vecchio elettrodomestico da smaltire. Concorda con il venditore quando e come consegnarlo, ma non smaltirlo autonomamente in discarica.""";
 
@@ -354,7 +354,7 @@ class OnboardingIoNotificationTest {
 
                 **Come fare?**
 
-                Per avere più informazioni su come e dove usare il bonus, [leggi i dettagli](https://ioapp.it/bonus-elettrodomestici).
+                Per avere più informazioni su come e dove usare il bonus, [leggi i dettagli](https://assistenza.ioapp.it/hc/it/articles/40429655391505-Come-e-dove-spendere-il-Bonus-Elettrodomestici).
 
                 **Importante:** ricorda che puoi usare il bonus solo se hai un vecchio elettrodomestico da smaltire. Concorda con il venditore quando e come consegnarlo, ma non smaltirlo autonomamente in discarica.""";
 
