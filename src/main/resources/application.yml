@@ -12,8 +12,8 @@ server:
   port: ${NOTIFICATION_MANAGER_PORT:8080}
 rest-client:
   decrypt:
-    api-key: ${PDV_DECRYPT_API_KEY:loXaUTf93X75qrXLZDOaV37Bm051OXdI5e7ydmh1}
-    base-url: ${PDV_DECRYPT_BASE_URL:https://idpay.itn.internal.dev.cstar.pagopa.it/mcshareddatavault}
+    api-key: ${PDV_DECRYPT_API_KEY:}
+    base-url: ${PDV_DECRYPT_BASE_URL:}
     serviceCode: pdv-ms-tokenizer
   notification:
     backend-io:
