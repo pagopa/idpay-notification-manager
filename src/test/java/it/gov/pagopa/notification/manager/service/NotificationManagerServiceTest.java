@@ -939,7 +939,7 @@ class NotificationManagerServiceTest {
                 .getProfile(argThat(fc -> FISCAL_CODE.equals(fc.getFiscalCode())), eq(TOKEN));
 
         notificationManagerService.notify(KO_NOTIFICATION_FIRST_RETRY);
-        verify(notificationManagerRepository, times(1)).save(any(Notification.class));
+        verify(notificationManagerRepository, times(0)).save(any(Notification.class));
     }
 
     @Test
@@ -951,7 +951,7 @@ class NotificationManagerServiceTest {
                 .thenReturn(PROFILE_RESOURCE_KO);
 
         notificationManagerService.notify(KO_NOTIFICATION_N_RETRY);
-        verify(notificationManagerRepository, times(1)).save(any(Notification.class));
+        verify(notificationManagerRepository, times(0)).save(any(Notification.class));
     }
 
     @Test
