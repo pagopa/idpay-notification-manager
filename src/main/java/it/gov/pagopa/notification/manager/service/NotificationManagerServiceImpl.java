@@ -156,8 +156,6 @@ public class NotificationManagerServiceImpl implements NotificationManagerServic
         if (fiscalCode == null || isNotSenderAllowed(fiscalCode, ioTokens.getPrimaryKey())) {
             log.error("[NOTIFY][ONBOARDING_STATUS] Invalid fiscal code or notifications not allowed for this user.");
             log.error(LOG_NOTIFICATION_KO, sanitizedUserId, sanitizedInitiativeId);
-
-            //notificationKO(notification, startTime);
             return;
         }
 
@@ -199,7 +197,6 @@ public class NotificationManagerServiceImpl implements NotificationManagerServic
         String fiscalCode = decryptUserToken(notification.getUserId());
 
         if (fiscalCode == null) {
-            //notificationKO(notification, startTime);
             log.error(LOG_NOTIFICATION_KO, sanitizedUserId, sanitizedInitiativeId);
             return false;
         }
@@ -207,7 +204,7 @@ public class NotificationManagerServiceImpl implements NotificationManagerServic
         String tokenDecrypt = ioTokens.getPrimaryKey();
 
         if (isNotSenderAllowed(fiscalCode, tokenDecrypt)) {
-            notificationKO(notification, startTime);
+            log.error(LOG_NOTIFICATION_KO, sanitizedUserId, sanitizedInitiativeId);
             return false;
         }
 
