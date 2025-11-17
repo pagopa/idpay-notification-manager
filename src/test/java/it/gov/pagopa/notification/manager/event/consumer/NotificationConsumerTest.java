@@ -45,7 +45,7 @@ class NotificationConsumerTest {
         consumer.accept(reminderDto);
 
         verify(webNotificationManagerService, times(1)).sendReminderMail(reminderDto);
-        verifyNoInteractions(notificationManagerService);
+        verify(notificationManagerService, times(1)).sendNotificationFromOperationType(reminderDto);
     }
 
     @Test

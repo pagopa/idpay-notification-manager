@@ -506,6 +506,7 @@ class NotificationManagerServiceTest {
         );
 
         when(onboardingWebNotification.processNotification(evaluationDTO)).thenReturn(null);
+        when(notificationMapper.evaluationToNotification(evaluationDTO)).thenReturn(NOTIFICATION);
         notificationManagerService.notify(evaluationDTO);
         verify(onboardingWebNotification, times(1)).processNotification(any());
     }
@@ -597,7 +598,7 @@ class NotificationManagerServiceTest {
         when(notificationMapper.evaluationToNotification(EVALUATION_DTO)).thenReturn(NOTIFICATION);
 
         notificationManagerService.notify(EVALUATION_DTO);
-        verify(notificationManagerRepository, times(1)).save(any(Notification.class));
+        verify(notificationManagerRepository, times(0)).save(any(Notification.class));
     }
 
     @Test
@@ -609,7 +610,7 @@ class NotificationManagerServiceTest {
         when(notificationMapper.evaluationToNotification(EVALUATION_DTO)).thenReturn(NOTIFICATION);
 
         notificationManagerService.notify(EVALUATION_DTO);
-        verify(notificationManagerRepository, times(1)).save(any(Notification.class));
+        verify(notificationManagerRepository, times(0)).save(any(Notification.class));
     }
 
     @Test
@@ -622,7 +623,7 @@ class NotificationManagerServiceTest {
         when(notificationMapper.evaluationToNotification(EVALUATION_DTO)).thenReturn(NOTIFICATION);
 
         notificationManagerService.notify(EVALUATION_DTO);
-        verify(notificationManagerRepository, times(1)).save(any(Notification.class));
+        verify(notificationManagerRepository, times(0)).save(any(Notification.class));
     }
 
     @Test
@@ -938,7 +939,7 @@ class NotificationManagerServiceTest {
                 .getProfile(argThat(fc -> FISCAL_CODE.equals(fc.getFiscalCode())), eq(TOKEN));
 
         notificationManagerService.notify(KO_NOTIFICATION_FIRST_RETRY);
-        verify(notificationManagerRepository, times(1)).save(any(Notification.class));
+        verify(notificationManagerRepository, times(0)).save(any(Notification.class));
     }
 
     @Test
@@ -950,7 +951,7 @@ class NotificationManagerServiceTest {
                 .thenReturn(PROFILE_RESOURCE_KO);
 
         notificationManagerService.notify(KO_NOTIFICATION_N_RETRY);
-        verify(notificationManagerRepository, times(1)).save(any(Notification.class));
+        verify(notificationManagerRepository, times(0)).save(any(Notification.class));
     }
 
     @Test
@@ -962,7 +963,7 @@ class NotificationManagerServiceTest {
                 .when(pdvDecryptRestConnector).getPii(TEST_TOKEN);
 
         notificationManagerService.notify(KO_NOTIFICATION_FIRST_RETRY);
-        verify(notificationManagerRepository, times(1)).save(any(Notification.class));
+        verify(notificationManagerRepository, times(0)).save(any(Notification.class));
     }
 
     private void checkKoNotifications() {

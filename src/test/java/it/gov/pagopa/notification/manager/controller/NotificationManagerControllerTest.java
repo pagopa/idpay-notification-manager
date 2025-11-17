@@ -87,4 +87,17 @@ class NotificationManagerControllerTest {
             .andExpect(MockMvcResultMatchers.status().isOk())
             .andReturn();
   }
+
+  @Test
+  void notify_ok() throws Exception {
+    Mockito.doNothing().when(notificationManagerServiceMock).notify(EVALUATION_DTO);
+
+    mvc.perform(
+                    MockMvcRequestBuilders.put(BASE_URL + "/notify")
+                            .content(objectMapper.writeValueAsString(EVALUATION_DTO))
+                            .contentType(MediaType.APPLICATION_JSON_VALUE)
+                            .accept(MediaType.APPLICATION_JSON_VALUE))
+            .andExpect(MockMvcResultMatchers.status().isOk())
+            .andReturn();
+  }
 }
