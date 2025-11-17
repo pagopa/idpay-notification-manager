@@ -29,5 +29,11 @@ public class NotificationManagerControllerImpl implements NotificationManagerCon
     notificationManagerService.addOutcome(body);
     return new ResponseEntity<>(HttpStatus.OK);
   }
+
+  @Override
+  public ResponseEntity<Void> notify(EvaluationDTO body) {
+    notificationManagerService.notify(body);
+    return new ResponseEntity<>(HttpStatus.OK);
+  }
   
 }
