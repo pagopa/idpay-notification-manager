@@ -62,7 +62,7 @@ public class NotificationManagerServiceImpl implements NotificationManagerServic
     @Value("${notification.manager.recover.parallelism}")
     private int parallelism;
 
-    private final static String LOG_NOTIFICATION_KO = "[NOTIFY] [SENT_NOTIFICATION_KO] -  Failed to send notification for user {} and initiative {}";
+    private static final String LOG_NOTIFICATION_KO = "[NOTIFY] [SENT_NOTIFICATION_KO] -  Failed to send notification for user {} and initiative {}";
     private ExecutorService executorService;
 
     public NotificationManagerServiceImpl(@Value("${app.delete.paginationSize:100}") int pageSize,
