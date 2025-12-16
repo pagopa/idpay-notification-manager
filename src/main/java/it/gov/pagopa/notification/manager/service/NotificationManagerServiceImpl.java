@@ -69,7 +69,6 @@ public class NotificationManagerServiceImpl implements NotificationManagerServic
     private String markdownDoubleNewLine;
 
     private static final String LOG_NOTIFICATION_KO = "[NOTIFY] [SENT_NOTIFICATION_KO] -  Failed to send notification for user {} and initiative {}";
-    private static final Pair<String, String> PAIR_NULL = Pair.of(null, null);
     private ExecutorService executorService;
 
     public NotificationManagerServiceImpl(@Value("${app.delete.paginationSize:100}") int pageSize,
