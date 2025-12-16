@@ -1,6 +1,7 @@
 package it.gov.pagopa.notification.manager.controller;
 
 import it.gov.pagopa.notification.manager.dto.EvaluationDTO;
+import it.gov.pagopa.notification.manager.dto.ManualNotificationDTO;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -22,5 +23,8 @@ public interface NotificationManagerController {
 
   @PutMapping("/notify")
   ResponseEntity<Void> notify(@RequestBody EvaluationDTO body);
+
+  @PutMapping("/manualNotify")
+  ResponseEntity<Void> manualNotify(@RequestBody ManualNotificationDTO body);
 
 }

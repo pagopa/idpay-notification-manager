@@ -16,7 +16,6 @@ import org.springframework.util.StringUtils;
 
 import java.util.Map;
 
-import static it.gov.pagopa.notification.manager.constants.NotificationConstants.EmailTemplates.*;
 import static it.gov.pagopa.notification.manager.dto.OnboardingRejectionReason.OnboardingRejectionReasonCode.REJECTION_REASON_INITIATIVE_ENDED;
 
 @Slf4j
@@ -128,14 +127,14 @@ public class OnboardingIoNotificationImpl extends BaseOnboardingNotification<Not
         }
 
     }
-    private String replaceMessageItems(String message, Map<String, String> values) {
+    public static String replaceMessageItems(String message, Map<String, String> values) {
         for (Map.Entry<String, String> entry : values.entrySet()) {
             message = replaceMessageItem(message, entry.getKey(), entry.getValue());
         }
         return message;
     }
 
-    private String replaceMessageItem(String message, String key, String value) {
+    public static String replaceMessageItem(String message, String key, String value) {
         return message.replace(
                 NotificationConstants.MARKDOWN_TAG + key + NotificationConstants.MARKDOWN_TAG,
                 StringUtils.hasLength(value) ? value : NotificationConstants.MARKDOWN_NA);

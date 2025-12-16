@@ -1,6 +1,7 @@
 package it.gov.pagopa.notification.manager.controller;
 
 import it.gov.pagopa.notification.manager.dto.EvaluationDTO;
+import it.gov.pagopa.notification.manager.dto.ManualNotificationDTO;
 import it.gov.pagopa.notification.manager.service.NotificationManagerService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -33,6 +34,12 @@ public class NotificationManagerControllerImpl implements NotificationManagerCon
   @Override
   public ResponseEntity<Void> notify(EvaluationDTO body) {
     notificationManagerService.notify(body);
+    return new ResponseEntity<>(HttpStatus.OK);
+  }
+
+  @Override
+  public ResponseEntity<Void> manualNotify(ManualNotificationDTO body) {
+    notificationManagerService.manualNotify(body);
     return new ResponseEntity<>(HttpStatus.OK);
   }
   
