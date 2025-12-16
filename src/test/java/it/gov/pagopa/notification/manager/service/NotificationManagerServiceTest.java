@@ -32,6 +32,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.HttpStatus;
+import org.springframework.messaging.support.MessageBuilder;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
@@ -1196,5 +1197,33 @@ class NotificationManagerServiceTest {
                     .getField(notificationManagerService, "executorService");
             assertTrue(exec.isShutdown(), "ExecutorService should be shut down after close()");
         }
+    }
+
+    @Test
+    void manualNotify_ok() {
+        String subject = "Subject Test!";
+        String markdown = "Ciao %name%, test.\n**Dummy** %libTest%";
+        MessageContent message = new MessageContent();
+        message.setSubject(subject);
+        message.setMarkdown(markdown);
+
+        String initiativeId = "INITIATIVE_ID";
+        String userId = "USER_ID";
+
+        ManualNotificationDTO request = ManualNotificationDTO.builder().userId(userId)
+                .initiativeId(initiativeId)
+                .content(message)
+                .bodyValues(Map.of("name", "NAME_FAKE", "libTest", "TESTO_LIBERO_FAKE")).build();
+        when(initiativeRestConnector.getIOTokens(initiativeId)).thenReturn(INITIATIVE_ADDITIONAL_INFO_DTO);
+        when(pdvDecryptRestConnector.getPii(userId)).thenReturn(FISCAL_CODE_RESOURCE);
+        when(ioBackEndRestConnector.getProfile(argThat(fc -> FISCAL_CODE.equals(fc.getFiscalCode())), eq(TOKEN)))
+                .thenReturn(PROFILE_RESOURCE);
+        NotificationResource notificationResource = new NotificationResource();
+        notificationResource.setId("ID");
+
+        when(ioBackEndRestConnector.notify(any(), eq(TOKEN))).thenReturn(notificationResource);
+
+        assertDoesNotThrow(() -> notificationManagerService.manualNotify(request));
+        verifyNoMoreInteractions(notificationManagerRepository);
     }
 }

@@ -65,8 +65,11 @@ public class NotificationManagerServiceImpl implements NotificationManagerServic
     private Long timeToLive;
     @Value("${notification.manager.recover.parallelism}")
     private int parallelism;
+    @Value("${notification.manager.markdown.double.new.line}")
+    private String markdownDoubleNewLine;
 
     private static final String LOG_NOTIFICATION_KO = "[NOTIFY] [SENT_NOTIFICATION_KO] -  Failed to send notification for user {} and initiative {}";
+    private static final Pair<String, String> PAIR_NULL = Pair.of(null, null);
     private ExecutorService executorService;
 
     public NotificationManagerServiceImpl(@Value("${app.delete.paginationSize:100}") int pageSize,
@@ -115,10 +118,10 @@ public class NotificationManagerServiceImpl implements NotificationManagerServic
         }
 
         if (evaluationDTO.getChannel().isAppIo()) {
-            processAppIoNotification(evaluationDTO, startTime, false);
+            processAppIoNotification(evaluationDTO, startTime);
         } else if (evaluationDTO.getChannel().isWeb()) {
             onboardingWebNotification.processNotification(evaluationDTO);
-            processAppIoNotification(evaluationDTO, startTime, false);
+            processAppIoNotification(evaluationDTO, startTime);
         } else {
             log.warn("[NOTIFY] Unsupported channel {} for user {}", sanitizedChannel, sanitizedUserId);
         }
@@ -134,20 +137,24 @@ public class NotificationManagerServiceImpl implements NotificationManagerServic
                 .initiativeId(manualNotificationDTO.getInitiativeId())
                 .build();
 
-        Pair<String, String> result =  processAppIoGeneralNotification(notification, startTime, true);
-        String markdown = manualNotificationDTO.getBodyValues() != null
+        Pair<String, String> notificationPreChecks =  processAppIoGeneralNotification(notification, startTime, true);
+        if(notificationPreChecks == null){
+            return;
+        }
+
+        String markdown = (manualNotificationDTO.getBodyValues() != null
                 ? OnboardingIoNotificationImpl.replaceMessageItems(
                     manualNotificationDTO.getContent().getMarkdown(), manualNotificationDTO.getBodyValues())
-                : manualNotificationDTO.getContent().getMarkdown();
+                : manualNotificationDTO.getContent().getMarkdown()).concat(markdownDoubleNewLine);
 
         NotificationDTO notificationDTO =
                 notificationDTOMapper.map(
-                        result.getValue(),
+                        notificationPreChecks.getValue(),
                         timeToLive,
                         manualNotificationDTO.getContent().getSubject(),
                         markdown);
 
-        String notificationId = sendNotification(notificationDTO, result.getKey());
+        String notificationId = sendNotification(notificationDTO, notificationPreChecks.getKey());
         logNotificationId(notificationId);
 
         performanceLog(startTime);
@@ -164,13 +171,16 @@ public class NotificationManagerServiceImpl implements NotificationManagerServic
     }
 
 
-    private void processAppIoNotification(EvaluationDTO evaluationDTO, long startTime, boolean manual) {
+    private void processAppIoNotification(EvaluationDTO evaluationDTO, long startTime) {
 
         Notification notification = notificationMapper.evaluationToNotification(evaluationDTO);
-        Pair<String, String> result = processAppIoGeneralNotification(notification, startTime, false);
+        Pair<String, String> notificationPreChecks = processAppIoGeneralNotification(notification, startTime, false);
+        if(notificationPreChecks == null){
+            return;
+        }
 
-        evaluationDTO.setIoToken(result.getKey());
-        evaluationDTO.setFiscalCode(result.getValue());
+        evaluationDTO.setIoToken(notificationPreChecks.getKey());
+        evaluationDTO.setFiscalCode(notificationPreChecks.getValue());
         String notificationId = onboardingIoNotification.processNotification(evaluationDTO);
 
         if (notificationId == null) {

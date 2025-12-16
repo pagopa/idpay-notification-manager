@@ -398,6 +398,27 @@ notification:
       assisted-link: ${ASSISTED_LINK:https://bonuselettrodomestici.it/utente/assistenza}
     threads:
       schedule-max-number: ${THREADS_SCHEDULE_MAX_NUMBER:1}
+    content:
+      anpr-ko:
+        subject: |-
+          Bonus Elettrodomestici: aggiornamento importante
+        markdown: |-
+          Ciao %nome%,
+          
+          abbiamo un **aggiornamento importante sulla tua richiesta di Bonus Elettrodomestici.**
+          
+          Dalle verifiche che abbiamo effettuato **non risulta una tua iscrizione all'ANPR (Anagrafe nazionale della popolazione residente),** ma è un requisito necessario per l'erogazione del bonus.
+          
+          **Cosa puoi fare ora?**
+          
+          Verifica la tua posizione presso l'ufficio anagrafe del tuo Comune e, se necessario regolarizza la tua iscrizione entro il %dataTermine%.
+          
+          **Entro quando**
+          
+          Il %dataVerifica% effettueremo una nuova verifica. Se la tua posizione risulterà regolarizzata, potrai ricevere il bonus. In caso contrario, la richiesta verrà definitivamente respinta.
+          
+          Grazie, a presto!
+          
 
 logging:
   level:
