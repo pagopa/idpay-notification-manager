@@ -16,11 +16,13 @@ import it.gov.pagopa.notification.manager.model.NotificationMarkdown;
 import it.gov.pagopa.notification.manager.repository.NotificationManagerRepository;
 import it.gov.pagopa.notification.manager.repository.NotificationManagerRepositoryExtended;
 import it.gov.pagopa.notification.manager.service.onboarding.OnboardingIoNotification;
+import it.gov.pagopa.notification.manager.service.onboarding.OnboardingIoNotificationImpl;
 import it.gov.pagopa.notification.manager.service.onboarding.OnboardingWebNotification;
 import it.gov.pagopa.notification.manager.utils.AuditUtilities;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.tuple.Pair;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.scheduling.concurrent.CustomizableThreadFactory;
@@ -31,6 +33,7 @@ import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -38,6 +41,7 @@ import java.util.concurrent.Future;
 import java.util.stream.IntStream;
 
 import static it.gov.pagopa.notification.manager.constants.NotificationConstants.AnyNotificationConsumer.SubTypes.*;
+
 
 @Service
 @Slf4j
@@ -61,6 +65,8 @@ public class NotificationManagerServiceImpl implements NotificationManagerServic
     private Long timeToLive;
     @Value("${notification.manager.recover.parallelism}")
     private int parallelism;
+    @Value("${notification.manager.markdown.double.new.line}")
+    private String markdownDoubleNewLine;
 
     private static final String LOG_NOTIFICATION_KO = "[NOTIFY] [SENT_NOTIFICATION_KO] -  Failed to send notification for user {} and initiative {}";
     private ExecutorService executorService;
@@ -121,6 +127,38 @@ public class NotificationManagerServiceImpl implements NotificationManagerServic
         performanceLog(startTime);
     }
 
+    @Override
+    public void manualNotify(ManualNotificationDTO manualNotificationDTO) {
+
+        long startTime = System.currentTimeMillis();
+        Notification notification = Notification.builder()
+                .userId(manualNotificationDTO.getUserId())
+                .initiativeId(manualNotificationDTO.getInitiativeId())
+                .build();
+
+        Pair<String, String> notificationPreChecks =  processAppIoGeneralNotification(notification, startTime, true);
+        if(notificationPreChecks == null){
+            return;
+        }
+
+        String markdown = (manualNotificationDTO.getBodyValues() != null
+                ? OnboardingIoNotificationImpl.replaceMessageItems(
+                    manualNotificationDTO.getContent().getMarkdown(), manualNotificationDTO.getBodyValues())
+                : manualNotificationDTO.getContent().getMarkdown()).concat(markdownDoubleNewLine);
+
+        NotificationDTO notificationDTO =
+                notificationDTOMapper.map(
+                        notificationPreChecks.getValue(),
+                        timeToLive,
+                        manualNotificationDTO.getContent().getSubject(),
+                        markdown);
+
+        String notificationId = sendNotification(notificationDTO, notificationPreChecks.getKey());
+        logNotificationId(notificationId);
+
+        performanceLog(startTime);
+    }
+
     private boolean shouldSkipNotification(EvaluationDTO evaluationDTO) {
         boolean hasFamilyCriteriaKo = evaluationDTO.getOnboardingRejectionReasons() != null &&
                 evaluationDTO.getOnboardingRejectionReasons().stream()
@@ -131,36 +169,17 @@ public class NotificationManagerServiceImpl implements NotificationManagerServic
         return hasFamilyCriteriaKo || isDemandedType2;
     }
 
+
     private void processAppIoNotification(EvaluationDTO evaluationDTO, long startTime) {
 
         Notification notification = notificationMapper.evaluationToNotification(evaluationDTO);
-        String sanitizedUserId = sanitizeString(notification.getUserId());
-        String sanitizedInitiativeId = sanitizeString(notification.getInitiativeId());
-        InitiativeAdditionalInfoDTO ioTokens;
-
-        try {
-            ioTokens = initiativeRestConnector.getIOTokens(evaluationDTO.getInitiativeId());
-        } catch (FeignException e) {
-            log.error("[NOTIFY][ONBOARDING_STATUS] Failed to retrieve ioTokens from initiative service.");
-            notificationKO(notification, startTime);
+        Pair<String, String> notificationPreChecks = processAppIoGeneralNotification(notification, startTime, false);
+        if(notificationPreChecks == null){
             return;
         }
 
-        if (ioTokens == null) {
-            log.error("[NOTIFY][ONBOARDING_STATUS] ioTokens must not be null");
-            notificationKO(notification, startTime);
-            return;
-        }
-
-        String fiscalCode = decryptUserToken(evaluationDTO.getUserId());
-        if (fiscalCode == null || isNotSenderAllowed(fiscalCode, ioTokens.getPrimaryKey())) {
-            log.error("[NOTIFY][ONBOARDING_STATUS] Invalid fiscal code or notifications not allowed for this user.");
-            log.error(LOG_NOTIFICATION_KO, sanitizedUserId, sanitizedInitiativeId);
-            return;
-        }
-
-        evaluationDTO.setIoToken(ioTokens.getPrimaryKey());
-        evaluationDTO.setFiscalCode(fiscalCode);
+        evaluationDTO.setIoToken(notificationPreChecks.getKey());
+        evaluationDTO.setFiscalCode(notificationPreChecks.getValue());
         String notificationId = onboardingIoNotification.processNotification(evaluationDTO);
 
         if (notificationId == null) {
@@ -171,6 +190,45 @@ public class NotificationManagerServiceImpl implements NotificationManagerServic
 
         logNotificationId(notificationId);
     }
+
+    private Pair<String, String> processAppIoGeneralNotification(Notification notification, long startTime, boolean manual) {
+        Pair<String, String> result = null;
+
+        String sanitizedUserId = sanitizeString(notification.getUserId());
+        String sanitizedInitiativeId = sanitizeString(notification.getInitiativeId());
+        InitiativeAdditionalInfoDTO ioTokens;
+
+        try {
+            ioTokens = initiativeRestConnector.getIOTokens(notification.getInitiativeId());
+        } catch (FeignException e) {
+            log.error("[NOTIFY][ONBOARDING_STATUS] Failed to retrieve ioTokens from initiative service.");
+            if(!manual) {
+                notificationKO(notification, startTime);
+            }
+            return result;
+        }
+
+        if (ioTokens == null) {
+            log.error("[NOTIFY][ONBOARDING_STATUS] ioTokens must not be null");
+            if(!manual) {
+                notificationKO(notification, startTime);
+            }
+            return result;
+        }
+
+        String fiscalCode = decryptUserToken(notification.getUserId());
+        if (fiscalCode == null || isNotSenderAllowed(fiscalCode, ioTokens.getPrimaryKey())) {
+            log.error("[NOTIFY][ONBOARDING_STATUS] Invalid fiscal code or notifications not allowed for this user.");
+            log.error(LOG_NOTIFICATION_KO, sanitizedUserId, sanitizedInitiativeId);
+            return result;
+        }
+
+        result = Pair.of(ioTokens.getPrimaryKey(), fiscalCode);
+        return result;
+
+    }
+
+
 
     @Override
     public boolean notify(Notification notification) {
