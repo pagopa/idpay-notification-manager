@@ -3,6 +3,7 @@ package it.gov.pagopa.notification.manager.controller;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import it.gov.pagopa.notification.manager.constants.NotificationConstants;
 import it.gov.pagopa.notification.manager.dto.EvaluationDTO;
+import it.gov.pagopa.notification.manager.dto.ManualNotificationDTO;
 import it.gov.pagopa.notification.manager.service.NotificationManagerService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -94,6 +95,22 @@ class NotificationManagerControllerTest {
 
     mvc.perform(
                     MockMvcRequestBuilders.put(BASE_URL + "/notify")
+                            .content(objectMapper.writeValueAsString(EVALUATION_DTO))
+                            .contentType(MediaType.APPLICATION_JSON_VALUE)
+                            .accept(MediaType.APPLICATION_JSON_VALUE))
+            .andExpect(MockMvcResultMatchers.status().isOk())
+            .andReturn();
+  }
+
+  @Test
+  void manualNotify_ok() throws Exception {
+    ManualNotificationDTO request = ManualNotificationDTO.builder()
+            .userId(USER_ID).build();
+
+    Mockito.doNothing().when(notificationManagerServiceMock).manualNotify(request);
+
+    mvc.perform(
+                    MockMvcRequestBuilders.put(BASE_URL + "/notify/manual")
                             .content(objectMapper.writeValueAsString(EVALUATION_DTO))
                             .contentType(MediaType.APPLICATION_JSON_VALUE)
                             .accept(MediaType.APPLICATION_JSON_VALUE))
