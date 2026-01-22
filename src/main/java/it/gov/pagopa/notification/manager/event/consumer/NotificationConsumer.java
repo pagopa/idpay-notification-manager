@@ -2,6 +2,7 @@ package it.gov.pagopa.notification.manager.event.consumer;
 
 import it.gov.pagopa.notification.manager.dto.event.AnyOfNotificationQueueDTO;
 import it.gov.pagopa.notification.manager.dto.event.NotificationReminderQueueDTO;
+import it.gov.pagopa.notification.manager.enums.Channel;
 import it.gov.pagopa.notification.manager.service.NotificationManagerService;
 import it.gov.pagopa.notification.manager.service.WebNotificationManagerService;
 import org.springframework.context.annotation.Bean;
@@ -20,6 +21,7 @@ public class NotificationConsumer {
             if (dto instanceof NotificationReminderQueueDTO notificationReminderQueueDTO
                     && notificationReminderQueueDTO.getChannel().isWeb()) {
                 webNotificationManagerService.sendReminderMail(notificationReminderQueueDTO);
+                notificationReminderQueueDTO.setChannel(Channel.IO);
                 notificationManagerService.sendNotificationFromOperationType(dto);
             } else {
                 notificationManagerService.sendNotificationFromOperationType(dto);
