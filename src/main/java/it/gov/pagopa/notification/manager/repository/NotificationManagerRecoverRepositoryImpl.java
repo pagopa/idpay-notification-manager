@@ -52,7 +52,8 @@ public class NotificationManagerRecoverRepositoryImpl implements NotificationMan
 
         return mongoTemplate.findAndModify(
                 Query.query(criteria),
-                new Update().set(Notification.Fields.notificationStatus, NotificationConstants.NOTIFICATION_STATUS_RECOVER).set(Notification.Fields.retryDate, LocalDateTime.now()),
+                new Update().set(Notification.Fields.notificationStatus, NotificationConstants.NOTIFICATION_STATUS_RECOVER).set(Notification.Fields.retryDate, LocalDateTime.now())
+                        .set(Notification.Fields.updateDate, LocalDateTime.now()),
                 FindAndModifyOptions.options().returnNew(true),
                 Notification.class
         );
@@ -67,7 +68,7 @@ public class NotificationManagerRecoverRepositoryImpl implements NotificationMan
 
         return mongoTemplate.findAndModify(
                 Query.query(criteria),
-                new Update().set(Notification.Fields.retryDate, LocalDateTime.now()),
+                new Update().set(Notification.Fields.retryDate, LocalDateTime.now()).set(Notification.Fields.updateDate, LocalDateTime.now()),
                 FindAndModifyOptions.options().returnNew(true),
                 Notification.class
         );
