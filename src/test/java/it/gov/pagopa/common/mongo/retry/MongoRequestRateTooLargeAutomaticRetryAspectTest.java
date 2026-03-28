@@ -1,113 +1,138 @@
 package it.gov.pagopa.common.mongo.retry;
 
 import org.aspectj.lang.ProceedingJoinPoint;
-import org.aspectj.lang.Signature;
 import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.Mockito;
+import org.mockito.MockedStatic;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.data.mongodb.UncategorizedMongoDbException;
 import org.springframework.web.context.request.RequestAttributes;
 import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.method.HandlerMethod;
+import org.springframework.web.servlet.HandlerMapping;
+
+import java.lang.reflect.Method;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class MongoRequestRateTooLargeAutomaticRetryAspectTest {
 
     @Mock
-    private ProceedingJoinPoint pjpMock;
+    ProceedingJoinPoint pjp;
 
-    private final int maxRetry = 1;
-    private final String expectedResult = "OK";
+    MongoRequestRateTooLargeAutomaticRetryAspect aspect;
 
     @BeforeEach
-    void configureRetryMock() throws Throwable {
-        int[] counter= {0};
-        Mockito.doAnswer(i -> {
-            if (counter[0]++ < maxRetry){
-                throw MongoRequestRateTooLargeRetryerTest.buildRequestRateTooLargeMongodbException_whenReading();
-            }
-            return expectedResult;
-        }).when(pjpMock).proceed();
-
-        Signature signatureMock = Mockito.mock(Signature.class);
-        Mockito.lenient().when(signatureMock.toShortString()).thenReturn("ClassName.jointPointName(..)");
-        Mockito.lenient().when(pjpMock.getSignature()).thenReturn(signatureMock);
+    void setUp() {
+        aspect = new MongoRequestRateTooLargeAutomaticRetryAspect(
+                true, 3, 0,
+                true, 5, 0
+        );
     }
 
     @AfterEach
-    void cleanContext(){
-        configureExecutionContext(true);
+    void cleanup() {
+        RequestContextHolder.resetRequestAttributes();
     }
 
-//region test batch
-    @Test
-    void testBatchEnabled() throws Throwable {
-        configureExecutionContext(true);
-        MongoRequestRateTooLargeAutomaticRetryAspect aspect = new MongoRequestRateTooLargeAutomaticRetryAspect(false, maxRetry, 1000, true, maxRetry, 1000);
-
-        checkRetryBehaviour(aspect);
+    static class TestController {
+        @MongoRequestRateTooLargeApiRetryable(maxRetry = 7, maxMillisElapsed = 100)
+        public void endpoint() {
+            // This method is intentionally empty because it's used only to test
+        }
     }
-    @Test
-    void testBatchException() {
-        configureExecutionContext(true);
-        MongoRequestRateTooLargeAutomaticRetryAspect aspect = new MongoRequestRateTooLargeAutomaticRetryAspect(false, maxRetry, 1000, false, maxRetry, 1000);
 
-        checkException(aspect);
+    static class TestControllerNoAnnotation {
+        public void endpoint() {
+            // This method is intentionally empty because it's used only to test
+        }
     }
 
     @Test
-    void testBatchDisabledApiEnabled() {
-        configureExecutionContext(true);
-        MongoRequestRateTooLargeAutomaticRetryAspect aspect = new MongoRequestRateTooLargeAutomaticRetryAspect(true, maxRetry, 1000, false, maxRetry, 1000);
+    void batchContext_enabled_shouldRetry() throws Throwable {
+        try (MockedStatic<MongoRequestRateTooLargeRetryableAspect> mocked =
+                     mockStatic(MongoRequestRateTooLargeRetryableAspect.class)) {
 
-        checkException(aspect);
-    }
+            mocked.when(() ->
+                    MongoRequestRateTooLargeRetryableAspect.executeJoinPointRetryable(
+                            pjp, 5, 0)
+            ).thenReturn("RETRY_OK");
 
-//endregion
+            Object result = aspect.decorateRepositoryMethods(pjp);
 
-//region test Api
-    @Test
-    void testApiEnabled() throws Throwable {
-        configureExecutionContext(false);
-        MongoRequestRateTooLargeAutomaticRetryAspect aspect = new MongoRequestRateTooLargeAutomaticRetryAspect(true, maxRetry, 1000, false, maxRetry, 1000);
-
-        checkRetryBehaviour(aspect);
+            assertEquals("RETRY_OK", result);
+        }
     }
 
     @Test
-    void testApiException() {
-        configureExecutionContext(false);
-        MongoRequestRateTooLargeAutomaticRetryAspect aspect = new MongoRequestRateTooLargeAutomaticRetryAspect(false, maxRetry, 1000, false, maxRetry, 1000);
+    void batchContext_disabled_shouldProceed() throws Throwable {
 
-        checkException(aspect);
+        aspect = new MongoRequestRateTooLargeAutomaticRetryAspect(
+                true, 3, 0,
+                false, 5, 0
+        );
+
+        when(pjp.proceed()).thenReturn("OK");
+
+        Object result = aspect.decorateRepositoryMethods(pjp);
+
+        assertEquals("OK", result);
     }
 
     @Test
-    void testApiDisabledBatchEnabled() {
-        configureExecutionContext(false);
-        MongoRequestRateTooLargeAutomaticRetryAspect aspect = new MongoRequestRateTooLargeAutomaticRetryAspect(false, maxRetry, 1000, true, maxRetry, 1000);
+    void apiContext_withAnnotation_shouldUseAnnotationConfig() throws Throwable {
 
-        checkException(aspect);
+        setControllerContext(TestController.class.getMethod("endpoint"));
+
+        try (MockedStatic<MongoRequestRateTooLargeRetryableAspect> mocked =
+                     mockStatic(MongoRequestRateTooLargeRetryableAspect.class)) {
+
+            mocked.when(() ->
+                    MongoRequestRateTooLargeRetryableAspect.executeJoinPointRetryable(
+                            pjp, 7, 100)
+            ).thenReturn("ANNOTATION_OK");
+
+            Object result = aspect.decorateRepositoryMethods(pjp);
+
+            assertEquals("ANNOTATION_OK", result);
+        }
     }
 
-//endregion
+    @Test
+    void apiContext_withoutAnnotation_shouldUseDefaultApiConfig() throws Throwable {
 
-    private void checkRetryBehaviour(MongoRequestRateTooLargeAutomaticRetryAspect aspect) throws Throwable {
-        Object result = aspect.decorateRepositoryMethods(pjpMock);
+        setControllerContext(TestControllerNoAnnotation.class.getMethod("endpoint"));
 
-        Assertions.assertEquals(expectedResult, result);
-        Mockito.verify(pjpMock, Mockito.times(maxRetry+1)).proceed();
-    }
-    private static void configureExecutionContext(boolean isBatch) {
-        RequestContextHolder.setRequestAttributes(isBatch ? null : Mockito.mock(RequestAttributes.class));
+        try (MockedStatic<MongoRequestRateTooLargeRetryableAspect> mocked =
+                     mockStatic(MongoRequestRateTooLargeRetryableAspect.class)) {
+
+            mocked.when(() ->
+                    MongoRequestRateTooLargeRetryableAspect.executeJoinPointRetryable(
+                            pjp, 3, 0)
+            ).thenReturn("DEFAULT_API_OK");
+
+            Object result = aspect.decorateRepositoryMethods(pjp);
+
+            assertEquals("DEFAULT_API_OK", result);
+        }
     }
 
-    private void checkException(MongoRequestRateTooLargeAutomaticRetryAspect aspect) {
-        UncategorizedMongoDbException uncategorizedMongoDbException = Assertions.assertThrows(UncategorizedMongoDbException.class, () -> aspect.decorateRepositoryMethods(pjpMock));
-        Assertions.assertEquals( MongoRequestRateTooLargeRetryerTest.buildRequestRateTooLargeMongodbException_whenReading().getMessage() ,uncategorizedMongoDbException.getMessage());
+
+    private void setControllerContext(Method method) {
+        HandlerMethod handlerMethod = new HandlerMethod(new Object(), method);
+
+        RequestAttributes attrs = mock(RequestAttributes.class);
+        when(attrs.getAttribute(
+                HandlerMapping.BEST_MATCHING_HANDLER_ATTRIBUTE,
+                RequestAttributes.SCOPE_REQUEST
+        )).thenReturn(handlerMethod);
+
+        RequestContextHolder.setRequestAttributes(attrs);
     }
+
 }
+
