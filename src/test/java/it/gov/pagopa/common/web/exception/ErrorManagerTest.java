@@ -145,7 +145,6 @@ class ErrorManagerTest {
             .andExpect(MockMvcResultMatchers.jsonPath("$.message").value("Something gone wrong"));
 
     checkLog(memoryAppender,
-            "Something went wrong handling request GET /test: HttpStatus 400 BAD_REQUEST - ClientException with httpStatus, message and throwable",
             "it.gov.pagopa.common.web.exception.ClientException: ClientException with httpStatus, message and throwable",
             "it.gov.pagopa.common.web.exception.ErrorManagerTest$TestController.testEndpoint"
     );
@@ -170,12 +169,10 @@ class ErrorManagerTest {
   }
 
 
-  public static void checkLog(MemoryAppender memoryAppender, String expectedLoggedMessageRegexp, String expectedLoggedExceptionMessage, String expectedLoggedExceptionOccurrencePosition) {
+  public static void checkLog(MemoryAppender memoryAppender, String expectedLoggedExceptionMessage, String expectedLoggedExceptionOccurrencePosition) {
     ILoggingEvent loggedEvent = memoryAppender.getLoggedEvents().get(0);
     IThrowableProxy loggedException = loggedEvent.getThrowableProxy();
     StackTraceElementProxy loggedExceptionOccurrenceStackTrace = loggedException.getStackTraceElementProxyArray()[0];
-
-    String loggedMessage = loggedEvent.getFormattedMessage();
 
     Assertions.assertEquals(expectedLoggedExceptionMessage,
             loggedException.getClassName() + ": " + loggedException.getMessage());
