@@ -1,6 +1,5 @@
 package it.gov.pagopa.notification.manager.controller;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import it.gov.pagopa.notification.manager.constants.NotificationConstants;
 import it.gov.pagopa.notification.manager.dto.EvaluationDTO;
 import it.gov.pagopa.notification.manager.dto.ManualNotificationDTO;
@@ -10,13 +9,17 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.boot.security.autoconfigure.SecurityAutoConfiguration;
+import org.springframework.boot.security.autoconfigure.UserDetailsServiceAutoConfiguration;
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
+import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
+import org.springframework.cache.CacheManager;
 import org.springframework.http.MediaType;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
+import tools.jackson.databind.ObjectMapper;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -25,8 +28,8 @@ import static it.gov.pagopa.notification.manager.enums.Channel.IO;
 
 @ExtendWith(MockitoExtension.class)
 @WebMvcTest(
-    value = {NotificationManagerController.class},
-    excludeAutoConfiguration = SecurityAutoConfiguration.class)
+    value = {NotificationManagerController.class}, excludeAutoConfiguration =  { UserDetailsServiceAutoConfiguration.class , SecurityAutoConfiguration.class})
+@AutoConfigureMockMvc(addFilters = false)
 class NotificationManagerControllerTest {
 
   private static final String BASE_URL = "http://localhost:8080/idpay/notifications/";
@@ -60,11 +63,15 @@ class NotificationManagerControllerTest {
           );
 
 
-  @MockBean NotificationManagerService notificationManagerServiceMock;
+  @MockitoBean NotificationManagerService notificationManagerServiceMock;
 
   @Autowired protected MockMvc mvc;
 
-  @Autowired ObjectMapper objectMapper;
+  @Autowired
+  ObjectMapper objectMapper;
+
+  @MockitoBean
+  CacheManager cacheManager;
 
   @Test
   void addOutcome_ok() throws Exception {
@@ -111,7 +118,7 @@ class NotificationManagerControllerTest {
 
     mvc.perform(
                     MockMvcRequestBuilders.put(BASE_URL + "/notify/manual")
-                            .content(objectMapper.writeValueAsString(EVALUATION_DTO))
+                            .content(objectMapper.writeValueAsString(request))
                             .contentType(MediaType.APPLICATION_JSON_VALUE)
                             .accept(MediaType.APPLICATION_JSON_VALUE))
             .andExpect(MockMvcResultMatchers.status().isOk())

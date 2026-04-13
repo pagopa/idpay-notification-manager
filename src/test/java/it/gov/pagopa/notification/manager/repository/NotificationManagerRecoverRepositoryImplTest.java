@@ -9,7 +9,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.data.mongodb.core.FindAndModifyOptions;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
@@ -76,7 +76,7 @@ class NotificationManagerRecoverRepositoryImplTest {
 
     private NotificationManagerRecoverRepository repository;
 
-    @MockBean
+    @MockitoBean
     MongoTemplate mongoTemplate;
 
     @BeforeEach

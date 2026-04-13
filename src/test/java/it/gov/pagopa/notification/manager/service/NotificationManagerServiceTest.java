@@ -30,7 +30,7 @@ import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.http.HttpStatus;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
@@ -398,19 +398,19 @@ class NotificationManagerServiceTest {
 
     @Autowired
     NotificationManagerServiceImpl notificationManagerService;
-    @MockBean OutcomeProducer outcomeProducer;
-    @MockBean InitiativeRestConnector initiativeRestConnector;
-    @MockBean IOBackEndRestConnector ioBackEndRestConnector;
-    @MockBean EmailNotificationConnector emailNotificationConnector;
-    @MockBean NotificationManagerRepository notificationManagerRepository;
-    @MockBean NotificationManagerRepositoryExtended notificationManagerRepositoryExtended;
-    @MockBean NotificationDTOMapper notificationDTOMapper;
-    @MockBean PdvDecryptRestConnector pdvDecryptRestConnector;
-    @MockBean NotificationMapper notificationMapper;
-    @MockBean NotificationMarkdown notificationMarkdown;
-    @MockBean AuditUtilities auditUtilities;
-    @MockBean OnboardingIoNotification onboardingIoNotification;
-    @MockBean OnboardingWebNotification onboardingWebNotification;
+    @MockitoBean OutcomeProducer outcomeProducer;
+    @MockitoBean InitiativeRestConnector initiativeRestConnector;
+    @MockitoBean IOBackEndRestConnector ioBackEndRestConnector;
+    @MockitoBean EmailNotificationConnector emailNotificationConnector;
+    @MockitoBean NotificationManagerRepository notificationManagerRepository;
+    @MockitoBean NotificationManagerRepositoryExtended notificationManagerRepositoryExtended;
+    @MockitoBean NotificationDTOMapper notificationDTOMapper;
+    @MockitoBean PdvDecryptRestConnector pdvDecryptRestConnector;
+    @MockitoBean NotificationMapper notificationMapper;
+    @MockitoBean NotificationMarkdown notificationMarkdown;
+    @MockitoBean AuditUtilities auditUtilities;
+    @MockitoBean OnboardingIoNotification onboardingIoNotification;
+    @MockitoBean OnboardingWebNotification onboardingWebNotification;
 
     // ===== TESTS =====
 
