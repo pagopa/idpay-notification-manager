@@ -21,5 +21,6 @@ public class EmailNotificationProperties {
         private String koFamilyUnit;
         private String koThanks;
         private String koGenericError;
+        private String falsoKo;
     }
 }
