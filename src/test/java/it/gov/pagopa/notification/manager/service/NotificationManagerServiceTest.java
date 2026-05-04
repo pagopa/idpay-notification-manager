@@ -30,7 +30,7 @@ import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.http.HttpStatus;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
@@ -398,19 +398,19 @@ class NotificationManagerServiceTest {
 
     @Autowired
     NotificationManagerServiceImpl notificationManagerService;
-    @MockBean OutcomeProducer outcomeProducer;
-    @MockBean InitiativeRestConnector initiativeRestConnector;
-    @MockBean IOBackEndRestConnector ioBackEndRestConnector;
-    @MockBean EmailNotificationConnector emailNotificationConnector;
-    @MockBean NotificationManagerRepository notificationManagerRepository;
-    @MockBean NotificationManagerRepositoryExtended notificationManagerRepositoryExtended;
-    @MockBean NotificationDTOMapper notificationDTOMapper;
-    @MockBean PdvDecryptRestConnector pdvDecryptRestConnector;
-    @MockBean NotificationMapper notificationMapper;
-    @MockBean NotificationMarkdown notificationMarkdown;
-    @MockBean AuditUtilities auditUtilities;
-    @MockBean OnboardingIoNotification onboardingIoNotification;
-    @MockBean OnboardingWebNotification onboardingWebNotification;
+    @MockitoBean OutcomeProducer outcomeProducer;
+    @MockitoBean InitiativeRestConnector initiativeRestConnector;
+    @MockitoBean IOBackEndRestConnector ioBackEndRestConnector;
+    @MockitoBean EmailNotificationConnector emailNotificationConnector;
+    @MockitoBean NotificationManagerRepository notificationManagerRepository;
+    @MockitoBean NotificationManagerRepositoryExtended notificationManagerRepositoryExtended;
+    @MockitoBean NotificationDTOMapper notificationDTOMapper;
+    @MockitoBean PdvDecryptRestConnector pdvDecryptRestConnector;
+    @MockitoBean NotificationMapper notificationMapper;
+    @MockitoBean NotificationMarkdown notificationMarkdown;
+    @MockitoBean AuditUtilities auditUtilities;
+    @MockitoBean OnboardingIoNotification onboardingIoNotification;
+    @MockitoBean OnboardingWebNotification onboardingWebNotification;
 
     // ===== TESTS =====
 
@@ -840,6 +840,7 @@ class NotificationManagerServiceTest {
     }
 
     @Test
+    @SuppressWarnings("unused")
     void recoverKoNotifications() {
         when(notificationManagerRepository.findKoToRecover(any(LocalDateTime.class)))
                 .thenReturn(KO_NOTIFICATION_FIRST_RETRY, KO_REFUND_NOTIFICATION_FIRST_RETRY,
@@ -876,6 +877,7 @@ class NotificationManagerServiceTest {
     }
 
     @Test
+    @SuppressWarnings("unused")
     void recoverKoNotification_ko_for_whitelist() {
         when(notificationManagerRepository.findKoToRecover(any(LocalDateTime.class)))
                 .thenReturn(KO_NOTIFICATION_WHITELIST, KO_NOTIFICATION_WHITELIST, null);
@@ -1148,6 +1150,7 @@ class NotificationManagerServiceTest {
     }
 
     @Test
+    @SuppressWarnings("unused")
     void recoverKoNotifications_noneFound_logsZero_noSaves() {
         when(notificationManagerRepository.findKoToRecover(any(LocalDateTime.class))).thenReturn(null);
         try (ExecSwap ignored = swapToRealExecutor()) {
@@ -1157,6 +1160,7 @@ class NotificationManagerServiceTest {
     }
 
     @Test
+    @SuppressWarnings("unused")
     void recoverKoNotifications_handlesExecutionException() {
         Future<Long> bad = new Future<>() {
             @Override public boolean cancel(boolean mayInterruptIfRunning) { return false; }
@@ -1173,6 +1177,7 @@ class NotificationManagerServiceTest {
     }
 
     @Test
+    @SuppressWarnings("unused")
     void recoverKoNotifications_handlesInterruptedException_rethrowsIllegalState() {
         Future<Long> interrupted = new Future<>() {
             @Override public boolean cancel(boolean mayInterruptIfRunning) { return false; }
@@ -1189,6 +1194,7 @@ class NotificationManagerServiceTest {
     }
 
     @Test
+    @SuppressWarnings("unused")
     void close_shutsDownExecutor() {
         try (ExecSwap ignored = swapToRealExecutor()) {
             notificationManagerService.close();

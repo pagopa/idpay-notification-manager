@@ -1,36 +1,30 @@
 package it.gov.pagopa.notification.manager.controller;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import it.gov.pagopa.notification.manager.constants.NotificationConstants;
-import it.gov.pagopa.notification.manager.dto.EvaluationDTO;
 import it.gov.pagopa.notification.manager.dto.event.NotificationReminderQueueDTO;
 import it.gov.pagopa.notification.manager.enums.Channel;
-import it.gov.pagopa.notification.manager.service.NotificationManagerService;
 import it.gov.pagopa.notification.manager.service.WebNotificationManagerService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.http.HttpStatus;
+import org.springframework.boot.security.autoconfigure.SecurityAutoConfiguration;
+import org.springframework.boot.security.autoconfigure.UserDetailsServiceAutoConfiguration;
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
+import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
+import org.springframework.cache.CacheManager;
 import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
-
-import java.time.LocalDate;
-import java.util.List;
-
-import static it.gov.pagopa.notification.manager.enums.Channel.IO;
+import tools.jackson.databind.ObjectMapper;
 
 @ExtendWith(MockitoExtension.class)
 @WebMvcTest(
-        value = {WebNotificationManagerController.class},
-        excludeAutoConfiguration = SecurityAutoConfiguration.class)
+        value = {WebNotificationManagerController.class}
+        , excludeAutoConfiguration =  { UserDetailsServiceAutoConfiguration.class , SecurityAutoConfiguration.class})
+@AutoConfigureMockMvc(addFilters = false)
 class WebNotificationManagerControllerTest {
 
     private static final String BASE_URL = "/idpay/notifications/";
@@ -58,7 +52,10 @@ class WebNotificationManagerControllerTest {
                     .build();
 
 
-    @MockBean
+    @MockitoBean
+    CacheManager cacheManager;
+
+    @MockitoBean
     WebNotificationManagerService webNotificationManagerServiceMock;
 
     @Autowired
@@ -75,7 +72,7 @@ class WebNotificationManagerControllerTest {
         mvc.perform(MockMvcRequestBuilders.put(BASE_URL + "sendReminderMail")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(NOTIFICATION_REMINDER_QUEUE_DTO)))
-                        .andExpect(MockMvcResultMatchers.status().isOk())
-                        .andReturn();
+                .andExpect(MockMvcResultMatchers.status().isOk())
+                .andReturn();
     }
 }
