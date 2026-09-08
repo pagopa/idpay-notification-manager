@@ -38,14 +38,14 @@ class NotificationMarkdownTest {
                     action: "ioit://idpay/initiative/%s"
                 cta_2:\s
                     text: "Dove puoi spenderlo?"
-                    action: "iohandledlink://https://bonuselettrodomestici.it/lista-punti-vendita"
+                    action: "iohandledlink://https://pari.pagopa.it/bonuselettrodomestici/lista-punti-vendita"
             en:
                 cta_1:\s
                     text: "Go to the bonus page"
                     action: "ioit://idpay/initiative/%s"
                 cta_2:\s
                     text: "Where can you spend it?"
-                    action: "iohandledlink://https://bonuselettrodomestici.it/lista-punti-vendita"
+                    action: "iohandledlink://https://pari.pagopa.it/bonuselettrodomestici/lista-punti-vendita"
             ---
                         
             Buone notizie! Hai ottenuto %s. Da questo momento puoi visualizzare il bonus nella sezione Portafoglio dell'app IO.
@@ -414,14 +414,14 @@ class NotificationMarkdownTest {
                     action: "ioit://idpay/initiative/INITIATIVE_ID"
                 cta_2:\s
                     text: "Dove puoi spenderlo?"
-                    action: "iohandledlink://https://bonuselettrodomestici.it/lista-punti-vendita"
+                    action: "iohandledlink://https://pari.pagopa.it/bonuselettrodomestici/lista-punti-vendita"
             en:
                 cta_1:\s
                     text: "Go to the bonus page"
                     action: "ioit://idpay/initiative/INITIATIVE_ID"
                 cta_2:\s
                     text: "Where can you spend it?"
-                    action: "iohandledlink://https://bonuselettrodomestici.it/lista-punti-vendita"
+                    action: "iohandledlink://https://pari.pagopa.it/bonuselettrodomestici/lista-punti-vendita"
             ---
                         
             Hai già deciso come usare il Bonus Elettrodomestici?
