@@ -318,14 +318,14 @@ notification:
                 action: "ioit://idpay/initiative/%initiativeId%"
             cta_2: 
                 text: "Dove puoi spenderlo?"
-                action: "iohandledlink://https://bonuselettrodomestici.it/lista-punti-vendita"
+                action: "iohandledlink://https://pari.pagopa.it/bonuselettrodomestici/lista-punti-vendita"
         en:
             cta_1: 
                 text: "Go to the bonus page"
                 action: "ioit://idpay/initiative/%initiativeId%"
             cta_2: 
                 text: "Where can you spend it?"
-                action: "iohandledlink://https://bonuselettrodomestici.it/lista-punti-vendita"
+                action: "iohandledlink://https://pari.pagopa.it/bonuselettrodomestici/lista-punti-vendita"
         ---}
       ok.cta: |-
         ${MARKDOWN_OK_CTA:---
@@ -335,14 +335,14 @@ notification:
                 action: "ioit://idpay/initiative/%initiativeId%"
             cta_2: 
                 text: "Dove puoi spenderlo?"
-                action: "iohandledlink://https://bonuselettrodomestici.it/lista-punti-vendita"
+                action: "iohandledlink://https://pari.pagopa.it/bonuselettrodomestici/lista-punti-vendita"
         en:
             cta_1: 
                 text: "Go to the bonus page"
                 action: "ioit://idpay/initiative/%initiativeId%"
             cta_2: 
                 text: "Where can you spend it?"
-                action: "iohandledlink://https://bonuselettrodomestici.it/lista-punti-vendita"
+                action: "iohandledlink://https://pari.pagopa.it/bonuselettrodomestici/lista-punti-vendita"
         ---}
       demanded: |-
         ${MARKDOWN_DEMANDED:Buone notizie! Grazie ad un tuo familiare puoi ottenere %initiativeName%.
