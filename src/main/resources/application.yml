@@ -350,6 +350,10 @@ notification:
         Aderisci all’iniziativa per usufruire del bonus.
         
         Puoi trovare maggiori informazioni sul [sito](http://example.com/).}
+      on-evaluation: |-
+          ${MARKDOWN_ON_EVALUATION:La tua richiesta e' in corso di valutazione.
+
+          Ti avviseremo quando avremo completato la verifica.}
       suspension: ${MARKDOWN_SUSPENSION:In seguito ad alcune verifiche, il tuo profilo è stato sospeso dall'iniziativa.
                   Gli importi ancora da erogare saranno sospesi e le transazioni a partire da questo momento non saranno riconosciute come valide ai fini dell'iniziativa.
                   Contatta l'assistenza al numero XXXXX per capire come risolvere entro 60 giorni a partire da oggi e comunica il codice protocollo XXXX.}
@@ -375,6 +379,7 @@ notification:
       ok.type2: ${SUBJECT_OK_TYPE2:Il tuo Bonus è attivo!}
       ok.type3: ${SUBJECT_OK_TYPE3:}
       demanded: ${SUBJECT_DEMANDED:Attiva il bonus %initiativeName%}
+      on-evaluation: ${SUBJECT_ON_EVALUATION:Verifica in corso}
       ok.refund: ${SUBJECT_OK_REFUND:Ti è stato accreditato un rimborso!}
       ko: ${SUBJECT_KO:Non è stato possibile attivare %initiativeName%}
       ko.refund: ${SUBJECT_KO_REFUND:Non è stato possibile effettuare il rimborso}
