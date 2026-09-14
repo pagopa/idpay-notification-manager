@@ -832,7 +832,7 @@ class NotificationManagerServiceTest {
 
     @Test
     void sendNotificationFromOperationType_checkiban_notification_Null_ioTokens_null() {
-        Notification dto = Mockito.mock(Notification.class);
+        Notification dto = mock(Notification.class);
 
         when(dto.getUserId()).thenReturn(null);
         when(dto.getInitiativeId()).thenReturn(null);
@@ -1167,7 +1167,7 @@ class NotificationManagerServiceTest {
 
     @Test
     void schedule_invokesRecoverKoNotifications() {
-        NotificationManagerServiceImpl spy = Mockito.spy(notificationManagerService);
+        NotificationManagerServiceImpl spy = spy(notificationManagerService);
         doNothing().when(spy).recoverKoNotifications();
         spy.schedule();
         verify(spy, times(1)).recoverKoNotifications();

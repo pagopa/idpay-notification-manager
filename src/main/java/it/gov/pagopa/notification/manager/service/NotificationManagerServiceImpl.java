@@ -31,9 +31,9 @@ import org.springframework.stereotype.Service;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -47,6 +47,7 @@ import static it.gov.pagopa.notification.manager.constants.NotificationConstants
 @Slf4j
 public class NotificationManagerServiceImpl implements NotificationManagerService {
     public static final String GENERIC_ERROR_LOG = "[NOTIFY][RECOVER] Something went wrong while recovering notifications";
+    private static final ZoneId DEFAULT_ZONE_ID = ZoneId.systemDefault();
     private final int pageSize;
     private final long delay;
     private final OutcomeProducer outcomeProducer;
@@ -236,7 +237,7 @@ public class NotificationManagerServiceImpl implements NotificationManagerServic
         String sanitizedInitiativeId = sanitizeString(notification.getInitiativeId());
         long startTime = System.currentTimeMillis();
 
-        notification.setNotificationDate(LocalDateTime.now());
+        notification.setNotificationDate(LocalDateTime.now(DEFAULT_ZONE_ID));
 
         InitiativeAdditionalInfoDTO ioTokens = null;
 
@@ -317,9 +318,9 @@ public class NotificationManagerServiceImpl implements NotificationManagerServic
     public void recoverKoNotifications() {
         log.debug("[NOTIFY][RECOVER] Searching for notifications to recover");
 
-        final LocalDateTime startTime = LocalDateTime.now();
+        final LocalDateTime startTime = LocalDateTime.now(DEFAULT_ZONE_ID);
         List<Future<Long>> workers = IntStream.range(0, parallelism)
-                .mapToObj(i -> executorService.submit(() -> recover(startTime)))
+                .mapToObj(ignored -> executorService.submit(() -> recover(startTime)))
                 .toList();
 
         long recovered = workers.stream().mapToLong(f -> {
@@ -575,8 +576,8 @@ public class NotificationManagerServiceImpl implements NotificationManagerServic
             return;
         }
         notification.setNotificationStatus(NotificationConstants.NOTIFICATION_STATUS_KO);
-        notification.setStatusKoTimestamp(LocalDateTime.now());
-        notification.setUpdateDate(LocalDateTime.now());
+        notification.setStatusKoTimestamp(LocalDateTime.now(DEFAULT_ZONE_ID));
+        notification.setUpdateDate(LocalDateTime.now(DEFAULT_ZONE_ID));
         notificationManagerRepository.save(notification);
         log.error(LOG_NOTIFICATION_KO, sanitizedUserId, sanitizedInitiativeId);
         performanceLog(startTime);
