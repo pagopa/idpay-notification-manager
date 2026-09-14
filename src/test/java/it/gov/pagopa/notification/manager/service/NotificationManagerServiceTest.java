@@ -257,6 +257,14 @@ class NotificationManagerServiceTest {
             .userId(TEST_TOKEN)
             .build();
 
+    private static final NotificationOnboardingQueueDTO NOTIFICATION_ONBOARDING_QUEUE_DTO = NotificationOnboardingQueueDTO.builder()
+            .initiativeId(INITIATIVE_ID)
+            .serviceId(SERVICE_ID)
+            .operationType(ONBOARDING)
+            .userId(TEST_TOKEN)
+            .status(NotificationConstants.STATUS_ON_EVALUATION)
+            .build();
+
     private static final Notification KO_NOTIFICATION_FIRST_RETRY = Notification.builder()
             .notificationDate(TEST_DATE)
             .initiativeId(EVALUATION_DTO.getInitiativeId())
@@ -692,6 +700,22 @@ class NotificationManagerServiceTest {
     }
 
     @Test
+    void sendNotificationFromOperationType_onboardingEvaluation_ok() {
+        when(notificationMapper.toEntity(NOTIFICATION_ONBOARDING_QUEUE_DTO)).thenReturn(NOTIFICATION);
+        when(initiativeRestConnector.getIOTokens(INITIATIVE_ID)).thenReturn(INITIATIVE_ADDITIONAL_INFO_DTO);
+        when(pdvDecryptRestConnector.getPii(TEST_TOKEN)).thenReturn(FISCAL_CODE_RESOURCE);
+        when(notificationMarkdown.getSubjectOnEvaluation()).thenReturn(SUBJECT);
+        when(notificationMarkdown.getMarkdownOnEvaluation()).thenReturn(MARKDOWN);
+        when(ioBackEndRestConnector.getProfile(argThat(fc -> FISCAL_CODE.equals(fc.getFiscalCode())), eq(TOKEN)))
+                .thenReturn(PROFILE_RESOURCE);
+        when(notificationDTOMapper.map(eq(FISCAL_CODE), anyLong(), anyString(), anyString()))
+                .thenReturn(NOTIFICATION_DTO);
+        when(ioBackEndRestConnector.notify(NOTIFICATION_DTO, TOKEN)).thenReturn(NOTIFICATION_RESOURCE);
+
+        assertDoesNotThrow(() -> notificationManagerService.sendNotificationFromOperationType(NOTIFICATION_ONBOARDING_QUEUE_DTO));
+    }
+
+    @Test
     void checkIbanKo_ko_get_io_tokens() {
         when(pdvDecryptRestConnector.getPii(TEST_TOKEN)).thenReturn(FISCAL_CODE_RESOURCE);
         Request request = Request.create(Request.HttpMethod.GET, "url", new HashMap<>(), null, new RequestTemplate());
@@ -808,7 +832,7 @@ class NotificationManagerServiceTest {
 
     @Test
     void sendNotificationFromOperationType_checkiban_notification_Null_ioTokens_null() {
-        Notification dto = Mockito.mock(Notification.class);
+        Notification dto = mock(Notification.class);
 
         when(dto.getUserId()).thenReturn(null);
         when(dto.getInitiativeId()).thenReturn(null);
@@ -1143,7 +1167,7 @@ class NotificationManagerServiceTest {
 
     @Test
     void schedule_invokesRecoverKoNotifications() {
-        NotificationManagerServiceImpl spy = Mockito.spy(notificationManagerService);
+        NotificationManagerServiceImpl spy = spy(notificationManagerService);
         doNothing().when(spy).recoverKoNotifications();
         spy.schedule();
         verify(spy, times(1)).recoverKoNotifications();

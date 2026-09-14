@@ -326,6 +326,27 @@ class NotificationMarkdownTest {
   }
 
   @Test
+  void getSubject_onEvaluation(){
+    EvaluationDTO evaluationDto = getEvaluationDto(NotificationConstants.STATUS_ON_EVALUATION, null);
+    String expectedSubject = "Verifica in corso";
+
+    String actual = notificationMarkdown.getSubject(evaluationDto);
+    Assertions.assertEquals(expectedSubject, actual);
+  }
+
+  @Test
+  void getMarkdown_onEvaluation(){
+    EvaluationDTO evaluationDto = getEvaluationDto(NotificationConstants.STATUS_ON_EVALUATION, null);
+    String expectedMarkdown = """
+            La tua richiesta e' in corso di valutazione.
+
+            Ti avviseremo quando avremo completato la verifica.""";
+
+    String actual = notificationMarkdown.getMarkdown(evaluationDto);
+    Assertions.assertEquals(expectedMarkdown, actual);
+  }
+
+  @Test
   void getSubject_budgetExhausted(){
     EvaluationDTO evaluationDto = getEvaluationDto(NotificationConstants.STATUS_ONBOARDING_KO,
             List.of(OnboardingRejectionReason.builder()

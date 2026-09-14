@@ -115,6 +115,10 @@ public class NotificationMarkdown {
   private String subjectDemanded;
   @Value("${notification.manager.markdown.demanded}")
   private String markdownDemanded;
+  @Value("${notification.manager.subject.on-evaluation}")
+  private String subjectOnEvaluation;
+  @Value("${notification.manager.markdown.on-evaluation}")
+  private String markdownOnEvaluation;
   @Value("${notification.manager.markdown.ko.budget}")
   private String markdownKoBudget;
   @Value("${notification.manager.markdown.ko.rejected.noRetry}")
@@ -154,11 +158,19 @@ public class NotificationMarkdown {
       return replaceMessageItem(subjectDemanded, NotificationConstants.INITIATIVE_NAME_KEY, evaluationDTO.getInitiativeName());
     }
 
+    if (NotificationConstants.STATUS_ON_EVALUATION.equals(evaluationDTO.getStatus())) {
+      return this.subjectOnEvaluation;
+    }
+
     return getSubjectKo(
             evaluationDTO.getInitiativeName(), evaluationDTO.getOnboardingRejectionReasons());
   }
 
   public String getSubject(Notification notification) {
+    if (NotificationConstants.STATUS_ON_EVALUATION.equals(notification.getOnboardingOutcome())) {
+      return this.subjectOnEvaluation;
+    }
+
     return notification.getOnboardingOutcome().equals(NotificationConstants.STATUS_ONBOARDING_OK)||
             notification.getOnboardingOutcome().equals(NotificationConstants.STATUS_ONBOARDING_JOINED)
         ? this.subjectOk
@@ -197,11 +209,19 @@ public class NotificationMarkdown {
               evaluationDTO.getInitiativeName());
     }
 
+    if (NotificationConstants.STATUS_ON_EVALUATION.equals(evaluationDTO.getStatus())) {
+      return this.markdownOnEvaluation;
+    }
+
     return getMarkdownKo(
             evaluationDTO.getInitiativeName(), evaluationDTO.getOnboardingRejectionReasons());
   }
 
   public String getMarkdown(Notification notification) {
+    if (NotificationConstants.STATUS_ON_EVALUATION.equals(notification.getOnboardingOutcome())) {
+      return this.markdownOnEvaluation;
+    }
+
     return notification.getOnboardingOutcome().equals(NotificationConstants.STATUS_ONBOARDING_OK) ||
             notification.getOnboardingOutcome().equals(NotificationConstants.STATUS_ONBOARDING_JOINED)
         ? replaceMessageItem(
