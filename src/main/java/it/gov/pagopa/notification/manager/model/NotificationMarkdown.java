@@ -115,9 +115,9 @@ public class NotificationMarkdown {
   private String subjectDemanded;
   @Value("${notification.manager.markdown.demanded}")
   private String markdownDemanded;
-  @Value("${notification.manager.subject.on.evaluation}")
+  @Value("${notification.manager.subject.on-evaluation}")
   private String subjectOnEvaluation;
-  @Value("${notification.manager.markdown.on.evaluation}")
+  @Value("${notification.manager.markdown.on-evaluation}")
   private String markdownOnEvaluation;
   @Value("${notification.manager.markdown.ko.budget}")
   private String markdownKoBudget;
