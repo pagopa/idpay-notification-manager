@@ -37,6 +37,7 @@ rest-client:
         ko-familyUnit: ${SUBJECT_KO_FAMILY_UNIT:Il bonus è stato già richiesto}
         ko-thanks: '${SUBJECT_OK_THANKS:Bonus Elettrodomestici: tutti i fondi sono stati assegnati}'
         ko-genericError: ${SUBJECT_KO_GENERIC_ERROR:Non è stato possibile assegnarti il bonus}
+        falso-ko: '${SUBJECT_FALSO_KO:Bonus Elettrodomestici: aggiornamento importante}'
       place-holder:
         ok: productFileName
         partial: productFileName
