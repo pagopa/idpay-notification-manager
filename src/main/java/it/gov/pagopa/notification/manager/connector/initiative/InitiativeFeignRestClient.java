@@ -1,6 +1,7 @@
 package it.gov.pagopa.notification.manager.connector.initiative;
 
 import it.gov.pagopa.notification.manager.dto.initiative.InitiativeAdditionalInfoDTO;
+import it.gov.pagopa.notification.manager.dto.initiative.InitiativeNotificationDTO;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -18,5 +19,12 @@ public interface InitiativeFeignRestClient {
       produces = MediaType.APPLICATION_JSON_VALUE)
   @ResponseBody
   ResponseEntity<InitiativeAdditionalInfoDTO> getTokens(
+          @PathVariable("initiativeId") String initiativeId);
+
+  @GetMapping(
+          value = "/idpay/initiative/{initiativeId}",
+          produces = MediaType.APPLICATION_JSON_VALUE)
+  @ResponseBody
+  ResponseEntity<InitiativeNotificationDTO> getInitiativeDetailInfo(
           @PathVariable("initiativeId") String initiativeId);
 }

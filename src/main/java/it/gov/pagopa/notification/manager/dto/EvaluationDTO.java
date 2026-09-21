@@ -32,7 +32,7 @@ public class EvaluationDTO {
   private List<OnboardingRejectionReason> onboardingRejectionReasons;
   private Long beneficiaryBudgetCents;
   private Long rankingValue;
-  private Boolean verifyIsee;
+  private List<VerifyDTO> verifies;
   private String userMail;
   private Channel channel;
   private String name;
@@ -41,4 +41,5 @@ public class EvaluationDTO {
   // Info filled during processing
   private String fiscalCode;
   private String ioToken;
+  private String emailFlux;
 }

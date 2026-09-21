@@ -1,13 +1,11 @@
 package it.gov.pagopa.notification.manager.service.onboarding;
 
 import it.gov.pagopa.notification.manager.config.EmailNotificationProperties;
-import it.gov.pagopa.notification.manager.config.NotificationProperties;
 import it.gov.pagopa.notification.manager.connector.EmailNotificationConnector;
-import it.gov.pagopa.notification.manager.connector.IOBackEndRestConnector;
+import it.gov.pagopa.notification.manager.connector.initiative.InitiativeRestConnector;
 import it.gov.pagopa.notification.manager.constants.NotificationConstants;
 import it.gov.pagopa.notification.manager.dto.EmailMessageDTO;
 import it.gov.pagopa.notification.manager.dto.EvaluationDTO;
-import it.gov.pagopa.notification.manager.dto.mapper.NotificationDTOMapper;
 import it.gov.pagopa.notification.manager.dto.mapper.NotificationMapper;
 import it.gov.pagopa.notification.manager.model.Notification;
 import it.gov.pagopa.notification.manager.repository.NotificationManagerRepository;
@@ -41,7 +39,9 @@ public class OnboardingWebNotificationImpl extends BaseOnboardingNotification<Em
                                          EmailNotificationProperties emailNotificationProperties,
                                          NotificationManagerRepository notificationManagerRepository,
                                          NotificationMapper notificationMapper,
+                                         InitiativeRestConnector initiativeRestConnector,
                                          @Value("${notification.manager.email.assisted-link}") String assistedLink){
+        super(initiativeRestConnector);
         this.emailNotificationConnector = emailNotificationConnector;
         this.emailNotificationProperties = emailNotificationProperties;
         this.notificationManagerRepository = notificationManagerRepository;
@@ -54,7 +54,8 @@ public class OnboardingWebNotificationImpl extends BaseOnboardingNotification<Em
     EmailMessageDTO processOnboardingJoined(EvaluationDTO evaluationDTO) {
         Map<String, String> templateValues = new HashMap<>();
         templateValues.put("name", evaluationDTO.getName());
-        return createNotification(evaluationDTO, emailNotificationProperties.getSubject().getKoFamilyUnit(), EMAIL_OUTCOME_FAMILY_UNIT, templateValues);
+        String body = String.format(EMAIL_OUTCOME_FAMILY_UNIT, evaluationDTO.getEmailFlux());
+        return createNotification(evaluationDTO, emailNotificationProperties.getSubject().getKoFamilyUnit(), body, templateValues);
     }
 
     @Override
@@ -66,8 +67,8 @@ public class OnboardingWebNotificationImpl extends BaseOnboardingNotification<Em
                 && REJECTION_REASON_INITIATIVE_ENDED.equals(firstReason.getCode());
 
         final String template = initiativeEnded
-                ? EMAIL_OUTCOME_THANKS
-                : EMAIL_OUTCOME_GENERIC_ERROR;
+                ? String.format(EMAIL_OUTCOME_THANKS, evaluationDTO.getEmailFlux())
+                : String.format(EMAIL_OUTCOME_GENERIC_ERROR, evaluationDTO.getEmailFlux());
         final String subject = initiativeEnded
                 ? emailNotificationProperties.getSubject().getKoThanks()
                 : emailNotificationProperties.getSubject().getKoGenericError();
@@ -89,7 +90,11 @@ public class OnboardingWebNotificationImpl extends BaseOnboardingNotification<Em
 
     @Override
     protected EmailMessageDTO generateOnboardingOkNotification(boolean isPartial, EvaluationDTO evaluationDTO) {
-        String template = isPartial ? EMAIL_OUTCOME_PARTIAL : EMAIL_OUTCOME_OK;
+        String template = String.format(
+                isPartial ? EMAIL_OUTCOME_PARTIAL : EMAIL_OUTCOME_OK,
+                evaluationDTO.getEmailFlux()
+        );
+
 
         Map<String, String> templateValues = new HashMap<>();
         templateValues.put("name", evaluationDTO.getName());
@@ -99,9 +104,10 @@ public class OnboardingWebNotificationImpl extends BaseOnboardingNotification<Em
             templateValues.put("amount", String.valueOf(amount));
         }
 
-        String subject = EMAIL_OUTCOME_OK.equals(template) ?
-                emailNotificationProperties.getSubject().getOk() :
-                emailNotificationProperties.getSubject().getPartial();
+        String subject = isPartial ?
+                emailNotificationProperties.getSubject().getPartial() :
+                emailNotificationProperties.getSubject().getOk();
+
 
         return createNotification(evaluationDTO, subject, template, templateValues);
     }
@@ -119,10 +125,15 @@ public class OnboardingWebNotificationImpl extends BaseOnboardingNotification<Em
     }
 
     @Override
-    String sendNotification(EmailMessageDTO notificationToSend, EvaluationDTO evaluationDTO) {
+    String sendNotification(EmailMessageDTO notificationToSend, EvaluationDTO evaluationDTO, boolean initiativeFetchFailed) {
         long startTime = System.currentTimeMillis();
         String sanitizedUserId = sanitizeString(evaluationDTO.getUserId());
         String sanitizedInitiativeId = sanitizeString(evaluationDTO.getInitiativeId());
+        if (initiativeFetchFailed) {
+            log.error("[NOTIFY] Skipping email send for user {} due to initiative service failure. Saving as KO.", sanitizedUserId);
+            saveNotification(notificationToSend, evaluationDTO, NotificationConstants.NOTIFICATION_STATUS_KO, LocalDateTime.now(), startTime);
+            return null;
+        }
         try {
             emailNotificationConnector.sendEmail(notificationToSend);
             performanceLog(startTime, "NOTIFY");
