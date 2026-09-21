@@ -5,11 +5,9 @@ import feign.Request;
 import feign.Response;
 import it.gov.pagopa.notification.manager.config.NotificationProperties;
 import it.gov.pagopa.notification.manager.connector.IOBackEndRestConnector;
+import it.gov.pagopa.notification.manager.connector.initiative.InitiativeRestConnector;
 import it.gov.pagopa.notification.manager.constants.NotificationConstants;
-import it.gov.pagopa.notification.manager.dto.EvaluationDTO;
-import it.gov.pagopa.notification.manager.dto.NotificationDTO;
-import it.gov.pagopa.notification.manager.dto.NotificationResource;
-import it.gov.pagopa.notification.manager.dto.OnboardingRejectionReason;
+import it.gov.pagopa.notification.manager.dto.*;
 import it.gov.pagopa.notification.manager.dto.mapper.NotificationDTOMapper;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -110,12 +108,16 @@ class OnboardingIoNotificationTest {
 
     private OnboardingIoNotification onboardingIoNotification;
 
+    @Mock
+    private InitiativeRestConnector initiativeRestConnector;
+
     @BeforeEach
     void setUp() {
         onboardingIoNotification = new OnboardingIoNotificationImpl(
                 notificationPropertiesMock,
                 notificationDTOMapper,
                 ioBackEndRestConnectorMock,
+                initiativeRestConnector,
                 10L,
                 null);
     }
@@ -134,13 +136,14 @@ class OnboardingIoNotificationTest {
                 List.of(),
                 20000L,
                 1L,
-                true,
+                null,
                 null,
                 IO,
                 "Mario",
                 "Rossi",
                 "FISCAL_CODE",
-                "IO_TOKEN"
+                "IO_TOKEN",
+                null
         );
     }
 
@@ -201,7 +204,6 @@ class OnboardingIoNotificationTest {
     @Test
     void processNotification_whenTemplateEsitoOkNoVerifyIsee100() {
         EvaluationDTO evaluationDTO = getEvaluationDto();
-        evaluationDTO.setVerifyIsee(false);
         evaluationDTO.setBeneficiaryBudgetCents(10000L);
 
         NotificationProperties.Subject subjectMock = Mockito.mock(NotificationProperties.Subject.class);
@@ -257,7 +259,6 @@ class OnboardingIoNotificationTest {
     @Test
     void processNotification_withNullBeneficiaryBudget() {
         EvaluationDTO evaluationDTO = getEvaluationDto();
-        evaluationDTO.setVerifyIsee(false);
         evaluationDTO.setBeneficiaryBudgetCents(null);
 
         NotificationProperties.Subject subjectMock = Mockito.mock(NotificationProperties.Subject.class);
@@ -313,7 +314,11 @@ class OnboardingIoNotificationTest {
     @Test
     void processNotification_templateEsitoOkParziale() {
         EvaluationDTO evaluationDTO = getEvaluationDto();
-        evaluationDTO.setVerifyIsee(true);
+        VerifyDTO verifyDTO = VerifyDTO.builder()
+                .beneficiaryBudgetCentsMin(10000L)
+                .build();
+        List<VerifyDTO> verifies = List.of(verifyDTO);
+        evaluationDTO.setVerifies(verifies);
         evaluationDTO.setBeneficiaryBudgetCents(10000L);
 
         NotificationProperties.Subject subjectMock = Mockito.mock(NotificationProperties.Subject.class);
@@ -368,7 +373,6 @@ class OnboardingIoNotificationTest {
     @Test
     void processNotification_callNotificationEmail_Error() {
         EvaluationDTO evaluationDTO = getEvaluationDto();
-        evaluationDTO.setVerifyIsee(false);
         evaluationDTO.setBeneficiaryBudgetCents(10000L);
 
         NotificationProperties.Subject subjectMock = Mockito.mock(NotificationProperties.Subject.class);

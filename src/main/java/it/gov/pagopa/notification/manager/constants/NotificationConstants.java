@@ -49,11 +49,11 @@ public class NotificationConstants {
   public static final class EmailTemplates {
     private EmailTemplates() {}
 
-    public static final String EMAIL_OUTCOME_OK = "Email_%s_EsitoOk";
-    public static final String EMAIL_OUTCOME_PARTIAL = "Email_%s_EsitoParziale";
-    public static final String EMAIL_OUTCOME_THANKS = "Email_%s_Thanks";
-    public static final String EMAIL_OUTCOME_THREE_DAY_REMINDER = "Email_%s_ThreeDayReminder";
-    public static final String EMAIL_OUTCOME_FAMILY_UNIT = "Email_%s_FamilyUnit";
-    public static final String EMAIL_OUTCOME_GENERIC_ERROR = "Email_%s_GenericError";
+    public static final String EMAIL_OUTCOME_OK = "Email_%s/EsitoOk";
+    public static final String EMAIL_OUTCOME_PARTIAL = "Email_%s/EsitoParziale";
+    public static final String EMAIL_OUTCOME_THANKS = "Email_%s/Thanks";
+    public static final String EMAIL_OUTCOME_THREE_DAY_REMINDER = "Email_%s/ThreeDayReminder";
+    public static final String EMAIL_OUTCOME_FAMILY_UNIT = "Email_%s/FamilyUnit";
+    public static final String EMAIL_OUTCOME_GENERIC_ERROR = "Email_%s/GenericError";
   }
 }

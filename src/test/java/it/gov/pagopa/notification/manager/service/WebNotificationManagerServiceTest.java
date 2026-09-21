@@ -2,6 +2,7 @@ package it.gov.pagopa.notification.manager.service;
 
 import it.gov.pagopa.notification.manager.config.EmailNotificationProperties;
 import it.gov.pagopa.notification.manager.connector.EmailNotificationConnector;
+import it.gov.pagopa.notification.manager.connector.initiative.InitiativeRestConnector;
 import it.gov.pagopa.notification.manager.dto.EmailMessageDTO;
 import it.gov.pagopa.notification.manager.dto.event.NotificationReminderQueueDTO;
 import org.junit.jupiter.api.BeforeEach;
@@ -25,6 +26,8 @@ class WebNotificationManagerServiceImplTest {
     private EmailNotificationConnector emailNotificationConnector;
 
     private EmailNotificationProperties emailNotificationProperties = new EmailNotificationProperties();
+    @Mock
+    private InitiativeRestConnector initiativeRestConnector;
 
     @Mock
     private WebNotificationManagerServiceImpl service;
@@ -36,7 +39,7 @@ class WebNotificationManagerServiceImplTest {
     void setUp() {
         subjectProps.setOkThreeDayReminder("Il tuo bonus sta per scadere!");
         emailNotificationProperties.setSubject(subjectProps);
-        service = new WebNotificationManagerServiceImpl(emailNotificationConnector, emailNotificationProperties);
+        service = new WebNotificationManagerServiceImpl(emailNotificationConnector, emailNotificationProperties, initiativeRestConnector);
     }
 
     @Test
