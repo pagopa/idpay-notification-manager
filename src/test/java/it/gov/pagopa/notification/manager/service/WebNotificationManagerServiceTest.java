@@ -111,5 +111,23 @@ class WebNotificationManagerServiceImplTest {
         assertDoesNotThrow(() -> service.sendNotification(toSend, dto));
         verify(emailNotificationConnector, times(1)).sendEmail(any(EmailMessageDTO.class));
     }
+
+    @Test
+    void sendReminderMail_whenInitiativeIsNull_usesDefaultFlux() {
+        NotificationReminderQueueDTO dto = Mockito.mock(NotificationReminderQueueDTO.class);
+        when(dto.getVoucherEndDate()).thenReturn(LocalDate.now());
+        when(dto.getInitiativeId()).thenReturn("initiative123");
+        when(dto.getName()).thenReturn("Mario");
+        when(dto.getUserMail()).thenReturn("mario@example.com");
+
+        when(initiativeRestConnector.getInitiativeDetailInfo(anyString())).thenReturn(null);
+
+        service.sendReminderMail(dto);
+
+        ArgumentCaptor<EmailMessageDTO> captor = ArgumentCaptor.forClass(EmailMessageDTO.class);
+        verify(emailNotificationConnector).sendEmail(captor.capture());
+
+        assertEquals("Email_/ThreeDayReminder", captor.getValue().getTemplateName());
+    }
 }
 

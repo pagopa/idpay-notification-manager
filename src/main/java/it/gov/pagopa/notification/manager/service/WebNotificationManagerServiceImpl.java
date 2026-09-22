@@ -38,7 +38,7 @@ public class WebNotificationManagerServiceImpl implements  WebNotificationManage
     public void sendReminderMail(NotificationReminderQueueDTO notificationQueueDTO) {
         long startTime = System.currentTimeMillis();
         String sanitizedUserId = sanitizeString(notificationQueueDTO.getUserId());
-        String sanitizedInitiativeId = sanitizeString(notificationQueueDTO.getUserId());
+        String sanitizedInitiativeId = sanitizeString(notificationQueueDTO.getInitiativeId());
 
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd MMMM yyyy").withLocale(Locale.ITALIAN);
 
