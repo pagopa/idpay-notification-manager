@@ -143,7 +143,4 @@ public class OnboardingIoNotificationImpl extends BaseOnboardingNotification<Not
                 StringUtils.hasLength(value) ? value : NotificationConstants.MARKDOWN_NA);
     }
 
-    public static String sanitizeString(String str){
-        return str == null? null: str.replaceAll("[\\r\\n]", "").replaceAll("[^\\w\\s-]", "");
-    }
 }

@@ -6,10 +6,8 @@ import org.springframework.cache.annotation.Cacheable;
 
 public interface InitiativeRestConnector {
 
-    @Cacheable(value = "initiativeToken", key = "#initiativeId")
     InitiativeAdditionalInfoDTO getIOTokens(String initiativeId);
 
-    @Cacheable(value = "initiativeMailFlux", key = "#initiativeId")
     InitiativeNotificationDTO getInitiativeDetailInfo(String initiativeId);
 
 }

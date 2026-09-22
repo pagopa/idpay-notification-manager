@@ -21,7 +21,6 @@ import org.springframework.test.context.support.TestPropertySourceUtils;
 
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
-@ExtendWith(SpringExtension.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.NONE)
 @ContextConfiguration(
         initializers = InitiativeFeignRestClientTest.WireMockInitializer.class,
@@ -81,7 +80,6 @@ class InitiativeFeignRestClientTest {
 
     @Test
     void getInitiativeDetailInfo_test() {
-        // Configura la stub di WireMock per la chiamata al dettaglio dell'iniziativa
         wireMockServer.stubFor(
                 com.github.tomakehurst.wiremock.client.WireMock.get(
                                 com.github.tomakehurst.wiremock.client.WireMock.urlPathMatching("/idpay/initiative/.*"))
@@ -94,7 +92,5 @@ class InitiativeFeignRestClientTest {
         final InitiativeNotificationDTO actualResponse = initiativeRestConnector.getInitiativeDetailInfo(INITIATIVE_ID);
 
         assertNotNull(actualResponse);
-        // Se InitiativeNotificationDTO ha il getter per emailFlux, puoi verificarlo:
-        // assertEquals("DEC26", actualResponse.getEmailFlux());
     }
 }

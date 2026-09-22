@@ -200,8 +200,5 @@ public class OnboardingWebNotificationImpl extends BaseOnboardingNotification<Em
                 System.currentTimeMillis() - startTime);
     }
 
-    public static String sanitizeString(String str){
-        return str == null? null: str.replaceAll("[\\r\\n]", "").replaceAll("[^\\w\\s-]", "");
-    }
 
 }
