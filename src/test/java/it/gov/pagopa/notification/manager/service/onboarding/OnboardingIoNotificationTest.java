@@ -29,7 +29,7 @@ import static it.gov.pagopa.notification.manager.dto.OnboardingRejectionReason.O
 import static it.gov.pagopa.notification.manager.enums.Channel.IO;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class OnboardingIoNotificationTest {
@@ -155,20 +155,20 @@ class OnboardingIoNotificationTest {
     void processNotification_whenTemplateEsitoOk200() {
         EvaluationDTO evaluationDTO = getEvaluationDto();
 
-        NotificationProperties.Subject subjectMock = Mockito.mock(NotificationProperties.Subject.class);
-        Mockito.when(notificationPropertiesMock.getSubject()).thenReturn(subjectMock);
-        Mockito.when(subjectMock.getOkBel()).thenReturn(SUBJECT_OK);
+        NotificationProperties.Subject subjectMock = mock(NotificationProperties.Subject.class);
+        when(notificationPropertiesMock.getSubject()).thenReturn(subjectMock);
+        when(subjectMock.getOkBel()).thenReturn(SUBJECT_OK);
 
-        NotificationProperties.Markdown markdownMock = Mockito.mock(NotificationProperties.Markdown.class);
-        Mockito.when(notificationPropertiesMock.getMarkdown()).thenReturn(markdownMock);
-        Mockito.when(markdownMock.getOkBel()).thenReturn(MARKDOWN_OK_BEL);
-        Mockito.when(markdownMock.getDoubleNewLine()).thenReturn(MARKDOWN_DOUBLE_LINE);
-        Mockito.when(markdownMock.getOkCta()).thenReturn(MARKDOWN_CTA_OK);
+        NotificationProperties.Markdown markdownMock = mock(NotificationProperties.Markdown.class);
+        when(notificationPropertiesMock.getMarkdown()).thenReturn(markdownMock);
+        when(markdownMock.getOkBel()).thenReturn(MARKDOWN_OK_BEL);
+        when(markdownMock.getDoubleNewLine()).thenReturn(MARKDOWN_DOUBLE_LINE);
+        when(markdownMock.getOkCta()).thenReturn(MARKDOWN_CTA_OK);
 
-        NotificationResource notificationResource = Mockito.mock(NotificationResource.class);
-        Mockito.when(ioBackEndRestConnectorMock.notify(Mockito.any(NotificationDTO.class), Mockito.anyString()))
+        NotificationResource notificationResource = mock(NotificationResource.class);
+        when(ioBackEndRestConnectorMock.notify(Mockito.any(NotificationDTO.class), Mockito.anyString()))
                 .thenReturn(notificationResource);
-        Mockito.when(notificationResource.getId()).thenReturn(MESSAGE_ID);
+        when(notificationResource.getId()).thenReturn(MESSAGE_ID);
 
         InitiativeNotificationDTO mockInitiative = new InitiativeNotificationDTO();
         mockInitiative.setEmailFlux("DEC26");
@@ -200,7 +200,7 @@ class OnboardingIoNotificationTest {
 
                 **Importante:** ricorda che puoi usare il bonus solo se hai un vecchio elettrodomestico da smaltire. Concorda con il venditore quando e come consegnarlo, ma non smaltirlo autonomamente in discarica.""";
 
-        Mockito.verify(ioBackEndRestConnectorMock, Mockito.times(1))
+        verify(ioBackEndRestConnectorMock, times(1))
                 .notify(Mockito.argThat(notificationDTO -> notificationDTO.getContent().getMarkdown().equals(expectedMarkdown)), eq("IO_TOKEN"));
 
         Assertions.assertNotNull(result);
@@ -212,20 +212,20 @@ class OnboardingIoNotificationTest {
         EvaluationDTO evaluationDTO = getEvaluationDto();
         evaluationDTO.setBeneficiaryBudgetCents(10000L);
 
-        NotificationProperties.Subject subjectMock = Mockito.mock(NotificationProperties.Subject.class);
-        Mockito.when(notificationPropertiesMock.getSubject()).thenReturn(subjectMock);
-        Mockito.when(subjectMock.getOkBel()).thenReturn(SUBJECT_OK);
+        NotificationProperties.Subject subjectMock = mock(NotificationProperties.Subject.class);
+        when(notificationPropertiesMock.getSubject()).thenReturn(subjectMock);
+        when(subjectMock.getOkBel()).thenReturn(SUBJECT_OK);
 
-        NotificationProperties.Markdown markdownMock = Mockito.mock(NotificationProperties.Markdown.class);
-        Mockito.when(notificationPropertiesMock.getMarkdown()).thenReturn(markdownMock);
-        Mockito.when(markdownMock.getOkBel()).thenReturn(MARKDOWN_OK_BEL);
-        Mockito.when(markdownMock.getDoubleNewLine()).thenReturn(MARKDOWN_DOUBLE_LINE);
-        Mockito.when(markdownMock.getOkCta()).thenReturn(MARKDOWN_CTA_OK);
+        NotificationProperties.Markdown markdownMock = mock(NotificationProperties.Markdown.class);
+        when(notificationPropertiesMock.getMarkdown()).thenReturn(markdownMock);
+        when(markdownMock.getOkBel()).thenReturn(MARKDOWN_OK_BEL);
+        when(markdownMock.getDoubleNewLine()).thenReturn(MARKDOWN_DOUBLE_LINE);
+        when(markdownMock.getOkCta()).thenReturn(MARKDOWN_CTA_OK);
 
-        NotificationResource notificationResource = Mockito.mock(NotificationResource.class);
-        Mockito.when(ioBackEndRestConnectorMock.notify(Mockito.any(NotificationDTO.class), Mockito.anyString()))
+        NotificationResource notificationResource = mock(NotificationResource.class);
+        when(ioBackEndRestConnectorMock.notify(Mockito.any(NotificationDTO.class), Mockito.anyString()))
                 .thenReturn(notificationResource);
-        Mockito.when(notificationResource.getId()).thenReturn(MESSAGE_ID);
+        when(notificationResource.getId()).thenReturn(MESSAGE_ID);
 
         InitiativeNotificationDTO mockInitiative = new InitiativeNotificationDTO();
         mockInitiative.setEmailFlux("DEC26");
@@ -258,7 +258,7 @@ class OnboardingIoNotificationTest {
                 **Importante:** ricorda che puoi usare il bonus solo se hai un vecchio elettrodomestico da smaltire. Concorda con il venditore quando e come consegnarlo, ma non smaltirlo autonomamente in discarica.""";
 
 
-        Mockito.verify(ioBackEndRestConnectorMock, Mockito.times(1))
+        verify(ioBackEndRestConnectorMock, times(1))
                 .notify(Mockito.argThat(notificationDTO -> notificationDTO.getContent().getMarkdown().equals(expectedMarkdown)), Mockito.anyString());
 
         Assertions.assertNotNull(result);
@@ -270,20 +270,20 @@ class OnboardingIoNotificationTest {
         EvaluationDTO evaluationDTO = getEvaluationDto();
         evaluationDTO.setBeneficiaryBudgetCents(null);
 
-        NotificationProperties.Subject subjectMock = Mockito.mock(NotificationProperties.Subject.class);
-        Mockito.when(notificationPropertiesMock.getSubject()).thenReturn(subjectMock);
-        Mockito.when(subjectMock.getOkBel()).thenReturn(SUBJECT_OK);
+        NotificationProperties.Subject subjectMock = mock(NotificationProperties.Subject.class);
+        when(notificationPropertiesMock.getSubject()).thenReturn(subjectMock);
+        when(subjectMock.getOkBel()).thenReturn(SUBJECT_OK);
 
-        NotificationProperties.Markdown markdownMock = Mockito.mock(NotificationProperties.Markdown.class);
-        Mockito.when(notificationPropertiesMock.getMarkdown()).thenReturn(markdownMock);
-        Mockito.when(markdownMock.getOkBel()).thenReturn(MARKDOWN_OK_BEL);
-        Mockito.when(markdownMock.getDoubleNewLine()).thenReturn(MARKDOWN_DOUBLE_LINE);
-        Mockito.when(markdownMock.getOkCta()).thenReturn(MARKDOWN_CTA_OK);
+        NotificationProperties.Markdown markdownMock = mock(NotificationProperties.Markdown.class);
+        when(notificationPropertiesMock.getMarkdown()).thenReturn(markdownMock);
+        when(markdownMock.getOkBel()).thenReturn(MARKDOWN_OK_BEL);
+        when(markdownMock.getDoubleNewLine()).thenReturn(MARKDOWN_DOUBLE_LINE);
+        when(markdownMock.getOkCta()).thenReturn(MARKDOWN_CTA_OK);
 
-        NotificationResource notificationResource = Mockito.mock(NotificationResource.class);
-        Mockito.when(ioBackEndRestConnectorMock.notify(Mockito.any(NotificationDTO.class), Mockito.anyString()))
+        NotificationResource notificationResource = mock(NotificationResource.class);
+        when(ioBackEndRestConnectorMock.notify(Mockito.any(NotificationDTO.class), Mockito.anyString()))
                 .thenReturn(notificationResource);
-        Mockito.when(notificationResource.getId()).thenReturn(MESSAGE_ID);
+        when(notificationResource.getId()).thenReturn(MESSAGE_ID);
 
         InitiativeNotificationDTO mockInitiative = new InitiativeNotificationDTO();
         mockInitiative.setEmailFlux("DEC26");
@@ -317,7 +317,7 @@ class OnboardingIoNotificationTest {
                 **Importante:** ricorda che puoi usare il bonus solo se hai un vecchio elettrodomestico da smaltire. Concorda con il venditore quando e come consegnarlo, ma non smaltirlo autonomamente in discarica.""";
 
 
-        Mockito.verify(ioBackEndRestConnectorMock, Mockito.times(1))
+        verify(ioBackEndRestConnectorMock, times(1))
                 .notify(Mockito.argThat(notificationDTO -> notificationDTO.getContent().getMarkdown().equals(expectedMarkdown)), Mockito.anyString());
 
         Assertions.assertNotNull(result);
@@ -334,20 +334,20 @@ class OnboardingIoNotificationTest {
         evaluationDTO.setVerifies(verifies);
         evaluationDTO.setBeneficiaryBudgetCents(10000L);
 
-        NotificationProperties.Subject subjectMock = Mockito.mock(NotificationProperties.Subject.class);
-        Mockito.when(notificationPropertiesMock.getSubject()).thenReturn(subjectMock);
-        Mockito.when(subjectMock.getOkPartialBel()).thenReturn(SUBJECT_OK_PARTIAL);
+        NotificationProperties.Subject subjectMock = mock(NotificationProperties.Subject.class);
+        when(notificationPropertiesMock.getSubject()).thenReturn(subjectMock);
+        when(subjectMock.getOkPartialBel()).thenReturn(SUBJECT_OK_PARTIAL);
 
-        NotificationProperties.Markdown markdownMock = Mockito.mock(NotificationProperties.Markdown.class);
-        Mockito.when(notificationPropertiesMock.getMarkdown()).thenReturn(markdownMock);
-        Mockito.when(markdownMock.getOkPartialBel()).thenReturn(MARKDOWN_OK_PARTIAL_BEL);
-        Mockito.when(markdownMock.getDoubleNewLine()).thenReturn(MARKDOWN_DOUBLE_LINE);
-        Mockito.when(markdownMock.getOkCta()).thenReturn(MARKDOWN_CTA_OK);
+        NotificationProperties.Markdown markdownMock = mock(NotificationProperties.Markdown.class);
+        when(notificationPropertiesMock.getMarkdown()).thenReturn(markdownMock);
+        when(markdownMock.getOkPartialBel()).thenReturn(MARKDOWN_OK_PARTIAL_BEL);
+        when(markdownMock.getDoubleNewLine()).thenReturn(MARKDOWN_DOUBLE_LINE);
+        when(markdownMock.getOkCta()).thenReturn(MARKDOWN_CTA_OK);
 
-        NotificationResource notificationResource = Mockito.mock(NotificationResource.class);
-        Mockito.when(ioBackEndRestConnectorMock.notify(Mockito.any(NotificationDTO.class), Mockito.anyString()))
+        NotificationResource notificationResource = mock(NotificationResource.class);
+        when(ioBackEndRestConnectorMock.notify(Mockito.any(NotificationDTO.class), Mockito.anyString()))
                 .thenReturn(notificationResource);
-        Mockito.when(notificationResource.getId()).thenReturn(MESSAGE_ID);
+        when(notificationResource.getId()).thenReturn(MESSAGE_ID);
         InitiativeNotificationDTO mockInitiative = new InitiativeNotificationDTO();
         mockInitiative.setEmailFlux("DEC26");
         when(initiativeRestConnector.getInitiativeDetailInfo(anyString())).thenReturn(mockInitiative);
@@ -379,7 +379,7 @@ class OnboardingIoNotificationTest {
 
                 **Importante:** ricorda che puoi usare il bonus solo se hai un vecchio elettrodomestico da smaltire. Concorda con il venditore quando e come consegnarlo, ma non smaltirlo autonomamente in discarica.""";
 
-        Mockito.verify(ioBackEndRestConnectorMock, Mockito.times(1))
+        verify(ioBackEndRestConnectorMock, times(1))
                 .notify(Mockito.argThat(notificationDTO -> notificationDTO.getContent().getMarkdown().equals(expectedMarkdown)), Mockito.anyString());
 
         Assertions.assertNotNull(result);
@@ -391,15 +391,15 @@ class OnboardingIoNotificationTest {
         EvaluationDTO evaluationDTO = getEvaluationDto();
         evaluationDTO.setBeneficiaryBudgetCents(10000L);
 
-        NotificationProperties.Subject subjectMock = Mockito.mock(NotificationProperties.Subject.class);
-        Mockito.when(notificationPropertiesMock.getSubject()).thenReturn(subjectMock);
-        Mockito.when(subjectMock.getOkBel()).thenReturn(SUBJECT_OK);
+        NotificationProperties.Subject subjectMock = mock(NotificationProperties.Subject.class);
+        when(notificationPropertiesMock.getSubject()).thenReturn(subjectMock);
+        when(subjectMock.getOkBel()).thenReturn(SUBJECT_OK);
 
-        NotificationProperties.Markdown markdownMock = Mockito.mock(NotificationProperties.Markdown.class);
-        Mockito.when(notificationPropertiesMock.getMarkdown()).thenReturn(markdownMock);
-        Mockito.when(markdownMock.getOkBel()).thenReturn(MARKDOWN_OK_BEL);
-        Mockito.when(markdownMock.getDoubleNewLine()).thenReturn(MARKDOWN_DOUBLE_LINE);
-        Mockito.when(markdownMock.getOkCta()).thenReturn(MARKDOWN_CTA_OK);
+        NotificationProperties.Markdown markdownMock = mock(NotificationProperties.Markdown.class);
+        when(notificationPropertiesMock.getMarkdown()).thenReturn(markdownMock);
+        when(markdownMock.getOkBel()).thenReturn(MARKDOWN_OK_BEL);
+        when(markdownMock.getDoubleNewLine()).thenReturn(MARKDOWN_DOUBLE_LINE);
+        when(markdownMock.getOkCta()).thenReturn(MARKDOWN_CTA_OK);
 
         InitiativeNotificationDTO mockInitiative = new InitiativeNotificationDTO();
         mockInitiative.setEmailFlux("DEC26");
@@ -412,7 +412,7 @@ class OnboardingIoNotificationTest {
                 .reason("DUMMY_EXCEPTION")
                 .request(request)
                 .build();
-        Mockito.when(ioBackEndRestConnectorMock.notify(Mockito.any(NotificationDTO.class), Mockito.anyString()))
+        when(ioBackEndRestConnectorMock.notify(Mockito.any(NotificationDTO.class), Mockito.anyString()))
                 .thenThrow(FeignException.errorStatus("DUMMY_CLIENT", response));
 
         String result = onboardingIoNotification.processNotification(evaluationDTO);
@@ -438,14 +438,14 @@ class OnboardingIoNotificationTest {
     void processOnboardingJoined_buildsSubjectAndMarkdown() {
         EvaluationDTO evaluationDTO = getEvaluationDto();
 
-        NotificationProperties.Subject subjectMock = Mockito.mock(NotificationProperties.Subject.class);
-        Mockito.when(notificationPropertiesMock.getSubject()).thenReturn(subjectMock);
-        Mockito.when(subjectMock.getJoinedBel()).thenReturn("SUBJECT_JOINED_BEL");
+        NotificationProperties.Subject subjectMock = mock(NotificationProperties.Subject.class);
+        when(notificationPropertiesMock.getSubject()).thenReturn(subjectMock);
+        when(subjectMock.getJoinedBel()).thenReturn("SUBJECT_JOINED_BEL");
 
-        NotificationProperties.Markdown markdownMock = Mockito.mock(NotificationProperties.Markdown.class);
-        Mockito.when(notificationPropertiesMock.getMarkdown()).thenReturn(markdownMock);
-        Mockito.when(markdownMock.getJoinedBel()).thenReturn("MD_JOINED");
-        Mockito.when(markdownMock.getDoubleNewLine()).thenReturn(MARKDOWN_DOUBLE_LINE);
+        NotificationProperties.Markdown markdownMock = mock(NotificationProperties.Markdown.class);
+        when(notificationPropertiesMock.getMarkdown()).thenReturn(markdownMock);
+        when(markdownMock.getJoinedBel()).thenReturn("MD_JOINED");
+        when(markdownMock.getDoubleNewLine()).thenReturn(MARKDOWN_DOUBLE_LINE);
 
         NotificationDTO dto = ((OnboardingIoNotificationImpl) onboardingIoNotification)
                 .processOnboardingJoined(evaluationDTO);
@@ -467,12 +467,12 @@ class OnboardingIoNotificationTest {
                 .build();
         evaluationDTO.setOnboardingRejectionReasons(List.of(reason));
 
-        NotificationProperties.Markdown markdownMock = Mockito.mock(NotificationProperties.Markdown.class);
-        Mockito.when(notificationPropertiesMock.getMarkdown()).thenReturn(markdownMock);
-        Mockito.when(markdownMock.getKoThanksBel()).thenReturn(MARKDOWN_KO_THANKS_BEL);
-        NotificationProperties.Subject subjectMock = Mockito.mock(NotificationProperties.Subject.class);
-        Mockito.when(notificationPropertiesMock.getSubject()).thenReturn(subjectMock);
-        Mockito.when(subjectMock.getKoThanksBel()).thenReturn("SUBJECT_KO_THANKS_BEL");
+        NotificationProperties.Markdown markdownMock = mock(NotificationProperties.Markdown.class);
+        when(notificationPropertiesMock.getMarkdown()).thenReturn(markdownMock);
+        when(markdownMock.getKoThanksBel()).thenReturn(MARKDOWN_KO_THANKS_BEL);
+        NotificationProperties.Subject subjectMock = mock(NotificationProperties.Subject.class);
+        when(notificationPropertiesMock.getSubject()).thenReturn(subjectMock);
+        when(subjectMock.getKoThanksBel()).thenReturn("SUBJECT_KO_THANKS_BEL");
 
         NotificationDTO dto = ((OnboardingIoNotificationImpl) onboardingIoNotification)
                 .processOnboardingKo(evaluationDTO);
@@ -485,9 +485,9 @@ class OnboardingIoNotificationTest {
     void processOnboardingKo_whenGeneric_withReason_buildsPlaceholdersAndSubject() {
         EvaluationDTO evaluationDTO = getEvaluationDto();
 
-        NotificationProperties.Markdown markdownMock = Mockito.mock(NotificationProperties.Markdown.class);
-        Mockito.when(notificationPropertiesMock.getMarkdown()).thenReturn(markdownMock);
-        Mockito.when(markdownMock.getKoGenericBel()).thenReturn(MARKDOWN_KO_GENERIC_BEL);
+        NotificationProperties.Markdown markdownMock = mock(NotificationProperties.Markdown.class);
+        when(notificationPropertiesMock.getMarkdown()).thenReturn(markdownMock);
+        when(markdownMock.getKoGenericBel()).thenReturn(MARKDOWN_KO_GENERIC_BEL);
         OnboardingRejectionReason reason = OnboardingRejectionReason
                 .builder()
                 .code(FAMILY_CRITERIA_FAIL)
@@ -496,9 +496,9 @@ class OnboardingIoNotificationTest {
                 .build();
         evaluationDTO.setOnboardingRejectionReasons(List.of(reason));
 
-        NotificationProperties.Subject subjectMock = Mockito.mock(NotificationProperties.Subject.class);
-        Mockito.when(notificationPropertiesMock.getSubject()).thenReturn(subjectMock);
-        Mockito.when(subjectMock.getKoGenericBel()).thenReturn("SUBJECT_KO_GENERIC_BEL");
+        NotificationProperties.Subject subjectMock = mock(NotificationProperties.Subject.class);
+        when(notificationPropertiesMock.getSubject()).thenReturn(subjectMock);
+        when(subjectMock.getKoGenericBel()).thenReturn("SUBJECT_KO_GENERIC_BEL");
 
         NotificationDTO dto = ((OnboardingIoNotificationImpl) onboardingIoNotification)
                 .processOnboardingKo(evaluationDTO);

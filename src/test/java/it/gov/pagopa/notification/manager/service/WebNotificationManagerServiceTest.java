@@ -11,7 +11,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.LocalDate;
@@ -45,7 +44,7 @@ class WebNotificationManagerServiceImplTest {
 
     @Test
     void sendReminderMail_buildsEmailMessageAndSends() {
-        NotificationReminderQueueDTO dto = Mockito.mock(NotificationReminderQueueDTO.class);
+        NotificationReminderQueueDTO dto = mock(NotificationReminderQueueDTO.class);
         when(dto.getName()).thenReturn("Mario");
         when(dto.getUserMail()).thenReturn("mario.rossi@example.com");
         when(dto.getUserId()).thenReturn("USER123");
@@ -74,7 +73,7 @@ class WebNotificationManagerServiceImplTest {
 
     @Test
     void sendReminderMail_doesNotPropagateException() {
-        NotificationReminderQueueDTO dto = Mockito.mock(NotificationReminderQueueDTO.class);
+        NotificationReminderQueueDTO dto = mock(NotificationReminderQueueDTO.class);
 
         when(dto.getVoucherEndDate()).thenReturn(LocalDate.now());
         when(dto.getInitiativeId()).thenReturn("initiative123");
@@ -95,7 +94,7 @@ class WebNotificationManagerServiceImplTest {
 
     @Test
     void sendNotification_doesNotPropagateException() {
-        NotificationReminderQueueDTO dto = Mockito.mock(NotificationReminderQueueDTO.class);
+        NotificationReminderQueueDTO dto = mock(NotificationReminderQueueDTO.class);
         when(dto.getUserId()).thenReturn("USER789");
 
         EmailMessageDTO toSend = EmailMessageDTO.builder()
@@ -114,7 +113,7 @@ class WebNotificationManagerServiceImplTest {
 
     @Test
     void sendReminderMail_whenInitiativeIsNull_usesDefaultFlux() {
-        NotificationReminderQueueDTO dto = Mockito.mock(NotificationReminderQueueDTO.class);
+        NotificationReminderQueueDTO dto = mock(NotificationReminderQueueDTO.class);
         when(dto.getVoucherEndDate()).thenReturn(LocalDate.now());
         when(dto.getInitiativeId()).thenReturn("initiative123");
         when(dto.getName()).thenReturn("Mario");

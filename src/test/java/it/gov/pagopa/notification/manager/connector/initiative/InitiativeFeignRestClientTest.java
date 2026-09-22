@@ -6,7 +6,6 @@ import it.gov.pagopa.notification.manager.config.NotificationManagerConfig;
 import it.gov.pagopa.notification.manager.dto.initiative.InitiativeAdditionalInfoDTO;
 import it.gov.pagopa.notification.manager.dto.initiative.InitiativeNotificationDTO;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.http.converter.autoconfigure.HttpMessageConvertersAutoConfiguration;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -16,7 +15,6 @@ import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.event.ContextClosedEvent;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.context.support.TestPropertySourceUtils;
 
 import static org.junit.jupiter.api.Assertions.assertNotNull;
