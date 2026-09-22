@@ -421,4 +421,43 @@ class OnboardingWebNotificationTest {
         //check that the notificationKo method has called the save method 1 time
         verify(notificationManagerRepository, times(1)).save(any(Notification.class));
     }
+
+    @Test
+    void processNotification_whenFeignException_handlesError() {
+        EvaluationDTO evaluationDTO = getEvaluationDto();
+
+        EmailNotificationProperties.Subject subjectMock = Mockito.mock(EmailNotificationProperties.Subject.class);
+        Mockito.when(emailNotificationPropertiesMock.getSubject()).thenReturn(subjectMock);
+        Mockito.when(subjectMock.getOk()).thenReturn("TEST_OK");
+
+        when(notificationMapper.createNotificationFromEmailMessageDTO(any(EmailMessageDTO.class),
+                any(EvaluationDTO.class))).thenReturn(NOTIFICATION);
+
+        when(initiativeRestConnector.getInitiativeDetailInfo(anyString()))
+                .thenThrow(new feign.FeignException.InternalServerError(
+                        "Internal Server Error",
+                        org.mockito.Mockito.mock(feign.Request.class),
+                        new byte[0],
+                        null
+                ));
+
+        assertDoesNotThrow(() -> onboardingWebNotification.processNotification(evaluationDTO));
+    }
+
+    @Test
+    void processNotification_whenStatusJoined() {
+        EvaluationDTO evaluationDTO = getEvaluationDto();
+        evaluationDTO.setStatus(NotificationConstants.STATUS_ONBOARDING_JOINED);
+
+        EmailNotificationProperties.Subject subjectMock = Mockito.mock(EmailNotificationProperties.Subject.class);
+        Mockito.when(emailNotificationPropertiesMock.getSubject()).thenReturn(subjectMock);
+        Mockito.when(subjectMock.getKoFamilyUnit()).thenReturn("SUBJ_FAMILY_UNIT");
+
+        InitiativeNotificationDTO mockInitiative = new InitiativeNotificationDTO();
+        mockInitiative.setEmailFlux("DEC26");
+        when(initiativeRestConnector.getInitiativeDetailInfo(anyString())).thenReturn(mockInitiative);
+
+        assertDoesNotThrow(() -> onboardingWebNotification.processNotification(evaluationDTO));
+    }
+
 }
