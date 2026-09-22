@@ -56,7 +56,8 @@ public class WebNotificationManagerServiceImpl implements  WebNotificationManage
         templateValues.put("voucherEndDate", notificationQueueDTO.getVoucherEndDate().format(formatter));
 
         EmailMessageDTO emailMessageDTO = EmailMessageDTO.builder()
-                .templateName(String.format(EMAIL_OUTCOME_THREE_DAY_REMINDER, initiativeNotificationDTO.getEmailFlux()))
+                .templateName(String.format(EMAIL_OUTCOME_THREE_DAY_REMINDER,
+                        initiativeNotificationDTO != null ? initiativeNotificationDTO.getEmailFlux() : ""))
                 .recipientEmail(notificationQueueDTO.getUserMail())
                 .senderEmail(null)
                 .templateValues(templateValues)

@@ -29,12 +29,11 @@ public abstract class BaseOnboardingNotification<R> {
         boolean initiativeFetchFailed = false;
         try {
              initiativeNotificationDTO = initiativeRestConnector.getInitiativeDetailInfo(evaluationDTO.getInitiativeId());
-        } catch (FeignException e) {
+             evaluationDTO.setEmailFlux(initiativeNotificationDTO.getEmailFlux());
+        } catch (FeignException _) {
                 log.error("[PROCESS_ONBOARDING_NOTIFICATION] Failed to retrieve initiativeDetail from initiative service.");
                 initiativeFetchFailed = true;
         }
-
-        evaluationDTO.setEmailFlux(initiativeNotificationDTO.getEmailFlux());
 
         R notificationToSend = switch (evaluationDTO.getStatus()){
             case STATUS_ONBOARDING_OK -> processOnboardingOk(evaluationDTO);
