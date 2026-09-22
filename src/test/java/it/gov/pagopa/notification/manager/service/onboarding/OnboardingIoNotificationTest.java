@@ -8,6 +8,7 @@ import it.gov.pagopa.notification.manager.connector.IOBackEndRestConnector;
 import it.gov.pagopa.notification.manager.connector.initiative.InitiativeRestConnector;
 import it.gov.pagopa.notification.manager.constants.NotificationConstants;
 import it.gov.pagopa.notification.manager.dto.*;
+import it.gov.pagopa.notification.manager.dto.initiative.InitiativeNotificationDTO;
 import it.gov.pagopa.notification.manager.dto.mapper.NotificationDTOMapper;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -26,7 +27,9 @@ import java.util.Map;
 import static it.gov.pagopa.notification.manager.dto.OnboardingRejectionReason.OnboardingRejectionReasonCode.FAMILY_CRITERIA_FAIL;
 import static it.gov.pagopa.notification.manager.dto.OnboardingRejectionReason.OnboardingRejectionReasonCode.REJECTION_REASON_INITIATIVE_ENDED;
 import static it.gov.pagopa.notification.manager.enums.Channel.IO;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class OnboardingIoNotificationTest {
@@ -167,6 +170,9 @@ class OnboardingIoNotificationTest {
                 .thenReturn(notificationResource);
         Mockito.when(notificationResource.getId()).thenReturn(MESSAGE_ID);
 
+        InitiativeNotificationDTO mockInitiative = new InitiativeNotificationDTO();
+        mockInitiative.setEmailFlux("DEC26");
+        when(initiativeRestConnector.getInitiativeDetailInfo(anyString())).thenReturn(mockInitiative);
         String result = onboardingIoNotification.processNotification(evaluationDTO);
 
         String expectedMarkdown = """
@@ -221,6 +227,9 @@ class OnboardingIoNotificationTest {
                 .thenReturn(notificationResource);
         Mockito.when(notificationResource.getId()).thenReturn(MESSAGE_ID);
 
+        InitiativeNotificationDTO mockInitiative = new InitiativeNotificationDTO();
+        mockInitiative.setEmailFlux("DEC26");
+        when(initiativeRestConnector.getInitiativeDetailInfo(anyString())).thenReturn(mockInitiative);
         String result = onboardingIoNotification.processNotification(evaluationDTO);
 
         String expectedMarkdown = """
@@ -275,6 +284,10 @@ class OnboardingIoNotificationTest {
         Mockito.when(ioBackEndRestConnectorMock.notify(Mockito.any(NotificationDTO.class), Mockito.anyString()))
                 .thenReturn(notificationResource);
         Mockito.when(notificationResource.getId()).thenReturn(MESSAGE_ID);
+
+        InitiativeNotificationDTO mockInitiative = new InitiativeNotificationDTO();
+        mockInitiative.setEmailFlux("DEC26");
+        when(initiativeRestConnector.getInitiativeDetailInfo(anyString())).thenReturn(mockInitiative);
 
         String result = onboardingIoNotification.processNotification(evaluationDTO);
 
@@ -335,6 +348,9 @@ class OnboardingIoNotificationTest {
         Mockito.when(ioBackEndRestConnectorMock.notify(Mockito.any(NotificationDTO.class), Mockito.anyString()))
                 .thenReturn(notificationResource);
         Mockito.when(notificationResource.getId()).thenReturn(MESSAGE_ID);
+        InitiativeNotificationDTO mockInitiative = new InitiativeNotificationDTO();
+        mockInitiative.setEmailFlux("DEC26");
+        when(initiativeRestConnector.getInitiativeDetailInfo(anyString())).thenReturn(mockInitiative);
 
         String result = onboardingIoNotification.processNotification(evaluationDTO);
 
@@ -385,6 +401,11 @@ class OnboardingIoNotificationTest {
         Mockito.when(markdownMock.getDoubleNewLine()).thenReturn(MARKDOWN_DOUBLE_LINE);
         Mockito.when(markdownMock.getOkCta()).thenReturn(MARKDOWN_CTA_OK);
 
+        InitiativeNotificationDTO mockInitiative = new InitiativeNotificationDTO();
+        mockInitiative.setEmailFlux("DEC26");
+        when(initiativeRestConnector.getInitiativeDetailInfo(anyString())).thenReturn(mockInitiative);
+
+
         Request request = Request.create(Request.HttpMethod.GET, "/dummy", Map.of(), null, StandardCharsets.UTF_8, null);
         Response response = Response.builder()
                 .status(429)
@@ -403,6 +424,10 @@ class OnboardingIoNotificationTest {
     void onboardingInvalidStatus(){
         EvaluationDTO evaluationDTO = getEvaluationDto();
         evaluationDTO.setStatus("ANOTHER_STATUS");
+        evaluationDTO.setInitiativeId("initiative123");
+        InitiativeNotificationDTO mockInitiative = new InitiativeNotificationDTO();
+        mockInitiative.setEmailFlux("DEC26");
+        when(initiativeRestConnector.getInitiativeDetailInfo(anyString())).thenReturn(mockInitiative);
 
         String result = onboardingIoNotification.processNotification(evaluationDTO);
 

@@ -5,6 +5,7 @@ import it.gov.pagopa.notification.manager.connector.EmailNotificationConnector;
 import it.gov.pagopa.notification.manager.connector.initiative.InitiativeRestConnector;
 import it.gov.pagopa.notification.manager.dto.EmailMessageDTO;
 import it.gov.pagopa.notification.manager.dto.event.NotificationReminderQueueDTO;
+import it.gov.pagopa.notification.manager.dto.initiative.InitiativeNotificationDTO;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -49,6 +50,10 @@ class WebNotificationManagerServiceImplTest {
         when(dto.getUserMail()).thenReturn("mario.rossi@example.com");
         when(dto.getUserId()).thenReturn("USER123");
         when(dto.getVoucherEndDate()).thenReturn(LocalDate.now());
+        when(dto.getInitiativeId()).thenReturn("initiative123");
+        InitiativeNotificationDTO mockInitiative = new InitiativeNotificationDTO();
+        mockInitiative.setEmailFlux("DEC26");
+        when(initiativeRestConnector.getInitiativeDetailInfo(anyString())).thenReturn(mockInitiative);
 
         service.sendReminderMail(dto);
 
@@ -57,7 +62,7 @@ class WebNotificationManagerServiceImplTest {
 
         EmailMessageDTO sent = captor.getValue();
         assertNotNull(sent);
-        assertEquals(EMAIL_OUTCOME_THREE_DAY_REMINDER, sent.getTemplateName(), "Template name errato");
+        assertEquals("Email_DEC26/ThreeDayReminder", sent.getTemplateName(), "Template name errato");
         assertEquals("mario.rossi@example.com", sent.getRecipientEmail(), "Recipient errato");
         assertEquals("Il tuo bonus sta per scadere!", sent.getSubject(), "Subject errato");
         assertNull(sent.getSenderEmail(), "Sender email deve essere null");
@@ -72,6 +77,10 @@ class WebNotificationManagerServiceImplTest {
         NotificationReminderQueueDTO dto = Mockito.mock(NotificationReminderQueueDTO.class);
 
         when(dto.getVoucherEndDate()).thenReturn(LocalDate.now());
+        when(dto.getInitiativeId()).thenReturn("initiative123");
+        InitiativeNotificationDTO mockInitiative = new InitiativeNotificationDTO();
+        mockInitiative.setEmailFlux("DEC26");
+        when(initiativeRestConnector.getInitiativeDetailInfo(anyString())).thenReturn(mockInitiative);
 
         doThrow(new RuntimeException("SMTP down"))
                 .when(emailNotificationConnector)
@@ -81,6 +90,8 @@ class WebNotificationManagerServiceImplTest {
 
         verify(emailNotificationConnector, times(1)).sendEmail(any(EmailMessageDTO.class));
     }
+
+
 
     @Test
     void sendNotification_doesNotPropagateException() {
