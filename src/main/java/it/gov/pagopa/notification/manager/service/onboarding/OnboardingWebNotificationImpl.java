@@ -14,6 +14,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -66,9 +67,10 @@ public class OnboardingWebNotificationImpl extends BaseOnboardingNotification<Em
         final boolean initiativeEnded = firstReason != null
                 && REJECTION_REASON_INITIATIVE_ENDED.equals(firstReason.getCode());
 
-        final String template = initiativeEnded
-                ? String.format(EMAIL_OUTCOME_THANKS, evaluationDTO.getEmailFlux())
-                : String.format(EMAIL_OUTCOME_GENERIC_ERROR, evaluationDTO.getEmailFlux());
+        final String template = String.format(
+                initiativeEnded ? EMAIL_OUTCOME_THANKS : EMAIL_OUTCOME_GENERIC_ERROR,
+                evaluationDTO.getEmailFlux()
+        );
         final String subject = initiativeEnded
                 ? emailNotificationProperties.getSubject().getKoThanks()
                 : emailNotificationProperties.getSubject().getKoGenericError();
@@ -131,7 +133,7 @@ public class OnboardingWebNotificationImpl extends BaseOnboardingNotification<Em
         String sanitizedInitiativeId = sanitizeString(evaluationDTO.getInitiativeId());
         if (initiativeFetchFailed) {
             log.error("[NOTIFY] Skipping email send for user {} due to initiative service failure. Saving as KO.", sanitizedUserId);
-            saveNotification(notificationToSend, evaluationDTO, NotificationConstants.NOTIFICATION_STATUS_KO, LocalDateTime.now(), startTime);
+            saveNotification(notificationToSend, evaluationDTO, NotificationConstants.NOTIFICATION_STATUS_KO, LocalDateTime.now(ZoneId.of("Europe/Rome")), startTime);
             return null;
         }
         try {
@@ -140,7 +142,7 @@ public class OnboardingWebNotificationImpl extends BaseOnboardingNotification<Em
             log.info("[NOTIFY] OnboardingMail sent to user {} and initiative {}", sanitizedUserId, sanitizedInitiativeId);
         } catch (Exception e) {
             log.error("[NOTIFY] Failed to send email notification for user {} and initiative {}", sanitizedUserId, sanitizedInitiativeId, e);
-            saveNotification(notificationToSend, evaluationDTO, NotificationConstants.NOTIFICATION_STATUS_KO, LocalDateTime.now(), startTime);
+            saveNotification(notificationToSend, evaluationDTO, NotificationConstants.NOTIFICATION_STATUS_KO, LocalDateTime.now(ZoneId.of("Europe/Rome")), startTime);
         }
         return null;
     }
@@ -161,7 +163,7 @@ public class OnboardingWebNotificationImpl extends BaseOnboardingNotification<Em
             return true;
         } catch (Exception e) {
             log.error("[NOTIFY] Failed to re-send OnboardingMail for user {} and initiative {}", sanitizedUserId, sanitizedInitiativeId, e);
-            finalizeAndSave(notification, NotificationConstants.NOTIFICATION_STATUS_KO, LocalDateTime.now());
+            finalizeAndSave(notification, NotificationConstants.NOTIFICATION_STATUS_KO, LocalDateTime.now(ZoneId.of("Europe/Rome")));
             performanceLog(startTime, "NOTIFY");
             return false;
         }
