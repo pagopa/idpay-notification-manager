@@ -22,7 +22,7 @@ public interface InitiativeFeignRestClient {
           @PathVariable("initiativeId") String initiativeId);
 
   @GetMapping(
-          value = "/idpay/initiative/{initiativeId}",
+          value = "/{initiativeId}",
           produces = MediaType.APPLICATION_JSON_VALUE)
   @ResponseBody
   ResponseEntity<InitiativeNotificationDTO> getInitiativeDetailInfo(
