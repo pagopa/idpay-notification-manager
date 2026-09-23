@@ -22,7 +22,7 @@ public class InitiativeRestConnectorImpl implements InitiativeRestConnector {
     }
 
     @Override
-    @Cacheable(value = "initiativeMailFlux", key = "#initiativeId")
+    @Cacheable(value = "initiativeEmailFlux", key = "#initiativeId")
     public InitiativeNotificationDTO getInitiativeDetailInfo(String initiativeId) {
         return initiativeFeignRestClient.getInitiativeDetailInfo(initiativeId).getBody();
     }
