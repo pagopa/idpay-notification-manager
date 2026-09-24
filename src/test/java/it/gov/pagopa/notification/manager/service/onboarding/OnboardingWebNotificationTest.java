@@ -15,6 +15,9 @@ import it.gov.pagopa.notification.manager.repository.NotificationManagerReposito
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.Mock;
 import org.mockito.Mockito;
@@ -26,8 +29,11 @@ import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Stream;
 
-import static it.gov.pagopa.notification.manager.dto.OnboardingRejectionReason.OnboardingRejectionReasonCode.*;
+import static it.gov.pagopa.notification.manager.dto.OnboardingRejectionReason.OnboardingRejectionReasonCode.ISEE_TYPE_FAIL;
+import static it.gov.pagopa.notification.manager.dto.OnboardingRejectionReason.OnboardingRejectionReasonCode.AUTOMATED_CRITERIA_ISEE_FAIL;
+import static it.gov.pagopa.notification.manager.dto.OnboardingRejectionReason.OnboardingRejectionReasonCode.REJECTION_REASON_INITIATIVE_ENDED;
 import static it.gov.pagopa.notification.manager.enums.Channel.WEB;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
@@ -458,12 +464,13 @@ class OnboardingWebNotificationTest {
     }
 
     //region setReasonDetail tests
-    @Test
-    void setReasonDetail_shouldUseDetailWhenDetailIsPresent() {
+    @ParameterizedTest(name = "{2}")
+    @MethodSource("provideSetReasonDetailScenarios")
+    void setReasonDetail_shouldUseCorrectReasonValue(String detail, String expectedReason, String description) {
         EvaluationDTO evaluationDTO = getEvaluationDto();
         OnboardingRejectionReason rr = OnboardingRejectionReason.builder()
                 .code(AUTOMATED_CRITERIA_ISEE_FAIL)
-                .detail("Detail Message")
+                .detail(detail)
                 .authority("INPS")
                 .build();
         evaluationDTO.setOnboardingRejectionReasons(List.of(rr));
@@ -478,77 +485,32 @@ class OnboardingWebNotificationTest {
 
         assertNotNull(dto);
         assertTrue(dto.getTemplateValues().containsKey("reason"));
-        assertEquals("Detail Message", dto.getTemplateValues().get("reason"));
+        assertEquals(expectedReason, dto.getTemplateValues().get("reason"), description);
     }
 
-    @Test
-    void setReasonDetail_shouldUseCodeDetailWhenDetailIsNull() {
-        EvaluationDTO evaluationDTO = getEvaluationDto();
-        OnboardingRejectionReason rr = OnboardingRejectionReason.builder()
-                .code(AUTOMATED_CRITERIA_ISEE_FAIL)
-                .detail(null)
-                .authority("INPS")
-                .build();
-        evaluationDTO.setOnboardingRejectionReasons(List.of(rr));
-        evaluationDTO.setEmailFlux("DEC26");
-
-        EmailNotificationProperties.Subject subjectMock = mock(EmailNotificationProperties.Subject.class);
-        when(emailNotificationPropertiesMock.getSubject()).thenReturn(subjectMock);
-        when(subjectMock.getKoGenericError()).thenReturn("SUBJ_KO_GENERIC");
-
-        EmailMessageDTO dto =
-                ((OnboardingWebNotificationImpl) onboardingWebNotification).processOnboardingKo(evaluationDTO);
-
-        assertNotNull(dto);
-        assertTrue(dto.getTemplateValues().containsKey("reason"));
-        assertEquals(AUTOMATED_CRITERIA_ISEE_FAIL.getDetail(), dto.getTemplateValues().get("reason"));
-    }
-
-    @Test
-    void setReasonDetail_shouldUseCodeDetailWhenDetailIsBlank() {
-        EvaluationDTO evaluationDTO = getEvaluationDto();
-        OnboardingRejectionReason rr = OnboardingRejectionReason.builder()
-                .code(AUTOMATED_CRITERIA_ISEE_FAIL)
-                .detail("   ")
-                .authority("INPS")
-                .build();
-        evaluationDTO.setOnboardingRejectionReasons(List.of(rr));
-        evaluationDTO.setEmailFlux("DEC26");
-
-        EmailNotificationProperties.Subject subjectMock = mock(EmailNotificationProperties.Subject.class);
-        when(emailNotificationPropertiesMock.getSubject()).thenReturn(subjectMock);
-        when(subjectMock.getKoGenericError()).thenReturn("SUBJ_KO_GENERIC");
-
-        EmailMessageDTO dto =
-                ((OnboardingWebNotificationImpl) onboardingWebNotification).processOnboardingKo(evaluationDTO);
-
-        assertNotNull(dto);
-        assertTrue(dto.getTemplateValues().containsKey("reason"));
-        assertEquals(AUTOMATED_CRITERIA_ISEE_FAIL.getDetail(), dto.getTemplateValues().get("reason"));
-    }
-
-    @Test
-    void setReasonDetail_shouldUseCodeDetailWhenDetailIsEmpty() {
-        EvaluationDTO evaluationDTO = getEvaluationDto();
-
-        OnboardingRejectionReason rr = OnboardingRejectionReason.builder()
-                .code(AUTOMATED_CRITERIA_ISEE_FAIL)
-                .detail("")
-                .authority("INPS")
-                .build();
-        evaluationDTO.setOnboardingRejectionReasons(List.of(rr));
-        evaluationDTO.setEmailFlux("DEC26");
-
-        EmailNotificationProperties.Subject subjectMock = mock(EmailNotificationProperties.Subject.class);
-        when(emailNotificationPropertiesMock.getSubject()).thenReturn(subjectMock);
-        when(subjectMock.getKoGenericError()).thenReturn("SUBJ_KO_GENERIC");
-
-        EmailMessageDTO dto =
-                ((OnboardingWebNotificationImpl) onboardingWebNotification).processOnboardingKo(evaluationDTO);
-
-        assertNotNull(dto);
-        assertTrue(dto.getTemplateValues().containsKey("reason"));
-        assertEquals(AUTOMATED_CRITERIA_ISEE_FAIL.getDetail(), dto.getTemplateValues().get("reason"));
+    private static Stream<Arguments> provideSetReasonDetailScenarios() {
+        return Stream.of(
+                Arguments.of(
+                        "Detail Message",
+                        "Detail Message",
+                        "When detail is present and not blank, should use detail"
+                ),
+                Arguments.of(
+                        null,
+                        AUTOMATED_CRITERIA_ISEE_FAIL.getDetail(),
+                        "When detail is null, should use codeDetail"
+                ),
+                Arguments.of(
+                        "   ",
+                        AUTOMATED_CRITERIA_ISEE_FAIL.getDetail(),
+                        "When detail is blank (spaces), should use codeDetail"
+                ),
+                Arguments.of(
+                        "",
+                        AUTOMATED_CRITERIA_ISEE_FAIL.getDetail(),
+                        "When detail is empty, should use codeDetail"
+                )
+        );
     }
 
     //endregion
