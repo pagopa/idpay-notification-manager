@@ -27,8 +27,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static it.gov.pagopa.notification.manager.dto.OnboardingRejectionReason.OnboardingRejectionReasonCode.ISEE_TYPE_FAIL;
-import static it.gov.pagopa.notification.manager.dto.OnboardingRejectionReason.OnboardingRejectionReasonCode.REJECTION_REASON_INITIATIVE_ENDED;
+import static it.gov.pagopa.notification.manager.dto.OnboardingRejectionReason.OnboardingRejectionReasonCode.*;
 import static it.gov.pagopa.notification.manager.enums.Channel.WEB;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
@@ -457,5 +456,102 @@ class OnboardingWebNotificationTest {
 
         assertDoesNotThrow(() -> onboardingWebNotification.processNotification(evaluationDTO));
     }
+
+    //region setReasonDetail tests
+    @Test
+    void setReasonDetail_shouldUseDetailWhenDetailIsPresent() {
+        EvaluationDTO evaluationDTO = getEvaluationDto();
+        OnboardingRejectionReason rr = OnboardingRejectionReason.builder()
+                .code(AUTOMATED_CRITERIA_ISEE_FAIL)
+                .detail("Detail Message")
+                .authority("INPS")
+                .build();
+        evaluationDTO.setOnboardingRejectionReasons(List.of(rr));
+        evaluationDTO.setEmailFlux("DEC26");
+
+        EmailNotificationProperties.Subject subjectMock = mock(EmailNotificationProperties.Subject.class);
+        when(emailNotificationPropertiesMock.getSubject()).thenReturn(subjectMock);
+        when(subjectMock.getKoGenericError()).thenReturn("SUBJ_KO_GENERIC");
+
+        EmailMessageDTO dto =
+                ((OnboardingWebNotificationImpl) onboardingWebNotification).processOnboardingKo(evaluationDTO);
+
+        assertNotNull(dto);
+        assertTrue(dto.getTemplateValues().containsKey("reason"));
+        assertEquals("Detail Message", dto.getTemplateValues().get("reason"));
+    }
+
+    @Test
+    void setReasonDetail_shouldUseCodeDetailWhenDetailIsNull() {
+        EvaluationDTO evaluationDTO = getEvaluationDto();
+        OnboardingRejectionReason rr = OnboardingRejectionReason.builder()
+                .code(AUTOMATED_CRITERIA_ISEE_FAIL)
+                .detail(null)
+                .authority("INPS")
+                .build();
+        evaluationDTO.setOnboardingRejectionReasons(List.of(rr));
+        evaluationDTO.setEmailFlux("DEC26");
+
+        EmailNotificationProperties.Subject subjectMock = mock(EmailNotificationProperties.Subject.class);
+        when(emailNotificationPropertiesMock.getSubject()).thenReturn(subjectMock);
+        when(subjectMock.getKoGenericError()).thenReturn("SUBJ_KO_GENERIC");
+
+        EmailMessageDTO dto =
+                ((OnboardingWebNotificationImpl) onboardingWebNotification).processOnboardingKo(evaluationDTO);
+
+        assertNotNull(dto);
+        assertTrue(dto.getTemplateValues().containsKey("reason"));
+        assertEquals(AUTOMATED_CRITERIA_ISEE_FAIL.getDetail(), dto.getTemplateValues().get("reason"));
+    }
+
+    @Test
+    void setReasonDetail_shouldUseCodeDetailWhenDetailIsBlank() {
+        EvaluationDTO evaluationDTO = getEvaluationDto();
+        OnboardingRejectionReason rr = OnboardingRejectionReason.builder()
+                .code(AUTOMATED_CRITERIA_ISEE_FAIL)
+                .detail("   ")
+                .authority("INPS")
+                .build();
+        evaluationDTO.setOnboardingRejectionReasons(List.of(rr));
+        evaluationDTO.setEmailFlux("DEC26");
+
+        EmailNotificationProperties.Subject subjectMock = mock(EmailNotificationProperties.Subject.class);
+        when(emailNotificationPropertiesMock.getSubject()).thenReturn(subjectMock);
+        when(subjectMock.getKoGenericError()).thenReturn("SUBJ_KO_GENERIC");
+
+        EmailMessageDTO dto =
+                ((OnboardingWebNotificationImpl) onboardingWebNotification).processOnboardingKo(evaluationDTO);
+
+        assertNotNull(dto);
+        assertTrue(dto.getTemplateValues().containsKey("reason"));
+        assertEquals(AUTOMATED_CRITERIA_ISEE_FAIL.getDetail(), dto.getTemplateValues().get("reason"));
+    }
+
+    @Test
+    void setReasonDetail_shouldUseCodeDetailWhenDetailIsEmpty() {
+        EvaluationDTO evaluationDTO = getEvaluationDto();
+
+        OnboardingRejectionReason rr = OnboardingRejectionReason.builder()
+                .code(AUTOMATED_CRITERIA_ISEE_FAIL)
+                .detail("")
+                .authority("INPS")
+                .build();
+        evaluationDTO.setOnboardingRejectionReasons(List.of(rr));
+        evaluationDTO.setEmailFlux("DEC26");
+
+        EmailNotificationProperties.Subject subjectMock = mock(EmailNotificationProperties.Subject.class);
+        when(emailNotificationPropertiesMock.getSubject()).thenReturn(subjectMock);
+        when(subjectMock.getKoGenericError()).thenReturn("SUBJ_KO_GENERIC");
+
+        EmailMessageDTO dto =
+                ((OnboardingWebNotificationImpl) onboardingWebNotification).processOnboardingKo(evaluationDTO);
+
+        assertNotNull(dto);
+        assertTrue(dto.getTemplateValues().containsKey("reason"));
+        assertEquals(AUTOMATED_CRITERIA_ISEE_FAIL.getDetail(), dto.getTemplateValues().get("reason"));
+    }
+
+    //endregion
+
 
 }
