@@ -6,6 +6,7 @@ import it.gov.pagopa.notification.manager.connector.initiative.InitiativeRestCon
 import it.gov.pagopa.notification.manager.constants.NotificationConstants;
 import it.gov.pagopa.notification.manager.dto.EmailMessageDTO;
 import it.gov.pagopa.notification.manager.dto.EvaluationDTO;
+import it.gov.pagopa.notification.manager.dto.OnboardingRejectionReason;
 import it.gov.pagopa.notification.manager.dto.mapper.NotificationMapper;
 import it.gov.pagopa.notification.manager.model.Notification;
 import it.gov.pagopa.notification.manager.repository.NotificationManagerRepository;
@@ -32,6 +33,7 @@ public class OnboardingWebNotificationImpl extends BaseOnboardingNotification<Em
     private final NotificationMapper notificationMapper;
 
     private static final String MANAGED_ENTITY = "managedEntity";
+    private static final String REASON = "reason";
     private static final String ZONE_ID_ROME = "Europe/Rome";
 
     private final String assistedLink;
@@ -86,9 +88,22 @@ public class OnboardingWebNotificationImpl extends BaseOnboardingNotification<Em
             if(templateValues.get(MANAGED_ENTITY) != null && templateValues.get(MANAGED_ENTITY).equalsIgnoreCase("Assistenza")){
                 templateValues.put("assistedLink", assistedLink);
             }
+            setReasonDetail(firstReason, templateValues);
+
         }
 
         return createNotification(evaluationDTO, subject, template, templateValues);
+    }
+
+    private void setReasonDetail(OnboardingRejectionReason firstReason, Map<String, String> templateValues) {
+        String detail = firstReason.getDetail();
+        String codeDetail = firstReason.getCode().getDetail();
+
+        String reason = detail != null && !detail.isBlank()
+                ? detail
+                : codeDetail;
+
+        templateValues.put(REASON, reason);
     }
 
     @Override
