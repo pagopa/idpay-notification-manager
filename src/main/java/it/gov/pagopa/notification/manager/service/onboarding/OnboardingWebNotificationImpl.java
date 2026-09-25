@@ -1,13 +1,12 @@
 package it.gov.pagopa.notification.manager.service.onboarding;
 
 import it.gov.pagopa.notification.manager.config.EmailNotificationProperties;
-import it.gov.pagopa.notification.manager.config.NotificationProperties;
 import it.gov.pagopa.notification.manager.connector.EmailNotificationConnector;
-import it.gov.pagopa.notification.manager.connector.IOBackEndRestConnector;
+import it.gov.pagopa.notification.manager.connector.initiative.InitiativeRestConnector;
 import it.gov.pagopa.notification.manager.constants.NotificationConstants;
 import it.gov.pagopa.notification.manager.dto.EmailMessageDTO;
 import it.gov.pagopa.notification.manager.dto.EvaluationDTO;
-import it.gov.pagopa.notification.manager.dto.mapper.NotificationDTOMapper;
+import it.gov.pagopa.notification.manager.dto.OnboardingRejectionReason;
 import it.gov.pagopa.notification.manager.dto.mapper.NotificationMapper;
 import it.gov.pagopa.notification.manager.model.Notification;
 import it.gov.pagopa.notification.manager.repository.NotificationManagerRepository;
@@ -16,6 +15,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -33,15 +33,19 @@ public class OnboardingWebNotificationImpl extends BaseOnboardingNotification<Em
     private final NotificationMapper notificationMapper;
 
     private static final String MANAGED_ENTITY = "managedEntity";
-
+    private static final String REASON = "reason";
+    private static final String ZONE_ID_ROME = "Europe/Rome";
 
     private final String assistedLink;
+
 
     public OnboardingWebNotificationImpl(EmailNotificationConnector emailNotificationConnector,
                                          EmailNotificationProperties emailNotificationProperties,
                                          NotificationManagerRepository notificationManagerRepository,
                                          NotificationMapper notificationMapper,
+                                         InitiativeRestConnector initiativeRestConnector,
                                          @Value("${notification.manager.email.assisted-link}") String assistedLink){
+        super(initiativeRestConnector);
         this.emailNotificationConnector = emailNotificationConnector;
         this.emailNotificationProperties = emailNotificationProperties;
         this.notificationManagerRepository = notificationManagerRepository;
@@ -54,7 +58,8 @@ public class OnboardingWebNotificationImpl extends BaseOnboardingNotification<Em
     EmailMessageDTO processOnboardingJoined(EvaluationDTO evaluationDTO) {
         Map<String, String> templateValues = new HashMap<>();
         templateValues.put("name", evaluationDTO.getName());
-        return createNotification(evaluationDTO, emailNotificationProperties.getSubject().getKoFamilyUnit(), EMAIL_OUTCOME_FAMILY_UNIT, templateValues);
+        String body = String.format(EMAIL_OUTCOME_FAMILY_UNIT, evaluationDTO.getEmailFlux());
+        return createNotification(evaluationDTO, emailNotificationProperties.getSubject().getKoFamilyUnit(), body, templateValues);
     }
 
     @Override
@@ -65,9 +70,10 @@ public class OnboardingWebNotificationImpl extends BaseOnboardingNotification<Em
         final boolean initiativeEnded = firstReason != null
                 && REJECTION_REASON_INITIATIVE_ENDED.equals(firstReason.getCode());
 
-        final String template = initiativeEnded
-                ? EMAIL_OUTCOME_THANKS
-                : EMAIL_OUTCOME_GENERIC_ERROR;
+        final String template = String.format(
+                initiativeEnded ? EMAIL_OUTCOME_THANKS : EMAIL_OUTCOME_GENERIC_ERROR,
+                evaluationDTO.getEmailFlux()
+        );
         final String subject = initiativeEnded
                 ? emailNotificationProperties.getSubject().getKoThanks()
                 : emailNotificationProperties.getSubject().getKoGenericError();
@@ -82,14 +88,31 @@ public class OnboardingWebNotificationImpl extends BaseOnboardingNotification<Em
             if(templateValues.get(MANAGED_ENTITY) != null && templateValues.get(MANAGED_ENTITY).equalsIgnoreCase("Assistenza")){
                 templateValues.put("assistedLink", assistedLink);
             }
+            setReasonDetail(firstReason, templateValues);
+
         }
 
         return createNotification(evaluationDTO, subject, template, templateValues);
     }
 
+    private void setReasonDetail(OnboardingRejectionReason firstReason, Map<String, String> templateValues) {
+        String detail = firstReason.getDetail();
+        String codeDetail = firstReason.getCode().getDetail();
+
+        String reason = detail != null && !detail.isBlank()
+                ? detail
+                : codeDetail;
+
+        templateValues.put(REASON, reason);
+    }
+
     @Override
     protected EmailMessageDTO generateOnboardingOkNotification(boolean isPartial, EvaluationDTO evaluationDTO) {
-        String template = isPartial ? EMAIL_OUTCOME_PARTIAL : EMAIL_OUTCOME_OK;
+        String template = String.format(
+                isPartial ? EMAIL_OUTCOME_PARTIAL : EMAIL_OUTCOME_OK,
+                evaluationDTO.getEmailFlux()
+        );
+
 
         Map<String, String> templateValues = new HashMap<>();
         templateValues.put("name", evaluationDTO.getName());
@@ -99,9 +122,10 @@ public class OnboardingWebNotificationImpl extends BaseOnboardingNotification<Em
             templateValues.put("amount", String.valueOf(amount));
         }
 
-        String subject = EMAIL_OUTCOME_OK.equals(template) ?
-                emailNotificationProperties.getSubject().getOk() :
-                emailNotificationProperties.getSubject().getPartial();
+        String subject = isPartial ?
+                emailNotificationProperties.getSubject().getPartial() :
+                emailNotificationProperties.getSubject().getOk();
+
 
         return createNotification(evaluationDTO, subject, template, templateValues);
     }
@@ -119,17 +143,22 @@ public class OnboardingWebNotificationImpl extends BaseOnboardingNotification<Em
     }
 
     @Override
-    String sendNotification(EmailMessageDTO notificationToSend, EvaluationDTO evaluationDTO) {
+    String sendNotification(EmailMessageDTO notificationToSend, EvaluationDTO evaluationDTO, boolean initiativeFetchFailed) {
         long startTime = System.currentTimeMillis();
         String sanitizedUserId = sanitizeString(evaluationDTO.getUserId());
         String sanitizedInitiativeId = sanitizeString(evaluationDTO.getInitiativeId());
+        if (initiativeFetchFailed) {
+            log.error("[NOTIFY] Skipping email send for user {} due to initiative service failure. Saving as KO.", sanitizedUserId);
+            saveNotification(notificationToSend, evaluationDTO, NotificationConstants.NOTIFICATION_STATUS_KO, LocalDateTime.now(ZoneId.of(ZONE_ID_ROME)), startTime);
+            return null;
+        }
         try {
             emailNotificationConnector.sendEmail(notificationToSend);
             performanceLog(startTime, "NOTIFY");
             log.info("[NOTIFY] OnboardingMail sent to user {} and initiative {}", sanitizedUserId, sanitizedInitiativeId);
         } catch (Exception e) {
             log.error("[NOTIFY] Failed to send email notification for user {} and initiative {}", sanitizedUserId, sanitizedInitiativeId, e);
-            saveNotification(notificationToSend, evaluationDTO, NotificationConstants.NOTIFICATION_STATUS_KO, LocalDateTime.now(), startTime);
+            saveNotification(notificationToSend, evaluationDTO, NotificationConstants.NOTIFICATION_STATUS_KO, LocalDateTime.now(ZoneId.of(ZONE_ID_ROME)), startTime);
         }
         return null;
     }
@@ -150,7 +179,7 @@ public class OnboardingWebNotificationImpl extends BaseOnboardingNotification<Em
             return true;
         } catch (Exception e) {
             log.error("[NOTIFY] Failed to re-send OnboardingMail for user {} and initiative {}", sanitizedUserId, sanitizedInitiativeId, e);
-            finalizeAndSave(notification, NotificationConstants.NOTIFICATION_STATUS_KO, LocalDateTime.now());
+            finalizeAndSave(notification, NotificationConstants.NOTIFICATION_STATUS_KO, LocalDateTime.now(ZoneId.of(ZONE_ID_ROME)));
             performanceLog(startTime, "NOTIFY");
             return false;
         }
@@ -189,8 +218,5 @@ public class OnboardingWebNotificationImpl extends BaseOnboardingNotification<Em
                 System.currentTimeMillis() - startTime);
     }
 
-    public static String sanitizeString(String str){
-        return str == null? null: str.replaceAll("[\\r\\n]", "").replaceAll("[^\\w\\s-]", "");
-    }
 
 }

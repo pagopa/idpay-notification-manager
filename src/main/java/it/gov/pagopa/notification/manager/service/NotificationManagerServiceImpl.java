@@ -31,9 +31,9 @@ import org.springframework.stereotype.Service;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -69,6 +69,7 @@ public class NotificationManagerServiceImpl implements NotificationManagerServic
     private String markdownDoubleNewLine;
 
     private static final String LOG_NOTIFICATION_KO = "[NOTIFY] [SENT_NOTIFICATION_KO] -  Failed to send notification for user {} and initiative {}";
+    private static final String ZONE_ID_ROME = "Europe/Rome";
     private ExecutorService executorService;
 
     public NotificationManagerServiceImpl(@Value("${app.delete.paginationSize:100}") int pageSize,
@@ -236,7 +237,7 @@ public class NotificationManagerServiceImpl implements NotificationManagerServic
         String sanitizedInitiativeId = sanitizeString(notification.getInitiativeId());
         long startTime = System.currentTimeMillis();
 
-        notification.setNotificationDate(LocalDateTime.now());
+        notification.setNotificationDate(LocalDateTime.now(ZoneId.of(ZONE_ID_ROME)));
 
         InitiativeAdditionalInfoDTO ioTokens = null;
 
@@ -317,7 +318,7 @@ public class NotificationManagerServiceImpl implements NotificationManagerServic
     public void recoverKoNotifications() {
         log.debug("[NOTIFY][RECOVER] Searching for notifications to recover");
 
-        final LocalDateTime startTime = LocalDateTime.now();
+        final LocalDateTime startTime = LocalDateTime.now(ZoneId.of(ZONE_ID_ROME));
         List<Future<Long>> workers = IntStream.range(0, parallelism)
                 .mapToObj(i -> executorService.submit(() -> recover(startTime)))
                 .toList();
@@ -564,8 +565,8 @@ public class NotificationManagerServiceImpl implements NotificationManagerServic
             return;
         }
         notification.setNotificationStatus(NotificationConstants.NOTIFICATION_STATUS_KO);
-        notification.setStatusKoTimestamp(LocalDateTime.now());
-        notification.setUpdateDate(LocalDateTime.now());
+        notification.setStatusKoTimestamp(LocalDateTime.now(ZoneId.of(ZONE_ID_ROME)));
+        notification.setUpdateDate(LocalDateTime.now(ZoneId.of(ZONE_ID_ROME)));
         notificationManagerRepository.save(notification);
         log.error(LOG_NOTIFICATION_KO, sanitizedUserId, sanitizedInitiativeId);
         performanceLog(startTime);

@@ -55,12 +55,13 @@ class OnboardingNotificationControllerTest {
                   List.of(),
                   50000L,
                   1L,
-                  true,
+                  null,
                   null,
                   IO,
                   null,
                   null,
                   FISCAL_CODE,
+                  null,
                   null
           );
 
