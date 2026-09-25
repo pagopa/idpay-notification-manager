@@ -4,6 +4,7 @@ import feign.FeignException;
 import it.gov.pagopa.common.utils.CommonUtilities;
 import it.gov.pagopa.notification.manager.config.NotificationProperties;
 import it.gov.pagopa.notification.manager.connector.IOBackEndRestConnector;
+import it.gov.pagopa.notification.manager.connector.initiative.InitiativeRestConnector;
 import it.gov.pagopa.notification.manager.constants.NotificationConstants;
 import it.gov.pagopa.notification.manager.dto.EvaluationDTO;
 import it.gov.pagopa.notification.manager.dto.NotificationDTO;
@@ -33,8 +34,10 @@ public class OnboardingIoNotificationImpl extends BaseOnboardingNotification<Not
     public OnboardingIoNotificationImpl(NotificationProperties notificationProperties,
             NotificationDTOMapper notificationDTOMapper,
             IOBackEndRestConnector ioBackEndRestConnector,
+            InitiativeRestConnector initiativeRestConnector,
             @Value("${rest-client.notification.backend-io.ttl}") Long timeToLive,
             @Value("${notification.manager.email.assisted-link}") String assistedLink) {
+        super(initiativeRestConnector);
         this.notificationProperties = notificationProperties;
         this.notificationDTOMapper = notificationDTOMapper;
         this.ioBackEndRestConnector = ioBackEndRestConnector;
@@ -111,7 +114,7 @@ public class OnboardingIoNotificationImpl extends BaseOnboardingNotification<Not
     }
 
     @Override
-    String sendNotification(NotificationDTO notificationToSend, EvaluationDTO evaluationDTO) {
+    String sendNotification(NotificationDTO notificationToSend, EvaluationDTO evaluationDTO, boolean initiativeFetchFailed) {
         String sanitizedUserId = sanitizeString(evaluationDTO.getUserId());
         String sanitizedInitiativeId = sanitizeString(evaluationDTO.getInitiativeId());
         try {
@@ -140,7 +143,4 @@ public class OnboardingIoNotificationImpl extends BaseOnboardingNotification<Not
                 StringUtils.hasLength(value) ? value : NotificationConstants.MARKDOWN_NA);
     }
 
-    public static String sanitizeString(String str){
-        return str == null? null: str.replaceAll("[\\r\\n]", "").replaceAll("[^\\w\\s-]", "");
-    }
 }

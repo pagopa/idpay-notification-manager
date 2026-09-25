@@ -1,6 +1,7 @@
 package it.gov.pagopa.notification.manager.config;
 
 import it.gov.pagopa.notification.manager.dto.initiative.InitiativeAdditionalInfoDTO;
+import it.gov.pagopa.notification.manager.dto.initiative.InitiativeNotificationDTO;
 import org.springframework.boot.cache.autoconfigure.RedisCacheManagerBuilderCustomizer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -19,13 +20,21 @@ public class RedisConfig {
 
     ObjectMapper mapper = new ObjectMapper();
 
-    JacksonJsonRedisSerializer<InitiativeAdditionalInfoDTO> serializer = new JacksonJsonRedisSerializer<>(
+    JacksonJsonRedisSerializer<InitiativeAdditionalInfoDTO> tokenSerializer = new JacksonJsonRedisSerializer<>(
         mapper, InitiativeAdditionalInfoDTO.class);
+
+    JacksonJsonRedisSerializer<InitiativeNotificationDTO> notificationSerializer = new JacksonJsonRedisSerializer<>(
+        mapper, InitiativeNotificationDTO.class);
 
     return builder -> builder
         .withCacheConfiguration("initiativeToken",
             RedisCacheConfiguration.defaultCacheConfig().entryTtl(Duration.ofDays(1))
                 .serializeValuesWith(
-                    SerializationPair.fromSerializer(serializer)));
+                    SerializationPair.fromSerializer(tokenSerializer)))
+        .withCacheConfiguration("initiativeEmailFlux",
+                    RedisCacheConfiguration.defaultCacheConfig().entryTtl(Duration.ofDays(1))
+                            .serializeValuesWith(
+                                    SerializationPair.fromSerializer(notificationSerializer)));
   }
 }
+
