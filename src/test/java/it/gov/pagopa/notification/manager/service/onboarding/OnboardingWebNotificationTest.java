@@ -207,6 +207,7 @@ class OnboardingWebNotificationTest {
     void processNotification_templateEsitoOkParziale() {
         EvaluationDTO evaluationDTO = getEvaluationDto();
         VerifyDTO verifyDTO = VerifyDTO.builder()
+                .verify(true)
                 .beneficiaryBudgetCentsMin(10000L)
                 .build();
         List<VerifyDTO> verifies = List.of(verifyDTO);
@@ -231,6 +232,38 @@ class OnboardingWebNotificationTest {
         verify(emailNotificationConnectorMock, times(1))
                 .sendEmail(Mockito.argThat(email ->
                         "Email_DEC26/EsitoParziale".equals(email.getTemplateName())
+                ));
+    }
+
+    @Test
+    void processNotification_whenNoIseeVerify_shouldBuildEsitoOk() {
+        EvaluationDTO evaluationDTO = getEvaluationDto();
+        // User opted NOT to use ISEE: verification is not performed even if the option's
+        // min budget matches the awarded budget. Must resolve to EsitoOk, not EsitoParziale.
+        VerifyDTO verifyDTO = VerifyDTO.builder()
+                .verify(false)
+                .beneficiaryBudgetCentsMin(10000L)
+                .build();
+        evaluationDTO.setVerifies(List.of(verifyDTO));
+        evaluationDTO.setBeneficiaryBudgetCents(10000L);
+
+        EmailNotificationProperties.Subject subjectMock = mock(EmailNotificationProperties.Subject.class);
+        when(emailNotificationPropertiesMock.getSubject()).thenReturn(subjectMock);
+        when(subjectMock.getOk()).thenReturn("TEST_OK");
+
+        Mockito.doAnswer(invocation -> null)
+                .when(emailNotificationConnectorMock)
+                .sendEmail(Mockito.any(EmailMessageDTO.class));
+
+        InitiativeNotificationDTO mockInitiative = new InitiativeNotificationDTO();
+        mockInitiative.setEmailFlux("DEC26");
+        when(initiativeRestConnector.getInitiativeDetailInfo(anyString())).thenReturn(mockInitiative);
+
+        onboardingWebNotification.processNotification(evaluationDTO);
+
+        verify(emailNotificationConnectorMock, times(1))
+                .sendEmail(Mockito.argThat(email ->
+                        "Email_DEC26/EsitoOk".equals(email.getTemplateName())
                 ));
     }
 
