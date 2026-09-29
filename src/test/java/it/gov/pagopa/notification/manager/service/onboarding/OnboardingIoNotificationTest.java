@@ -208,6 +208,50 @@ class OnboardingIoNotificationTest {
     }
 
     @Test
+    void processNotification_whenNoIseeVerify_shouldBuildEsitoOk100() {
+        EvaluationDTO evaluationDTO = getEvaluationDto();
+        // User opted NOT to use ISEE: verification is not performed, so even if the
+        // option's min budget matches the awarded budget it must resolve to full OK.
+        VerifyDTO verifyDTO = VerifyDTO.builder()
+                .verify(false)
+                .beneficiaryBudgetCentsMin(10000L)
+                .build();
+        evaluationDTO.setVerifies(List.of(verifyDTO));
+        evaluationDTO.setBeneficiaryBudgetCents(10000L);
+
+        NotificationProperties.Subject subjectMock = mock(NotificationProperties.Subject.class);
+        when(notificationPropertiesMock.getSubject()).thenReturn(subjectMock);
+        when(subjectMock.getOkBel()).thenReturn(SUBJECT_OK);
+
+        NotificationProperties.Markdown markdownMock = mock(NotificationProperties.Markdown.class);
+        when(notificationPropertiesMock.getMarkdown()).thenReturn(markdownMock);
+        when(markdownMock.getOkBel()).thenReturn(MARKDOWN_OK_BEL);
+        when(markdownMock.getDoubleNewLine()).thenReturn(MARKDOWN_DOUBLE_LINE);
+        when(markdownMock.getOkCta()).thenReturn(MARKDOWN_CTA_OK);
+
+        NotificationResource notificationResource = mock(NotificationResource.class);
+        when(ioBackEndRestConnectorMock.notify(Mockito.any(NotificationDTO.class), Mockito.anyString()))
+                .thenReturn(notificationResource);
+        when(notificationResource.getId()).thenReturn(MESSAGE_ID);
+
+        InitiativeNotificationDTO mockInitiative = new InitiativeNotificationDTO();
+        mockInitiative.setEmailFlux("DEC26");
+        when(initiativeRestConnector.getInitiativeDetailInfo(anyString())).thenReturn(mockInitiative);
+
+        String result = onboardingIoNotification.processNotification(evaluationDTO);
+
+        // Full OK markdown (100€), NOT the ISEE-difforme partial markdown.
+        verify(ioBackEndRestConnectorMock, times(1))
+                .notify(Mockito.argThat(notificationDTO ->
+                        notificationDTO.getContent().getMarkdown().contains("Hai ottenuto il INITIATIVE_NAME da 100€")
+                                && !notificationDTO.getContent().getMarkdown().contains("il tuo ISEE risulta difforme")),
+                        eq("IO_TOKEN"));
+
+        Assertions.assertNotNull(result);
+        Assertions.assertEquals(MESSAGE_ID, result);
+    }
+
+    @Test
     void processNotification_whenTemplateEsitoOkNoVerifyIsee100() {
         EvaluationDTO evaluationDTO = getEvaluationDto();
         evaluationDTO.setBeneficiaryBudgetCents(10000L);
@@ -328,6 +372,7 @@ class OnboardingIoNotificationTest {
     void processNotification_templateEsitoOkParziale() {
         EvaluationDTO evaluationDTO = getEvaluationDto();
         VerifyDTO verifyDTO = VerifyDTO.builder()
+                .verify(true)
                 .beneficiaryBudgetCentsMin(10000L)
                 .build();
         List<VerifyDTO> verifies = List.of(verifyDTO);

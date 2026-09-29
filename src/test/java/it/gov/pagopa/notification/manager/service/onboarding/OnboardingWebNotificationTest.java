@@ -207,6 +207,7 @@ class OnboardingWebNotificationTest {
     void processNotification_templateEsitoOkParziale() {
         EvaluationDTO evaluationDTO = getEvaluationDto();
         VerifyDTO verifyDTO = VerifyDTO.builder()
+                .verify(true)
                 .beneficiaryBudgetCentsMin(10000L)
                 .build();
         List<VerifyDTO> verifies = List.of(verifyDTO);
@@ -216,6 +217,193 @@ class OnboardingWebNotificationTest {
         EmailNotificationProperties.Subject subjectMock = mock(EmailNotificationProperties.Subject.class);
         when(emailNotificationPropertiesMock.getSubject()).thenReturn(subjectMock);
 
+        when(subjectMock.getPartial()).thenReturn("TEST_PARTIAL_OK");
+
+        Mockito.doAnswer(invocation -> null)
+                .when(emailNotificationConnectorMock)
+                .sendEmail(Mockito.any(EmailMessageDTO.class));
+
+        InitiativeNotificationDTO mockInitiative = new InitiativeNotificationDTO();
+        mockInitiative.setEmailFlux("DEC26");
+        when(initiativeRestConnector.getInitiativeDetailInfo(anyString())).thenReturn(mockInitiative);
+
+        onboardingWebNotification.processNotification(evaluationDTO);
+
+        verify(emailNotificationConnectorMock, times(1))
+                .sendEmail(Mockito.argThat(email ->
+                        "Email_DEC26/EsitoParziale".equals(email.getTemplateName())
+                ));
+    }
+
+    @Test
+    void processNotification_whenNoIseeVerify_shouldBuildEsitoOk() {
+        EvaluationDTO evaluationDTO = getEvaluationDto();
+        // User opted NOT to use ISEE: verification is not performed even if the option's
+        // min budget matches the awarded budget. Must resolve to EsitoOk, not EsitoParziale.
+        VerifyDTO verifyDTO = VerifyDTO.builder()
+                .verify(false)
+                .beneficiaryBudgetCentsMin(10000L)
+                .build();
+        evaluationDTO.setVerifies(List.of(verifyDTO));
+        evaluationDTO.setBeneficiaryBudgetCents(10000L);
+
+        EmailNotificationProperties.Subject subjectMock = mock(EmailNotificationProperties.Subject.class);
+        when(emailNotificationPropertiesMock.getSubject()).thenReturn(subjectMock);
+        when(subjectMock.getOk()).thenReturn("TEST_OK");
+
+        Mockito.doAnswer(invocation -> null)
+                .when(emailNotificationConnectorMock)
+                .sendEmail(Mockito.any(EmailMessageDTO.class));
+
+        InitiativeNotificationDTO mockInitiative = new InitiativeNotificationDTO();
+        mockInitiative.setEmailFlux("DEC26");
+        when(initiativeRestConnector.getInitiativeDetailInfo(anyString())).thenReturn(mockInitiative);
+
+        onboardingWebNotification.processNotification(evaluationDTO);
+
+        verify(emailNotificationConnectorMock, times(1))
+                .sendEmail(Mockito.argThat(email ->
+                        "Email_DEC26/EsitoOk".equals(email.getTemplateName())
+                ));
+    }
+
+    @Test
+    void processNotification_whenIseeVerifiedFullBudget_shouldBuildEsitoOk() {
+        EvaluationDTO evaluationDTO = getEvaluationDto();
+        // ISEE verified and conform: awarded budget equals the option MAX (200€),
+        // so min != budget and the outcome must be full EsitoOk.
+        VerifyDTO verifyDTO = VerifyDTO.builder()
+                .verify(true)
+                .beneficiaryBudgetCentsMin(10000L)
+                .beneficiaryBudgetCentsMax(20000L)
+                .build();
+        evaluationDTO.setVerifies(List.of(verifyDTO));
+        evaluationDTO.setBeneficiaryBudgetCents(20000L);
+
+        EmailNotificationProperties.Subject subjectMock = mock(EmailNotificationProperties.Subject.class);
+        when(emailNotificationPropertiesMock.getSubject()).thenReturn(subjectMock);
+        when(subjectMock.getOk()).thenReturn("TEST_OK");
+
+        Mockito.doAnswer(invocation -> null)
+                .when(emailNotificationConnectorMock)
+                .sendEmail(Mockito.any(EmailMessageDTO.class));
+
+        InitiativeNotificationDTO mockInitiative = new InitiativeNotificationDTO();
+        mockInitiative.setEmailFlux("DEC26");
+        when(initiativeRestConnector.getInitiativeDetailInfo(anyString())).thenReturn(mockInitiative);
+
+        onboardingWebNotification.processNotification(evaluationDTO);
+
+        verify(emailNotificationConnectorMock, times(1))
+                .sendEmail(Mockito.argThat(email ->
+                        "Email_DEC26/EsitoOk".equals(email.getTemplateName())
+                ));
+    }
+
+    @Test
+    void processNotification_whenVerifyTrueButBudgetNull_shouldBuildEsitoOk() {
+        EvaluationDTO evaluationDTO = getEvaluationDto();
+        // verify=true but budget is null: the null-check short-circuits, so it must not be partial.
+        VerifyDTO verifyDTO = VerifyDTO.builder()
+                .verify(true)
+                .beneficiaryBudgetCentsMin(10000L)
+                .build();
+        evaluationDTO.setVerifies(List.of(verifyDTO));
+        evaluationDTO.setBeneficiaryBudgetCents(null);
+
+        EmailNotificationProperties.Subject subjectMock = mock(EmailNotificationProperties.Subject.class);
+        when(emailNotificationPropertiesMock.getSubject()).thenReturn(subjectMock);
+        when(subjectMock.getOk()).thenReturn("TEST_OK");
+
+        Mockito.doAnswer(invocation -> null)
+                .when(emailNotificationConnectorMock)
+                .sendEmail(Mockito.any(EmailMessageDTO.class));
+
+        InitiativeNotificationDTO mockInitiative = new InitiativeNotificationDTO();
+        mockInitiative.setEmailFlux("DEC26");
+        when(initiativeRestConnector.getInitiativeDetailInfo(anyString())).thenReturn(mockInitiative);
+
+        onboardingWebNotification.processNotification(evaluationDTO);
+
+        verify(emailNotificationConnectorMock, times(1))
+                .sendEmail(Mockito.argThat(email ->
+                        "Email_DEC26/EsitoOk".equals(email.getTemplateName())
+                                && !email.getTemplateValues().containsKey("amount")
+                ));
+    }
+
+    @Test
+    void processNotification_whenVerifiesEmptyList_shouldBuildEsitoOk() {
+        EvaluationDTO evaluationDTO = getEvaluationDto();
+        // Non-null but empty verifies list: the loop is skipped, outcome must be full EsitoOk.
+        evaluationDTO.setVerifies(List.of());
+        evaluationDTO.setBeneficiaryBudgetCents(10000L);
+
+        EmailNotificationProperties.Subject subjectMock = mock(EmailNotificationProperties.Subject.class);
+        when(emailNotificationPropertiesMock.getSubject()).thenReturn(subjectMock);
+        when(subjectMock.getOk()).thenReturn("TEST_OK");
+
+        Mockito.doAnswer(invocation -> null)
+                .when(emailNotificationConnectorMock)
+                .sendEmail(Mockito.any(EmailMessageDTO.class));
+
+        InitiativeNotificationDTO mockInitiative = new InitiativeNotificationDTO();
+        mockInitiative.setEmailFlux("DEC26");
+        when(initiativeRestConnector.getInitiativeDetailInfo(anyString())).thenReturn(mockInitiative);
+
+        onboardingWebNotification.processNotification(evaluationDTO);
+
+        verify(emailNotificationConnectorMock, times(1))
+                .sendEmail(Mockito.argThat(email ->
+                        "Email_DEC26/EsitoOk".equals(email.getTemplateName())
+                ));
+    }
+
+    @Test
+    void processNotification_whenStatusKo_shouldSendGenericErrorEmail() {
+        EvaluationDTO evaluationDTO = getEvaluationDto();
+        // Exercise the STATUS_ONBOARDING_KO branch of the processNotification switch.
+        evaluationDTO.setStatus(NotificationConstants.STATUS_ONBOARDING_KO);
+        evaluationDTO.setOnboardingRejectionReasons(List.of());
+
+        EmailNotificationProperties.Subject subjectMock = mock(EmailNotificationProperties.Subject.class);
+        when(emailNotificationPropertiesMock.getSubject()).thenReturn(subjectMock);
+        when(subjectMock.getKoGenericError()).thenReturn("SUBJ_KO_GENERIC");
+
+        Mockito.doAnswer(invocation -> null)
+                .when(emailNotificationConnectorMock)
+                .sendEmail(Mockito.any(EmailMessageDTO.class));
+
+        InitiativeNotificationDTO mockInitiative = new InitiativeNotificationDTO();
+        mockInitiative.setEmailFlux("DEC26");
+        when(initiativeRestConnector.getInitiativeDetailInfo(anyString())).thenReturn(mockInitiative);
+
+        onboardingWebNotification.processNotification(evaluationDTO);
+
+        verify(emailNotificationConnectorMock, times(1))
+                .sendEmail(Mockito.argThat(email ->
+                        "Email_DEC26/GenericError".equals(email.getTemplateName())
+                ));
+    }
+
+    @Test
+    void processNotification_whenMultipleVerifies_firstNonMatching_shouldBuildEsitoParziale() {
+        EvaluationDTO evaluationDTO = getEvaluationDto();
+        // The first verify does not match (min != budget); the loop must continue and
+        // detect the second matching verify (verify=true, min == budget) -> partial.
+        VerifyDTO nonMatching = VerifyDTO.builder()
+                .verify(true)
+                .beneficiaryBudgetCentsMin(99999L)
+                .build();
+        VerifyDTO matching = VerifyDTO.builder()
+                .verify(true)
+                .beneficiaryBudgetCentsMin(10000L)
+                .build();
+        evaluationDTO.setVerifies(List.of(nonMatching, matching));
+        evaluationDTO.setBeneficiaryBudgetCents(10000L);
+
+        EmailNotificationProperties.Subject subjectMock = mock(EmailNotificationProperties.Subject.class);
+        when(emailNotificationPropertiesMock.getSubject()).thenReturn(subjectMock);
         when(subjectMock.getPartial()).thenReturn("TEST_PARTIAL_OK");
 
         Mockito.doAnswer(invocation -> null)
