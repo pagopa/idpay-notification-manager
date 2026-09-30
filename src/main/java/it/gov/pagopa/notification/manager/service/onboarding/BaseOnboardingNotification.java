@@ -59,12 +59,15 @@ public abstract class BaseOnboardingNotification<R> {
         boolean isPartial = Boolean.FALSE;
         if(evaluationDTO.getVerifies() != null && !evaluationDTO.getVerifies().isEmpty()){
             for(VerifyDTO verify : evaluationDTO.getVerifies()){
-                if(evaluationDTO.getBeneficiaryBudgetCents() != null && verify.getBeneficiaryBudgetCentsMin() == evaluationDTO.getBeneficiaryBudgetCents()){
+                // Partial outcome only when an ISEE verification was actually performed
+                // and the awarded budget dropped to the lower bracket (ISEE difforme).
+                if(verify.isVerify()
+                        && evaluationDTO.getBeneficiaryBudgetCents() != null
+                        && verify.getBeneficiaryBudgetCentsMin() == evaluationDTO.getBeneficiaryBudgetCents()){
                     isPartial = Boolean.TRUE;
                     break;
                 }
-        }
-
+            }
         }
 
         return generateOnboardingOkNotification(isPartial, evaluationDTO);
