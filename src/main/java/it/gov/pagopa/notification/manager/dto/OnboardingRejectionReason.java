@@ -54,7 +54,9 @@ public class OnboardingRejectionReason {
     RESIDENCE_FAIL("Residenza non disponibile"),
     BIRTHDATE_FAIL("Data di nascita non disponibile"),
     FAMILY_FAIL("Nucleo familiare non disponibile"),
-    RULE_ENGINE_NOT_READY("Errore tecnico");
+    RULE_ENGINE_NOT_READY("Errore tecnico"),
+
+    GENERIC_ERROR("Errore tecnico");
 
     private final String detail;
 
