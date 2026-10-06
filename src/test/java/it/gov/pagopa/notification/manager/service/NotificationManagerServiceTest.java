@@ -27,7 +27,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
-import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
@@ -205,13 +204,13 @@ class NotificationManagerServiceTest {
             new EvaluationDTO(
                     TEST_TOKEN, INITIATIVE_ID, INITIATIVE_ID, TEST_DATE_ONLY_DATE, INITIATIVE_ID, ORGANIZATION_NAME,
                     NotificationConstants.STATUS_ONBOARDING_OK, TEST_DATE, TEST_DATE, List.of(),
-                    50000L, 1L, true, null, IO, null, null, null, null
+                    50000L, 1L, null, null, IO, null, null, null, null, null
             );
 
     private static final EvaluationDTO EVALUATION_DTO_WEB = new EvaluationDTO(
             TEST_TOKEN, INITIATIVE_ID, INITIATIVE_ID, TEST_DATE_ONLY_DATE, INITIATIVE_ID, ORGANIZATION_NAME,
             NotificationConstants.STATUS_ONBOARDING_OK, TEST_DATE, TEST_DATE, List.of(),
-            50000L, 1L, true, "user@email.com", WEB, null, null, null, null
+            50000L, 1L, null, "user@email.com", WEB, null, null, null, null, null
     );
 
     private static final FiscalCodeDTO FISCAL_CODE_DTO = new FiscalCodeDTO(FISCAL_CODE);
@@ -436,7 +435,7 @@ class NotificationManagerServiceTest {
                                 OnboardingRejectionReason.OnboardingRejectionReasonCode.ISEE_TYPE_FAIL,
                                 null, null, null)
                 ),
-                50000L, 1L, true, "user@mail.com", IO, null, null, null, null
+                50000L, 1L, null, "user@mail.com", IO, null, null, null, null, null
         );
 
         notificationManagerService.notify(evaluationDTO);
@@ -465,7 +464,7 @@ class NotificationManagerServiceTest {
         EvaluationDTO evaluationDTO = new EvaluationDTO(
                 TEST_TOKEN, INITIATIVE_ID, INITIATIVE_ID, TEST_DATE_ONLY_DATE, INITIATIVE_ID, ORGANIZATION_NAME,
                 NotificationConstants.STATUS_ONBOARDING_OK, TEST_DATE, TEST_DATE, List.of(), 50000L, 1L,
-                true, null, IO, null, null, null, null
+                null, null, IO, null, null, null, null, null
         );
 
         Notification notification = Notification.builder()
@@ -502,7 +501,7 @@ class NotificationManagerServiceTest {
         EvaluationDTO evaluationDTO = new EvaluationDTO(
                 TEST_TOKEN, INITIATIVE_ID, INITIATIVE_ID, TEST_DATE_ONLY_DATE, INITIATIVE_ID, ORGANIZATION_NAME,
                 NotificationConstants.STATUS_ONBOARDING_OK, TEST_DATE, TEST_DATE, List.of(),
-                50000L, 1L, true, null, WEB, null, null, null, null
+                50000L, 1L, null, null, WEB, null, null, null, null, null
         );
 
         when(onboardingWebNotification.processNotification(evaluationDTO)).thenReturn(null);
@@ -516,7 +515,7 @@ class NotificationManagerServiceTest {
         EvaluationDTO evaluationDTO = new EvaluationDTO(
                 TEST_TOKEN, INITIATIVE_ID, INITIATIVE_ID, TEST_DATE_ONLY_DATE, INITIATIVE_ID, ORGANIZATION_NAME,
                 NotificationConstants.STATUS_ONBOARDING_DEMANDED, TEST_DATE, TEST_DATE, List.of(),
-                50000L, 1L, true, null, WEB, null, null, null, null
+                50000L, 1L, null, null, WEB, null, null, null, null, null
         );
 
         notificationManagerService.notify(evaluationDTO);
@@ -529,7 +528,7 @@ class NotificationManagerServiceTest {
                 new EvaluationDTO(
                         TEST_TOKEN, INITIATIVE_ID, INITIATIVE_ID, TEST_DATE_ONLY_DATE, INITIATIVE_ID, ORGANIZATION_NAME,
                         NotificationConstants.STATUS_ONBOARDING_OK, TEST_DATE, TEST_DATE, null,
-                        50000L, 1L, true, null, IO, null, null, null, null
+                        50000L, 1L, null, null, IO, null, null, null, null, null
                 );
 
         when(pdvDecryptRestConnector.getPii(TEST_TOKEN)).thenReturn(FISCAL_CODE_RESOURCE);
@@ -575,7 +574,7 @@ class NotificationManagerServiceTest {
                                         OnboardingRejectionReason.OnboardingRejectionReasonType.ISEE_TYPE_KO,
                                         OnboardingRejectionReason.OnboardingRejectionReasonCode.ISEE_TYPE_FAIL, null, null, null)
                         ),
-                        50000L, 1L, true, null, IO, null, null, null, null
+                        50000L, 1L, null, null, IO, null, null, null, null, null
                 );
 
         Request request = Request.create(Request.HttpMethod.GET, "url", new HashMap<>(), null, new RequestTemplate());
@@ -808,7 +807,7 @@ class NotificationManagerServiceTest {
 
     @Test
     void sendNotificationFromOperationType_checkiban_notification_Null_ioTokens_null() {
-        Notification dto = Mockito.mock(Notification.class);
+        Notification dto = mock(Notification.class);
 
         when(dto.getUserId()).thenReturn(null);
         when(dto.getInitiativeId()).thenReturn(null);
@@ -1071,7 +1070,7 @@ class NotificationManagerServiceTest {
         EvaluationDTO evaluationDTO = new EvaluationDTO(
                 TEST_TOKEN, INITIATIVE_ID, INITIATIVE_ID, TEST_DATE_ONLY_DATE, INITIATIVE_ID, ORGANIZATION_NAME,
                 NotificationConstants.STATUS_ONBOARDING_OK, TEST_DATE, TEST_DATE, List.of(),
-                50000L, 1L, true, null, IO, null, null, null, null
+                50000L, 1L, null, null, IO, null, null, null, null, null
         );
 
         Notification notification = Notification.builder()
@@ -1143,7 +1142,7 @@ class NotificationManagerServiceTest {
 
     @Test
     void schedule_invokesRecoverKoNotifications() {
-        NotificationManagerServiceImpl spy = Mockito.spy(notificationManagerService);
+        NotificationManagerServiceImpl spy = spy(notificationManagerService);
         doNothing().when(spy).recoverKoNotifications();
         spy.schedule();
         verify(spy, times(1)).recoverKoNotifications();

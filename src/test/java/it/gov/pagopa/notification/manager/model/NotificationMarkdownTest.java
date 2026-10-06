@@ -38,14 +38,14 @@ class NotificationMarkdownTest {
                     action: "ioit://idpay/initiative/%s"
                 cta_2:\s
                     text: "Dove puoi spenderlo?"
-                    action: "iohandledlink://https://bonuselettrodomestici.it/lista-punti-vendita"
+                    action: "iohandledlink://https://pari.pagopa.it/bonuselettrodomestici/lista-punti-vendita"
             en:
                 cta_1:\s
                     text: "Go to the bonus page"
                     action: "ioit://idpay/initiative/%s"
                 cta_2:\s
                     text: "Where can you spend it?"
-                    action: "iohandledlink://https://bonuselettrodomestici.it/lista-punti-vendita"
+                    action: "iohandledlink://https://pari.pagopa.it/bonuselettrodomestici/lista-punti-vendita"
             ---
                         
             Buone notizie! Hai ottenuto %s. Da questo momento puoi visualizzare il bonus nella sezione Portafoglio dell'app IO.
@@ -74,9 +74,10 @@ class NotificationMarkdownTest {
                   List.of(),
                   50000L,
                   1L,
-                  true,
+                  null,
                   null,
                   IO,
+                  null,
                   null,
                   null,
                   null,
@@ -97,9 +98,10 @@ class NotificationMarkdownTest {
                   List.of(new OnboardingRejectionReason(OnboardingRejectionReasonType.AUTOMATED_CRITERIA_FAIL, OnboardingRejectionReasonCode.AUTOMATED_CRITERIA_ISEE_FAIL, "AUTHORITY", "LABEL", "DETAIL")),
                   50000L,
                   1L,
-                  true,
+                  null,
                   null,
                   IO,
+                  null,
                   null,
                   null,
                   null,
@@ -120,9 +122,10 @@ class NotificationMarkdownTest {
                   List.of(new OnboardingRejectionReason(OnboardingRejectionReasonType.OUT_OF_RANKING, null, "AUTHORITY", "LABEL", "DETAIL")),
                   50000L,
                   1L,
-                  true,
+                  null,
                   null,
                   IO,
+                  null,
                   null,
                   null,
                   null,
@@ -143,9 +146,10 @@ class NotificationMarkdownTest {
                   List.of(new OnboardingRejectionReason(OnboardingRejectionReasonType.TECHNICAL_ERROR, null, "AUTHORITY", "LABEL", "DETAIL")),
                   50000L,
                   1L,
-                  true,
+                  null,
                   null,
                   IO,
+                  null,
                   null,
                   null,
                   null,
@@ -414,14 +418,14 @@ class NotificationMarkdownTest {
                     action: "ioit://idpay/initiative/INITIATIVE_ID"
                 cta_2:\s
                     text: "Dove puoi spenderlo?"
-                    action: "iohandledlink://https://bonuselettrodomestici.it/lista-punti-vendita"
+                    action: "iohandledlink://https://pari.pagopa.it/bonuselettrodomestici/lista-punti-vendita"
             en:
                 cta_1:\s
                     text: "Go to the bonus page"
                     action: "ioit://idpay/initiative/INITIATIVE_ID"
                 cta_2:\s
                     text: "Where can you spend it?"
-                    action: "iohandledlink://https://bonuselettrodomestici.it/lista-punti-vendita"
+                    action: "iohandledlink://https://pari.pagopa.it/bonuselettrodomestici/lista-punti-vendita"
             ---
                         
             Hai già deciso come usare il Bonus Elettrodomestici?
@@ -450,9 +454,10 @@ class NotificationMarkdownTest {
             rejectionReasons,
             50000L,
             1L,
-            true,
+            null,
             null,
             IO,
+            null,
             null,
             null,
             null,
