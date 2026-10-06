@@ -6,6 +6,7 @@ public class NotificationConstants {
   public static final String STATUS_ONBOARDING_JOINED = "JOINED";
   public static final String STATUS_ONBOARDING_DEMANDED = "DEMANDED";
   public static final String STATUS_ON_EVALUATION = "ON_EVALUATION";
+  public static final String STATUS_ONBOARDING_WAITING_LIST = "ON_WAITING_LIST";
   public static final String INITIATIVE_NAME_KEY = "initiativeName";
   public static final String INITIATIVE_ID_KEY = "initiativeId";
   public static final String VOUCHER_END_DATE_KEY = "voucherEndDate";

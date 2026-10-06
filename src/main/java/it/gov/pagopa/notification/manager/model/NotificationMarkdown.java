@@ -115,10 +115,10 @@ public class NotificationMarkdown {
   private String subjectDemanded;
   @Value("${notification.manager.markdown.demanded}")
   private String markdownDemanded;
-  @Value("${notification.manager.subject.on-evaluation}")
-  private String subjectOnEvaluation;
-  @Value("${notification.manager.markdown.on-evaluation}")
-  private String markdownOnEvaluation;
+  @Value("${notification.manager.subject.on-waiting-list}")
+  private String subjectOnWaitingList;
+  @Value("${notification.manager.markdown.on-waiting-list}")
+  private String markdownOnWaitingList;
   @Value("${notification.manager.markdown.ko.budget}")
   private String markdownKoBudget;
   @Value("${notification.manager.markdown.ko.rejected.noRetry}")
@@ -158,8 +158,8 @@ public class NotificationMarkdown {
       return replaceMessageItem(subjectDemanded, NotificationConstants.INITIATIVE_NAME_KEY, evaluationDTO.getInitiativeName());
     }
 
-    if (NotificationConstants.STATUS_ON_EVALUATION.equals(evaluationDTO.getStatus())) {
-      return this.subjectOnEvaluation;
+    if (NotificationConstants.STATUS_ONBOARDING_WAITING_LIST.equals(evaluationDTO.getStatus())) {
+      return this.subjectOnWaitingList;
     }
 
     return getSubjectKo(
@@ -167,8 +167,8 @@ public class NotificationMarkdown {
   }
 
   public String getSubject(Notification notification) {
-    if (NotificationConstants.STATUS_ON_EVALUATION.equals(notification.getOnboardingOutcome())) {
-      return this.subjectOnEvaluation;
+    if (NotificationConstants.STATUS_ONBOARDING_WAITING_LIST.equals(notification.getOnboardingOutcome())) {
+      return this.subjectOnWaitingList;
     }
 
     return notification.getOnboardingOutcome().equals(NotificationConstants.STATUS_ONBOARDING_OK)||
@@ -209,8 +209,8 @@ public class NotificationMarkdown {
               evaluationDTO.getInitiativeName());
     }
 
-    if (NotificationConstants.STATUS_ON_EVALUATION.equals(evaluationDTO.getStatus())) {
-      return this.markdownOnEvaluation;
+    if (NotificationConstants.STATUS_ONBOARDING_WAITING_LIST.equals(evaluationDTO.getStatus())) {
+      return this.markdownOnWaitingList;
     }
 
     return getMarkdownKo(
@@ -218,8 +218,8 @@ public class NotificationMarkdown {
   }
 
   public String getMarkdown(Notification notification) {
-    if (NotificationConstants.STATUS_ON_EVALUATION.equals(notification.getOnboardingOutcome())) {
-      return this.markdownOnEvaluation;
+    if (NotificationConstants.STATUS_ONBOARDING_WAITING_LIST.equals(notification.getOnboardingOutcome())) {
+      return this.markdownOnWaitingList;
     }
 
     return notification.getOnboardingOutcome().equals(NotificationConstants.STATUS_ONBOARDING_OK) ||

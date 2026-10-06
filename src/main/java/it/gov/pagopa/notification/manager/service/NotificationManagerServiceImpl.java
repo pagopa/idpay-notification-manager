@@ -493,8 +493,8 @@ public class NotificationManagerServiceImpl implements NotificationManagerServic
 
             fiscalCode = decryptUserToken(notificationOnboardingQueueDTO.getUserId());
 
-            subject = notificationMarkdown.getSubjectOnEvaluation();
-            markdown = notificationMarkdown.getMarkdownOnEvaluation();
+            subject = notificationMarkdown.getSubjectOnWaitingList();
+            markdown = notificationMarkdown.getMarkdownOnWaitingList();
 
         } else {
             return;
