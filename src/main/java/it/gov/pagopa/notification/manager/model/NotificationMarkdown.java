@@ -119,6 +119,10 @@ public class NotificationMarkdown {
   private String subjectOnWaitingList;
   @Value("${notification.manager.markdown.on-waiting-list}")
   private String markdownOnWaitingList;
+  @Value("${notification.manager.subject.on-evaluation}")
+  private String subjectOnEvaluation;
+  @Value("${notification.manager.markdown.on-evaluation}")
+  private String markdownOnEvaluation;
   @Value("${notification.manager.markdown.ko.budget}")
   private String markdownKoBudget;
   @Value("${notification.manager.markdown.ko.rejected.noRetry}")
@@ -160,6 +164,10 @@ public class NotificationMarkdown {
 
     if (NotificationConstants.STATUS_ONBOARDING_WAITING_LIST.equals(evaluationDTO.getStatus())) {
       return this.subjectOnWaitingList;
+    }
+
+    if (NotificationConstants.STATUS_ON_EVALUATION.equals(evaluationDTO.getStatus())) {
+      return this.subjectOnEvaluation;
     }
 
     return getSubjectKo(
@@ -211,6 +219,10 @@ public class NotificationMarkdown {
 
     if (NotificationConstants.STATUS_ONBOARDING_WAITING_LIST.equals(evaluationDTO.getStatus())) {
       return this.markdownOnWaitingList;
+    }
+
+    if (NotificationConstants.STATUS_ON_EVALUATION.equals(evaluationDTO.getStatus())) {
+      return this.markdownOnEvaluation;
     }
 
     return getMarkdownKo(
