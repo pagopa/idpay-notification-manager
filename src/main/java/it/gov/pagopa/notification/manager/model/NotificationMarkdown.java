@@ -4,6 +4,7 @@ import it.gov.pagopa.notification.manager.constants.NotificationConstants;
 import it.gov.pagopa.notification.manager.dto.EvaluationDTO;
 import it.gov.pagopa.notification.manager.dto.OnboardingRejectionReason;
 import it.gov.pagopa.notification.manager.dto.OnboardingRejectionReason.OnboardingRejectionReasonType;
+import it.gov.pagopa.notification.manager.dto.event.NotificationOnboardingQueueDTO;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
@@ -119,10 +120,6 @@ public class NotificationMarkdown {
   private String subjectOnWaitingList;
   @Value("${notification.manager.markdown.on-waiting-list}")
   private String markdownOnWaitingList;
-  @Value("${notification.manager.subject.on-evaluation}")
-  private String subjectOnEvaluation;
-  @Value("${notification.manager.markdown.on-evaluation}")
-  private String markdownOnEvaluation;
   @Value("${notification.manager.markdown.ko.budget}")
   private String markdownKoBudget;
   @Value("${notification.manager.markdown.ko.rejected.noRetry}")
@@ -163,11 +160,7 @@ public class NotificationMarkdown {
     }
 
     if (NotificationConstants.STATUS_ONBOARDING_WAITING_LIST.equals(evaluationDTO.getStatus())) {
-      return this.subjectOnWaitingList;
-    }
-
-    if (NotificationConstants.STATUS_ON_EVALUATION.equals(evaluationDTO.getStatus())) {
-      return this.subjectOnEvaluation;
+      return replaceMessageItem(this.subjectOnWaitingList, NotificationConstants.INITIATIVE_NAME_KEY, evaluationDTO.getInitiativeName());
     }
 
     return getSubjectKo(
@@ -176,7 +169,7 @@ public class NotificationMarkdown {
 
   public String getSubject(Notification notification) {
     if (NotificationConstants.STATUS_ONBOARDING_WAITING_LIST.equals(notification.getOnboardingOutcome())) {
-      return this.subjectOnWaitingList;
+      return replaceMessageItem(this.subjectOnWaitingList, NotificationConstants.INITIATIVE_NAME_KEY, notification.getInitiativeName());
     }
 
     return notification.getOnboardingOutcome().equals(NotificationConstants.STATUS_ONBOARDING_OK)||
@@ -218,12 +211,9 @@ public class NotificationMarkdown {
     }
 
     if (NotificationConstants.STATUS_ONBOARDING_WAITING_LIST.equals(evaluationDTO.getStatus())) {
-      return this.markdownOnWaitingList;
+      return replaceMessageItem(this.markdownOnWaitingList, NotificationConstants.INITIATIVE_NAME_KEY, evaluationDTO.getInitiativeName());
     }
 
-    if (NotificationConstants.STATUS_ON_EVALUATION.equals(evaluationDTO.getStatus())) {
-      return this.markdownOnEvaluation;
-    }
 
     return getMarkdownKo(
             evaluationDTO.getInitiativeName(), evaluationDTO.getOnboardingRejectionReasons());
@@ -231,7 +221,7 @@ public class NotificationMarkdown {
 
   public String getMarkdown(Notification notification) {
     if (NotificationConstants.STATUS_ONBOARDING_WAITING_LIST.equals(notification.getOnboardingOutcome())) {
-      return this.markdownOnWaitingList;
+      return replaceMessageItem(this.markdownOnWaitingList, NotificationConstants.INITIATIVE_NAME_KEY, notification.getInitiativeName());
     }
 
     return notification.getOnboardingOutcome().equals(NotificationConstants.STATUS_ONBOARDING_OK) ||
@@ -377,4 +367,13 @@ public class NotificationMarkdown {
             .concat(replaceMessageItem(this.markdownReminderBel, NotificationConstants.VOUCHER_END_DATE_KEY, voucherEndDate.format(formatter)));
 
   }
+
+  public String getSubjectOnWaitingList(NotificationOnboardingQueueDTO notification) {
+    return replaceMessageItem(this.subjectOnWaitingList, NotificationConstants.INITIATIVE_NAME_KEY, notification.getInitiativeName());
+  }
+
+  public String getMarkdownOnWaitingList(NotificationOnboardingQueueDTO notification) {
+    return replaceMessageItem(this.markdownOnWaitingList, NotificationConstants.INITIATIVE_NAME_KEY, notification.getInitiativeName());
+  }
+
 }

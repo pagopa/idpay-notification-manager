@@ -13,5 +13,6 @@ import lombok.experimental.SuperBuilder;
 @AllArgsConstructor
 public class NotificationOnboardingQueueDTO extends NotificationQueueDTO {
     private String status;
+    private String initiativeName;
 }
 

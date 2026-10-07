@@ -262,6 +262,7 @@ class NotificationManagerServiceTest {
             .operationType(ONBOARDING)
             .userId(TEST_TOKEN)
             .status(NotificationConstants.STATUS_ONBOARDING_WAITING_LIST)
+            .initiativeName(INITIATIVE_NAME)
             .build();
 
     private static final Notification KO_NOTIFICATION_FIRST_RETRY = Notification.builder()
@@ -703,8 +704,8 @@ class NotificationManagerServiceTest {
         when(notificationMapper.toEntity(NOTIFICATION_ONBOARDING_QUEUE_DTO)).thenReturn(NOTIFICATION);
         when(initiativeRestConnector.getIOTokens(INITIATIVE_ID)).thenReturn(INITIATIVE_ADDITIONAL_INFO_DTO);
         when(pdvDecryptRestConnector.getPii(TEST_TOKEN)).thenReturn(FISCAL_CODE_RESOURCE);
-        when(notificationMarkdown.getSubjectOnWaitingList()).thenReturn(SUBJECT);
-        when(notificationMarkdown.getMarkdownOnWaitingList()).thenReturn(MARKDOWN);
+        when(notificationMarkdown.getSubjectOnWaitingList(NOTIFICATION_ONBOARDING_QUEUE_DTO)).thenReturn(SUBJECT);
+        when(notificationMarkdown.getMarkdownOnWaitingList(NOTIFICATION_ONBOARDING_QUEUE_DTO)).thenReturn(MARKDOWN);
         when(ioBackEndRestConnector.getProfile(argThat(fc -> FISCAL_CODE.equals(fc.getFiscalCode())), eq(TOKEN)))
                 .thenReturn(PROFILE_RESOURCE);
         when(notificationDTOMapper.map(eq(FISCAL_CODE), anyLong(), anyString(), anyString()))
