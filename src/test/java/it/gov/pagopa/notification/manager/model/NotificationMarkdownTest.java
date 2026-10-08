@@ -5,6 +5,7 @@ import it.gov.pagopa.notification.manager.dto.EvaluationDTO;
 import it.gov.pagopa.notification.manager.dto.OnboardingRejectionReason;
 import it.gov.pagopa.notification.manager.dto.OnboardingRejectionReason.OnboardingRejectionReasonCode;
 import it.gov.pagopa.notification.manager.dto.OnboardingRejectionReason.OnboardingRejectionReasonType;
+import it.gov.pagopa.notification.manager.dto.event.NotificationOnboardingQueueDTO;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -329,6 +330,7 @@ class NotificationMarkdownTest {
     Assertions.assertEquals(markdownExpectedJoined, markdownJoined);
   }
 
+
   @Test
   void getSubject_budgetExhausted(){
     EvaluationDTO evaluationDto = getEvaluationDto(NotificationConstants.STATUS_ONBOARDING_KO,
@@ -464,6 +466,49 @@ class NotificationMarkdownTest {
             null
     );
 
+  }
+
+  @Test
+  void getSubjectOnWaitingList_ok(){
+    NotificationOnboardingQueueDTO notificationOnboardingQueueDTO = NotificationOnboardingQueueDTO.builder()
+            .initiativeName(INITIATIVE_NAME)
+            .initiativeId(INITIATIVE_ID)
+            .build();
+
+    String actual = notificationMarkdown.getSubjectOnWaitingList(notificationOnboardingQueueDTO);
+
+    Assertions.assertNotNull(actual);
+    Assertions.assertTrue(actual.contains(INITIATIVE_NAME));
+    Assertions.assertEquals("Aggiornamenti sulla tua richiesta per " + INITIATIVE_NAME, actual);
+  }
+
+  @Test
+  void getMarkdownOnWaitingList_ok(){
+    NotificationOnboardingQueueDTO notificationOnboardingQueueDTO = NotificationOnboardingQueueDTO.builder()
+            .initiativeName(INITIATIVE_NAME)
+            .initiativeId(INITIATIVE_ID)
+            .build();
+
+    String actual = notificationMarkdown.getMarkdownOnWaitingList(notificationOnboardingQueueDTO);
+
+    String expected = """
+            La tua richiesta per %s è stata inserita in **lista d’attesa**, poiché al momento non ci sono fondi disponibili.
+            
+            **Cosa succede ora?**
+            
+            Non devi fare nulla: la tua richiesta rimane valida. Ti ricontatteremo se si renderanno disponibili nuove risorse.
+            
+            **Hai attivato le notifiche?**
+            
+            Se ancora non l’hai fatto, per non perderti i messaggi [attiva le notifiche push](#).
+            
+            **Come funziona il bonus?**
+            
+            Per saperne di più su come funziona il %s e i criteri di assegnazione, [leggi i dettagli](https://assistenza.ioapp.it/hc/it/#categories)."""
+            .formatted(INITIATIVE_NAME, INITIATIVE_NAME);
+
+    Assertions.assertNotNull(actual);
+    Assertions.assertEquals(expected, actual);
   }
 
 }
