@@ -350,9 +350,23 @@ notification:
         Aderisci all’iniziativa per usufruire del bonus.
         
         Puoi trovare maggiori informazioni sul [sito](http://example.com/).}
+      on-waiting-list: |-
+        ${MARKDOWN_ON_WAITING_LIST:La tua richiesta per %initiativeName% è stata inserita in **lista d’attesa**, poiché al momento non ci sono fondi disponibili.
+
+        **Cosa succede ora?**
+
+        Non devi fare nulla: la tua richiesta rimane valida. Ti ricontatteremo se si renderanno disponibili nuove risorse.
+
+        **Hai attivato le notifiche?**
+  
+        Se ancora non l’hai fatto, per non perderti i messaggi [attiva le notifiche push](#).
+        
+        **Come funziona il bonus?**
+  
+        Per saperne di più su come funziona il %initiativeName% e i criteri di assegnazione, [leggi i dettagli](https://assistenza.ioapp.it/hc/it/#categories).}
       suspension: ${MARKDOWN_SUSPENSION:In seguito ad alcune verifiche, il tuo profilo è stato sospeso dall'iniziativa.
-                  Gli importi ancora da erogare saranno sospesi e le transazioni a partire da questo momento non saranno riconosciute come valide ai fini dell'iniziativa.
-                  Contatta l'assistenza al numero XXXXX per capire come risolvere entro 60 giorni a partire da oggi e comunica il codice protocollo XXXX.}
+                   Gli importi ancora da erogare saranno sospesi e le transazioni a partire da questo momento non saranno riconosciute come valide ai fini dell'iniziativa.
+                   Contatta l'assistenza al numero XXXXX per capire come risolvere entro 60 giorni a partire da oggi e comunica il codice protocollo XXXX.}
       readmission: ${MARKDOWN_READMISSION:In seguito ad alcune verifiche, il tuo profilo è stato riammesso all'iniziativa.
                    Gli importi precedentemente sospesi saranno riammessi e rimborsati nel prossimo ordine di rimborso a tuo favore.}
       initiative:
@@ -370,11 +384,12 @@ notification:
       ok-reminder-bel: ${SUBJECT_OK_REMINDER_BEL:Il tuo bonus sta per scadere!}
       ok-partial-bel: ${SUBJECT_OK_PARTIAL_BEL:Hai ottenuto il bonus!}
       ko-generic-bel: ${SUBJECT_KO_GENERIC_BEL:Non è stato possibile assegnarti il bonus}
-      ko-thanks-bel: '${SUBJECT_KO_THANKS_BEL:Bonus Elettrodomestici: tutti i fondi sono stati assegnati}'
+      ko-thanks-bel: ${SUBJECT_KO_THANKS_BEL:Bonus Elettrodomestici:tutti i fondi sono stati assegnati}
       joined-bel: ${SUBJECT_JOINED_BEL:Il bonus è stato già richiesto}
       ok.type2: ${SUBJECT_OK_TYPE2:Il tuo Bonus è attivo!}
       ok.type3: ${SUBJECT_OK_TYPE3:}
       demanded: ${SUBJECT_DEMANDED:Attiva il bonus %initiativeName%}
+      on-waiting-list: ${SUBJECT_ON_WAITING_LIST:Aggiornamenti sulla tua richiesta per %initiativeName%}
       ok.refund: ${SUBJECT_OK_REFUND:Ti è stato accreditato un rimborso!}
       ko: ${SUBJECT_KO:Non è stato possibile attivare %initiativeName%}
       ko.refund: ${SUBJECT_KO_REFUND:Non è stato possibile effettuare il rimborso}
