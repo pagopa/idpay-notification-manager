@@ -320,7 +320,7 @@ public class NotificationManagerServiceImpl implements NotificationManagerServic
 
         final LocalDateTime startTime = LocalDateTime.now(ZoneId.of(ZONE_ID_ROME));
         List<Future<Long>> workers = IntStream.range(0, parallelism)
-                .mapToObj(i -> executorService.submit(() -> recover(startTime)))
+                .mapToObj(ignored -> executorService.submit(() -> recover(startTime)))
                 .toList();
 
         long recovered = workers.stream().mapToLong(f -> {
@@ -484,6 +484,17 @@ public class NotificationManagerServiceImpl implements NotificationManagerServic
 
             subject = notificationMarkdown.getSubjectReminderBel();
             markdown = notificationMarkdown.getMarkdownReminder(notificationReminderQueueDTO.getInitiativeId(), notificationReminderQueueDTO.getVoucherEndDate());
+
+        } else if (anyOfNotificationQueueDTO instanceof NotificationOnboardingQueueDTO notificationOnboardingQueueDTO) {
+
+            notification = notificationMapper.toEntity(notificationOnboardingQueueDTO);
+
+            ioTokens = getIoTokens(notificationOnboardingQueueDTO.getInitiativeId());
+
+            fiscalCode = decryptUserToken(notificationOnboardingQueueDTO.getUserId());
+
+            subject = notificationMarkdown.getSubjectOnWaitingList(notificationOnboardingQueueDTO);
+            markdown = notificationMarkdown.getMarkdownOnWaitingList(notificationOnboardingQueueDTO);
 
         } else {
             return;

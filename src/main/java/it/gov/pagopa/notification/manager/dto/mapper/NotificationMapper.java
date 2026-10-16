@@ -4,6 +4,7 @@ import it.gov.pagopa.notification.manager.constants.NotificationConstants;
 import it.gov.pagopa.notification.manager.dto.EmailMessageDTO;
 import it.gov.pagopa.notification.manager.dto.EvaluationDTO;
 import it.gov.pagopa.notification.manager.dto.event.AnyOfNotificationQueueDTO;
+import it.gov.pagopa.notification.manager.dto.event.NotificationOnboardingQueueDTO;
 import it.gov.pagopa.notification.manager.dto.event.NotificationRefundQueueDTO;
 import it.gov.pagopa.notification.manager.dto.event.NotificationReminderQueueDTO;
 import it.gov.pagopa.notification.manager.model.Notification;
@@ -48,6 +49,8 @@ public class NotificationMapper {
       if(anyOfNotificationQueueDTO instanceof NotificationRefundQueueDTO notificationRefundOnQueueDTO){
         notification.setRefundStatus(notificationRefundOnQueueDTO.getStatus());
         notification.setRefundReward(BigDecimal.valueOf(notificationRefundOnQueueDTO.getRefundReward()));
+      } else if(anyOfNotificationQueueDTO instanceof NotificationOnboardingQueueDTO notificationOnboardingQueueDTO){
+        notification.setOnboardingOutcome(notificationOnboardingQueueDTO.getStatus());
       }
       return notification;
     }
