@@ -8,6 +8,15 @@ events:
       Ti ricordiamo che per iniziare ad usufruire del bonus devi configurare almeno un metodo di pagamento.
 
       Puoi trovare maggiori informazioni sul [sito](http://example.com/).}
+  ONBOARDING_OK_PARTIAL:
+    subject: "${SUBJECT_OK_PARTIAL:Hai ottenuto il bonus!}"
+    markdown: |-
+      ${MARKDOWN_OK_PARTIAL:Buone notizie! Hai ottenuto una parte dell'importo richiesto per %initiativeName%. Da questo momento puoi visualizzare il bonus che ti è stato assegnato nella sezione Portafoglio dell'app IO.
+  
+      Ti ricordiamo che per iniziare ad usufruire del bonus devi configurare almeno un metodo di pagamento.
+  
+      Puoi trovare maggiori informazioni sul [sito](http://example.com/).
+
   ONBOARDING_JOINED:
     subject: "${SUBJECT_OK:Il tuo Bonus è attivo}"
     markdown: |-

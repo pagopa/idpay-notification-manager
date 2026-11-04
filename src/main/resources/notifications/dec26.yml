@@ -1,2 +1,100 @@
 profile: DEC26
-events: {}
+events:
+  ONBOARDING_OK:
+    subject: "${SUBJECT_OK_DEC:Hai ottenuto il bonus!}"
+    markdown: |-
+      ${MARKDOWN_OK_CTA_DEC:---
+      it:
+          cta_1: 
+              text: "Vai al bonus"
+              action: "ioit://idpay/initiative/%initiativeId%"
+          cta_2: 
+              text: "Dove puoi spenderlo?"
+              action: "iohandledlink://https://pari.pagopa.it/bonusdecoder/lista-punti-vendita"
+      en:
+          cta_1: 
+              text: "Go to the bonus page"
+              action: "ioit://idpay/initiative/%initiativeId%"
+          cta_2: 
+              text: "Where can you spend it?"
+              action: "iohandledlink://https://pari.pagopa.it/bonusdecoder/lista-punti-vendita"
+      ---}${MARKDOWN_DOUBLE_NEW_LINE:
+      
+      }${MARKDOWN_OK_DEC:Buone notizie! 
+      Hai ottenuto il %initiativeName%.
+      
+      Il voucher sarà valido **per i prossimi 30 giorni**.
+
+      **Cosa puoi fare ora?**
+
+      Il contributo copre fino al 70% del costo di acquisto del decoder, per un importo massimo di:
+      - 30 € per i decoder digitali terresti standard;
+      - 70 € per i decoder satellitari.
+
+      **Come fare?**
+
+      Per avere più informazioni su come e dove usare il bonus, [leggi i dettagli](https://assistenza.ioapp.it/hc/it/articles/40429655391505-Come-e-dove-spendere-il-Bonus-Elettrodomestici).
+
+      **Importante:** ricorda che puoi usare il bonus una sola volta per famiglia anagrafica, e solo se sei in regola con il canone RAI.}
+  ONBOARDING_JOINED:
+    subject: "${SUBJECT_JOINED_DEC:Il bonus è stato già richiesto}"
+    markdown: |-
+      ${MARKDOWN_JOINED_DEC:La tua richiesta per il Bonus Decoder non può essere elaborata. Un'altra persona che fa parte della tua famiglia ha già fatto richiesta.
+      
+      È possibile ottenere **un solo bonus per famiglia anagrafica.**
+      
+      Per avere più dettagli sui requisiti del bonus, [leggi come fare](https://assistenza.ioapp.it/hc/it/articles/38962008319761-Cos-%C3%A8-e-come-richiedere-il-Bonus-Elettrodomestici).}${MARKDOWN_DOUBLE_NEW_LINE:
+      
+      }
+  ONBOARDING_KO_INITIATIVE_ENDED:
+    subject: "${SUBJECT_KO_THANKS_DEC:Bonus Decoder:tutti i fondi sono stati assegnati}"
+    markdown: |-
+      ${MARKDOWN_KO_THANKS_DEC:La tua richiesta era in lista d'attesa, ma **tutti i fondi disponibili sono stati assegnati**.
+      Ci dispiace, ma purtroppo non è possibile assegnare il bonus.
+      
+      Grazie per aver mostrato interesse per il **Bonus Decoder**.
+      
+      Alla prossima iniziativa!}
+  VOUCHER_EXPIRING:
+    subject: "${SUBJECT_OK_REMINDER_DEC:Il tuo Bonus Decoder sta per scadere!}"
+    markdown: |-
+      ${MARKDOWN_OK_CTA_DEC:---
+      it:
+          cta_1: 
+              text: "Vai al bonus"
+              action: "ioit://idpay/initiative/%initiativeId%"
+          cta_2: 
+              text: "Dove puoi spenderlo?"
+              action: "iohandledlink://https://pari.pagopa.it/bonusdecoder/lista-punti-vendita"
+      en:
+          cta_1: 
+              text: "Go to the bonus page"
+              action: "ioit://idpay/initiative/%initiativeId%"
+          cta_2: 
+              text: "Where can you spend it?"
+              action: "iohandledlink://https://pari.pagopa.it/bonusdecoder/lista-punti-vendita"
+      ---}${MARKDOWN_DOUBLE_NEW_LINE:
+
+            }${MARKDOWN_OK_REMINDER_DEC:Hai già deciso come usare il Bonus Decoder?
+
+      Hai tempo **fino alle 23:59 del giorno %voucherEndDate%** per usare il contributo e acquistare un nuovo decoder.
+
+      **Hai domande?**
+
+      Per avere più dettagli su come e dove usare il bonus, [leggi la guida](https://assistenza.ioapp.it/hc/it/articles/40429655391505-Come-e-dove-spendere-il-Bonus-Elettrodomestici).}
+  ONBOARDING_WAITING_LIST:
+    subject: "${SUBJECT_ON_WAITING_LIST_DEC:Aggiornamenti sulla tua richiesta per Bonus Decoder}"
+    markdown: |-
+      ${MARKDOWN_ON_WAITING_LIST_DEC:La tua richiesta per Bonus Decoder è stata inserita in **lista d’attesa**, poiché al momento non ci sono fondi disponibili.
+
+      **Cosa succede ora?**
+
+      Non devi fare nulla: la tua richiesta rimane valida. Ti ricontatteremo se si renderanno disponibili nuove risorse.
+
+      **Hai attivato le notifiche?**
+
+      Se ancora non l’hai fatto, per non perderti i messaggi [attiva le notifiche push](#).
+
+      **Come funziona il bonus?**
+
+      Per saperne di più su come funziona il Bonus Decoder e i criteri di assegnazione, [leggi i dettagli](https://assistenza.ioapp.it/hc/it/#categories).}
