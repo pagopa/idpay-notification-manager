@@ -3,7 +3,7 @@ events:
   ONBOARDING_OK:
     subject: "${SUBJECT_OK_BEL:Hai ottenuto il bonus!}"
     markdown: |-
-      ${MARKDOWN_OK_CTA:---
+      ${MARKDOWN_OK_CTA_BEL:---
       it:
           cta_1: 
               text: "Vai al bonus"
@@ -36,7 +36,7 @@ events:
   ONBOARDING_OK_PARTIAL:
     subject: "${SUBJECT_OK_PARTIAL_BEL:Hai ottenuto il bonus!}"
     markdown: |-
-      ${MARKDOWN_OK_CTA:---
+      ${MARKDOWN_OK_CTA_BEL:---
       it:
           cta_1: 
               text: "Vai al bonus"
@@ -53,7 +53,7 @@ events:
               action: "iohandledlink://https://pari.pagopa.it/bonuselettrodomestici/lista-punti-vendita"
       ---}${MARKDOWN_DOUBLE_NEW_LINE:
       
-      }${MARKDOWN_OK_PARTIAL:Dopo le verifiche con INPS, il tuo ISEE risulta difforme o diverso da quanto dichiarato. 
+      }${MARKDOWN_OK_PARTIAL_BEL:Dopo le verifiche con INPS, il tuo ISEE risulta difforme o diverso da quanto dichiarato. 
     
       Per questo motivo, non è possibile assegnarti il bonus da 200€ che avevi richiesto, ma hai ottenuto comunque il **bonus di 100€.** Sarà valido **per i prossimi 15 giorni**.
 
@@ -100,7 +100,7 @@ events:
   VOUCHER_EXPIRING:
     subject: "${SUBJECT_OK_REMINDER_BEL:Il tuo bonus sta per scadere!}"
     markdown: |-
-      ${MARKDOWN_OK_CTA:---
+      ${MARKDOWN_OK_CTA_BEL:---
       it:
           cta_1: 
               text: "Vai al bonus"
@@ -117,7 +117,7 @@ events:
               action: "iohandledlink://https://pari.pagopa.it/bonuselettrodomestici/lista-punti-vendita"
       ---}${MARKDOWN_DOUBLE_NEW_LINE:
 
-            }${MARKDOWN_OK_REMINDER_BEL:Hai già deciso come usare il Bonus Elettrodomestici?
+      }${MARKDOWN_OK_REMINDER_BEL:Hai già deciso come usare il Bonus Elettrodomestici?
 
       Hai tempo **fino alle 23:59 del giorno %voucherEndDate%** per usare il contributo e sostituire un vecchio elettrodomestico con uno a basso consumo energetico.
 
