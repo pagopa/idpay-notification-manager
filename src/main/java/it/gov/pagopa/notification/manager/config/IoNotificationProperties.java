@@ -12,10 +12,5 @@ import java.util.List;
 @Getter
 @Setter
 public class IoNotificationProperties {
-
-    private List<String> locations = List.of(
-            "classpath:notifications/default.yml",
-            "classpath:notifications/bel25.yml",
-            "classpath:notifications/dec26.yml"
-    );
+    private List<String> profileLocations;
 }

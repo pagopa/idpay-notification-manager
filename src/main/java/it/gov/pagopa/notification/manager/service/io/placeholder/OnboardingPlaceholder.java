@@ -2,9 +2,10 @@ package it.gov.pagopa.notification.manager.service.io.placeholder;
 
 import it.gov.pagopa.common.utils.CommonUtilities;
 import it.gov.pagopa.notification.manager.dto.OnboardingRejectionReason;
-import org.springframework.util.StringUtils;
 
 import java.util.function.Function;
+
+import static it.gov.pagopa.notification.manager.dto.OnboardingRejectionReason.OnboardingRejectionReasonCode.REJECTION_REASON_INITIATIVE_ENDED;
 
 public enum OnboardingPlaceholder implements NotificationPlaceholder<OnboardingPlaceholderContext> {
 
@@ -14,8 +15,7 @@ public enum OnboardingPlaceholder implements NotificationPlaceholder<OnboardingP
         Long cents = context.evaluation().getBeneficiaryBudgetCents();
         return cents == null ? null : CommonUtilities.centsToEuro(cents).toString();
     }),
-    MANAGED_ENTITY("managedEntity", OnboardingPlaceholder::managedEntity),
-    REASON("reason", OnboardingPlaceholder::reason);
+    MANAGED_ENTITY("managedEntity", OnboardingPlaceholder::managedEntity);
 
     private final String key;
     private final Function<OnboardingPlaceholderContext, String> resolver;
@@ -37,23 +37,13 @@ public enum OnboardingPlaceholder implements NotificationPlaceholder<OnboardingP
 
     private static String managedEntity(OnboardingPlaceholderContext context) {
         OnboardingRejectionReason firstReason = firstReason(context);
-        if (firstReason != null && StringUtils.hasText(firstReason.getAuthority())) {
+        if (firstReason == null || REJECTION_REASON_INITIATIVE_ENDED.equals(firstReason.getCode())) {
+            return "%managedEntity%"; // TODO: works like old code, maybe should be change to return null so the renderer marks "N.A."
+        }
+        if (firstReason.getAuthority() != null) {
             return firstReason.getAuthority();
         }
-        return StringUtils.hasText(context.assistedLink())
-                ? "[Assistenza](" + context.assistedLink() + ")"
-                : null;
-    }
-
-    private static String reason(OnboardingPlaceholderContext context) {
-        OnboardingRejectionReason firstReason = firstReason(context);
-        if (firstReason == null) {
-            return null;
-        }
-        if (StringUtils.hasText(firstReason.getDetail())) {
-            return firstReason.getDetail();
-        }
-        return firstReason.getCode() == null ? null : firstReason.getCode().getDetail();
+        return "[Assistenza](" + context.assistedLink() + ")";
     }
 
     private static OnboardingRejectionReason firstReason(OnboardingPlaceholderContext context) {

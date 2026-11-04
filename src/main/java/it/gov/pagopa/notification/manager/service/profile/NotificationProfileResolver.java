@@ -38,16 +38,32 @@ public class NotificationProfileResolver {
                     sanitizedInitiativeId);
             return new NotificationProfileResolution.Failed(EMPTY_INITIATIVE_RESPONSE);
         }
-        String profile = StringUtils.hasText(initiative.getEmailFlux())
-                ? initiative.getEmailFlux()
+        return resolveProfile(initiative.getEmailFlux(), sanitizedInitiativeId);
+    }
+
+    public NotificationProfileResolution resolveConfiguredProfile(String configuredProfile) {
+        return resolveProfile(configuredProfile, null);
+    }
+
+    private NotificationProfileResolution resolveProfile(String configuredProfile, String sanitizedInitiativeId) {
+        String profile = StringUtils.hasText(configuredProfile)
+                ? configuredProfile
                 : IoNotificationCatalog.DEFAULT_PROFILE;
         if (!catalog.containsProfile(profile)) {
-            log.warn("[NOTIFY][IO][UNKNOWN_NOTIFICATION_PROFILE] initiativeId={}, profile={}",
-                    sanitizedInitiativeId, sanitizeString(profile));
+            if (sanitizedInitiativeId != null) {
+                log.error("[NOTIFY][IO][UNKNOWN_NOTIFICATION_PROFILE] initiativeId={}, profile={}",
+                        sanitizedInitiativeId, sanitizeString(profile));
+            } else {
+                log.error("[NOTIFY][IO][UNKNOWN_NOTIFICATION_PROFILE] profile={}", sanitizeString(profile));
+            }
             return new NotificationProfileResolution.Skipped(profile);
         }
-        log.debug("[NOTIFY][IO][PROFILE_RESOLVED] initiativeId={}, profile={}",
-                sanitizedInitiativeId, profile);
+        if (sanitizedInitiativeId != null) {
+            log.info("[NOTIFY][IO][PROFILE_RESOLVED] initiativeId={}, profile={}",
+                    sanitizedInitiativeId, profile);
+        } else {
+            log.info("[NOTIFY][IO][PROFILE_RESOLVED] profile={}", profile);
+        }
         return new NotificationProfileResolution.Resolved(profile);
     }
 }

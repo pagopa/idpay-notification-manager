@@ -16,6 +16,7 @@ import static it.gov.pagopa.notification.manager.constants.NotificationConstants
 public abstract class BaseOnboardingNotification<R> {
 
     private final InitiativeRestConnector initiativeRestConnector;
+    protected static final String ZONE_ID_ROME = "Europe/Rome";
 
     protected BaseOnboardingNotification(InitiativeRestConnector initiativeRestConnector) {
         this.initiativeRestConnector = initiativeRestConnector;
@@ -33,6 +34,12 @@ public abstract class BaseOnboardingNotification<R> {
         } catch (FeignException _) {
                 log.error("[PROCESS_ONBOARDING_NOTIFICATION] Failed to retrieve initiativeDetail from initiative service.");
                 initiativeFetchFailed = true;
+        }
+
+        // TODO: is the channel always present? this should be enough not to refactor the web impl
+        if (initiativeFetchFailed && evaluationDTO.getChannel().isAppIo()) {
+            log.error("[PROCESS_ONBOARDING_NOTIFICATION] Failed to retrieve initiativeDetail from initiative service. Notification will not be sent for user {}", sanitizedUserId);
+            return sendNotification(null, evaluationDTO, initiativeFetchFailed);
         }
 
         R notificationToSend = switch (evaluationDTO.getStatus()){

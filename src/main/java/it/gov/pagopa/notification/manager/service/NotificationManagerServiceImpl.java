@@ -183,6 +183,7 @@ public class NotificationManagerServiceImpl implements NotificationManagerServic
         evaluationDTO.setFiscalCode(notificationPreChecks.getValue());
         String notificationId = onboardingIoNotification.processNotification(evaluationDTO);
 
+        // TODO: should this be removed since the OnboardingIoNotificationImpl could cover even the OnboardingNotificationControllerImpl case?
         if (notificationId == null) {
             log.error("[NOTIFY][ONBOARDING_STATUS] Failed to send onboarding status notification.");
             notificationKO(notification, startTime);

@@ -2,6 +2,10 @@ package it.gov.pagopa.notification.manager.service.io;
 
 import it.gov.pagopa.notification.manager.enums.NotificationEvent;
 import it.gov.pagopa.notification.manager.model.NotificationContent;
+import it.gov.pagopa.notification.manager.service.io.placeholder.NotificationContentRenderer;
+import it.gov.pagopa.notification.manager.service.io.placeholder.NotificationPlaceholder;
+import it.gov.pagopa.notification.manager.service.profile.NotificationProfileResolution;
+import it.gov.pagopa.notification.manager.service.profile.NotificationProfileResolver;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -16,6 +20,8 @@ import static it.gov.pagopa.notification.manager.service.onboarding.BaseOnboardi
 public class IoNotificationContentService {
 
     private final IoNotificationCatalog catalog;
+    private final NotificationContentRenderer renderer;
+    private final NotificationProfileResolver profileResolver;
 
     public Optional<NotificationContent> find(String profile, NotificationEvent event) {
         Optional<NotificationContent> content = catalog.find(profile, event);
@@ -24,5 +30,27 @@ public class IoNotificationContentService {
                     sanitizeString(profile), event);
         }
         return content;
+    }
+
+    public <T> Optional<NotificationContent> findAndRender(
+            String profile,
+            NotificationEvent event,
+            T source,
+            Iterable<? extends NotificationPlaceholder<T>> placeholders
+    ) {
+        return find(profile, event).map(content -> renderer.render(content, source, placeholders));
+    }
+
+    public <T> Optional<NotificationContent> resolveProfileAndFindAndRender(
+            String configuredProfile,
+            NotificationEvent event,
+            T source,
+            Iterable<? extends NotificationPlaceholder<T>> placeholders
+    ) {
+        NotificationProfileResolution resolution = profileResolver.resolveConfiguredProfile(configuredProfile);
+        if (!(resolution instanceof NotificationProfileResolution.Resolved(String profile))) {
+            return Optional.empty();
+        }
+        return findAndRender(profile, event, source, placeholders);
     }
 }

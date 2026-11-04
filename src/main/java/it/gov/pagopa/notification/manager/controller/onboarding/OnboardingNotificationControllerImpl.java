@@ -32,6 +32,7 @@ public class OnboardingNotificationControllerImpl implements OnboardingNotificat
     return new ResponseEntity<>(HttpStatus.OK);
   }
 
+  @Override
   public ResponseEntity<Void> processIoNotification(EvaluationDTO body) {
     onboardingIoNotification.processNotification(body);
     return new ResponseEntity<>(HttpStatus.OK);

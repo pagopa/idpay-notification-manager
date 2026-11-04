@@ -3,6 +3,7 @@ package it.gov.pagopa.notification.manager.service.io;
 import it.gov.pagopa.notification.manager.config.IoNotificationProperties;
 import it.gov.pagopa.notification.manager.enums.NotificationEvent;
 import it.gov.pagopa.notification.manager.model.NotificationContent;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.config.YamlMapFactoryBean;
 import org.springframework.core.env.Environment;
 import org.springframework.core.io.Resource;
@@ -13,6 +14,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
+@Slf4j
 @Component
 public class IoNotificationCatalog {
 
@@ -26,13 +28,14 @@ public class IoNotificationCatalog {
             Environment environment
     ) {
         Map<String, Map<NotificationEvent, NotificationContent>> loaded = new HashMap<>();
-        for (String location : properties.getLocations()) {
+        for (String location : properties.getProfileLocations()) {
             loadProfile(resourceLoader.getResource(location), loaded, environment);
         }
         if (!loaded.containsKey(DEFAULT_PROFILE)) {
             throw new IllegalArgumentException("The DEFAULT IO notification profile must be declared");
         }
         profiles = Map.copyOf(loaded);
+        log.info("Loaded IO notification profiles: {}", profiles.keySet());
     }
 
     public boolean containsProfile(String profile) {

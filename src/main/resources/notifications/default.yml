@@ -8,14 +8,6 @@ events:
       Ti ricordiamo che per iniziare ad usufruire del bonus devi configurare almeno un metodo di pagamento.
 
       Puoi trovare maggiori informazioni sul [sito](http://example.com/).}
-  ONBOARDING_OK_PARTIAL:
-    subject: "${SUBJECT_OK_PARTIAL:Il tuo Bonus è attivo}"
-    markdown: |-
-      ${MARKDOWN_OK_PARTIAL:Hai ottenuto il bonus parziale di %rewardAmount%€ per l'iniziativa %initiativeName%.
-
-      Da questo momento puoi visualizzare il bonus nella sezione Portafoglio dell'app IO.
-
-      Puoi trovare maggiori informazioni sul [sito](http://example.com/).}
   ONBOARDING_JOINED:
     subject: "${SUBJECT_OK:Il tuo Bonus è attivo}"
     markdown: |-
@@ -53,12 +45,6 @@ events:
     markdown: |-
       ${MARKDOWN_KO_GENERIC:Si è verificato un errore nel processare la tua richiesta di %initiativeName%.
       Se ritieni che ci sia stato un errore puoi segnalarlo direttamente all'Ente erogatore dell'iniziativa.}
-  ONBOARDING_KO_INITIATIVE_ENDED:
-    subject: "${SUBJECT_KO_THANKS:La tua richiesta non è stata accolta}"
-    markdown: |-
-      ${MARKDOWN_KO_THANKS:La tua richiesta era in lista d'attesa, ma tutti i fondi disponibili sono stati assegnati.
-
-      Ci dispiace, ma non è possibile assegnare il bonus. Grazie per aver mostrato interesse per %initiativeName%.}
   ONBOARDING_KO_PDND:
     subject: "${SUBJECT_KO:Non è stato possibile attivare %initiativeName%}"
     markdown: |-

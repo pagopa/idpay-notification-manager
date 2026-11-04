@@ -34,7 +34,6 @@ public class OnboardingWebNotificationImpl extends BaseOnboardingNotification<Em
 
     private static final String MANAGED_ENTITY = "managedEntity";
     private static final String REASON = "reason";
-    private static final String ZONE_ID_ROME = "Europe/Rome";
 
     private final String assistedLink;
 

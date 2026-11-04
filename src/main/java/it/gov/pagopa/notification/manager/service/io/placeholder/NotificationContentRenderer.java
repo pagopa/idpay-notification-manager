@@ -1,6 +1,7 @@
 package it.gov.pagopa.notification.manager.service.io.placeholder;
 
 import it.gov.pagopa.notification.manager.model.NotificationContent;
+import it.gov.pagopa.notification.manager.constants.NotificationConstants;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
@@ -12,7 +13,7 @@ import java.util.regex.Pattern;
 @Component
 public class NotificationContentRenderer {
 
-    private static final Pattern PLACEHOLDER = Pattern.compile("\\$\\{([^{}]+)}|%([^%]+)%");
+    private static final Pattern PLACEHOLDER = Pattern.compile("%([^%]+)%");
 
     public <T> NotificationContent render(
             NotificationContent content,
@@ -41,7 +42,7 @@ public class NotificationContentRenderer {
         Matcher matcher = PLACEHOLDER.matcher(text);
         StringBuilder rendered = new StringBuilder();
         while (matcher.find()) {
-            String key = matcher.group(1) != null ? matcher.group(1) : matcher.group(2);
+            String key = matcher.group(1);
             String value = values.computeIfAbsent(key, name -> resolve(name, source, supported));
             matcher.appendReplacement(rendered, Matcher.quoteReplacement(value));
         }
@@ -59,9 +60,6 @@ public class NotificationContentRenderer {
             throw new IllegalArgumentException("Unsupported notification placeholder: " + key);
         }
         String value = placeholder.resolve(source);
-        if (!StringUtils.hasText(value)) {
-            throw new IllegalArgumentException("Missing value for notification placeholder: " + key);
-        }
-        return value;
+        return StringUtils.hasLength(value) ? value : NotificationConstants.MARKDOWN_NA;
     }
 }

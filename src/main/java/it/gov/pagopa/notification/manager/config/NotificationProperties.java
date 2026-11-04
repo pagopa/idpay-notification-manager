@@ -9,7 +9,7 @@ import org.springframework.context.annotation.Configuration;
 @ConfigurationProperties( prefix = "notification.manager")
 @Getter
 @Setter
-public class NotificationProperties {
+public class NotificationProperties { // TODO: to be removed entirely
     private Markdown markdown;
     private Subject subject;
 
