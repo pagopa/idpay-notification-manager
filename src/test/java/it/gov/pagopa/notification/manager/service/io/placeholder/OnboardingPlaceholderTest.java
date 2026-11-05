@@ -17,18 +17,25 @@ class OnboardingPlaceholderTest {
     private final NotificationContentRenderer renderer = new NotificationContentRenderer();
 
     @Test
-    void render_managedEntity_leavesTagUnchangedWhenThereIsNoRejectionReason() {
-        assertEquals("%managedEntity%", renderManagedEntity(null, "https://assistance.example"));
+    void render_managedEntity_usesAssistanceLinkWhenThereIsNoRejectionReason() {
+        assertEquals(
+                "[Assistenza](https://assistance.example)",
+                renderManagedEntity(null, "https://assistance.example")
+        );
     }
 
     @Test
-    void render_managedEntity_leavesTagUnchangedForInitiativeEndedReason() {
+    void render_managedEntity_usesAssistanceLinkForInitiativeEndedReason() {
         OnboardingRejectionReason reason = OnboardingRejectionReason.builder()
                 .type(INVALID_REQUEST)
                 .code(REJECTION_REASON_INITIATIVE_ENDED)
+                .authority("Comune di Test")
                 .build();
 
-        assertEquals("%managedEntity%", renderManagedEntity(reason, "https://assistance.example"));
+        assertEquals(
+                "Comune di Test",
+                renderManagedEntity(reason, "https://assistance.example")
+        );
     }
 
     @Test

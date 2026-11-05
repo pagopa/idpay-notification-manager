@@ -183,6 +183,10 @@ spring:
   config:
     activate:
       on-profile: default
+    import:
+      - classpath:notifications/default.yml
+      - classpath:notifications/bel25.yml
+      - classpath:notifications/dec26.yml
   data:
     redis:
       url: ${REDIS_CONNECTION_URL:redis://@localhost:6379}
@@ -201,11 +205,6 @@ spring:
 
 notification:
   manager:
-    io:
-      profile-locations:
-        - classpath:notifications/default.yml
-        - classpath:notifications/bel25.yml
-        - classpath:notifications/dec26.yml
     markdown:
       ko:
         ranking: ${MARKDOWN_KO_RANKING:Purtroppo non è stato possibile attivare %initiativeName% in quanto i tuoi requisiti non rientrano nella graduatoria.}

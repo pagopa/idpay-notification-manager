@@ -5,16 +5,11 @@ import it.gov.pagopa.notification.manager.dto.OnboardingRejectionReason;
 
 import java.util.function.Function;
 
-import static it.gov.pagopa.notification.manager.dto.OnboardingRejectionReason.OnboardingRejectionReasonCode.REJECTION_REASON_INITIATIVE_ENDED;
-
 public enum OnboardingPlaceholder implements NotificationPlaceholder<OnboardingPlaceholderContext> {
 
     INITIATIVE_ID("initiativeId", context -> context.evaluation().getInitiativeId()),
     INITIATIVE_NAME("initiativeName", context -> context.evaluation().getInitiativeName()),
-    REWARD_AMOUNT("rewardAmount", context -> {
-        Long cents = context.evaluation().getBeneficiaryBudgetCents();
-        return cents == null ? null : CommonUtilities.centsToEuro(cents).toString();
-    }),
+    REWARD_AMOUNT("rewardAmount", OnboardingPlaceholder::rewardAmount),
     MANAGED_ENTITY("managedEntity", OnboardingPlaceholder::managedEntity);
 
     private final String key;
@@ -35,12 +30,14 @@ public enum OnboardingPlaceholder implements NotificationPlaceholder<OnboardingP
         return resolver.apply(source);
     }
 
+    private static String rewardAmount(OnboardingPlaceholderContext context) {
+        Long cents = context.evaluation().getBeneficiaryBudgetCents();
+        return cents == null ? null : String.valueOf(CommonUtilities.centsToEuro(cents));
+    }
+
     private static String managedEntity(OnboardingPlaceholderContext context) {
         OnboardingRejectionReason firstReason = firstReason(context);
-        if (firstReason == null || REJECTION_REASON_INITIATIVE_ENDED.equals(firstReason.getCode())) {
-            return "%managedEntity%"; // TODO: works like old code, maybe should be change to return null so the renderer marks "N.A."
-        }
-        if (firstReason.getAuthority() != null) {
+        if (firstReason != null && firstReason.getAuthority() != null) {
             return firstReason.getAuthority();
         }
         return "[Assistenza](" + context.assistedLink() + ")";
