@@ -7,8 +7,6 @@ import it.gov.pagopa.notification.manager.dto.VerifyDTO;
 import it.gov.pagopa.notification.manager.dto.initiative.InitiativeNotificationDTO;
 import lombok.extern.slf4j.Slf4j;
 
-import java.util.Map;
-
 import static it.gov.pagopa.notification.manager.constants.NotificationConstants.*;
 
 
@@ -32,12 +30,8 @@ public abstract class BaseOnboardingNotification<R> {
              initiativeNotificationDTO = initiativeRestConnector.getInitiativeDetailInfo(evaluationDTO.getInitiativeId());
              evaluationDTO.setEmailFlux(initiativeNotificationDTO.getEmailFlux());
         } catch (FeignException _) {
-                log.error("[PROCESS_ONBOARDING_NOTIFICATION] Failed to retrieve initiativeDetail from initiative service.");
-                initiativeFetchFailed = true;
-        }
-
-        if (initiativeFetchFailed && evaluationDTO.getChannel().isAppIo()) {
             log.error("[PROCESS_ONBOARDING_NOTIFICATION] Failed to retrieve initiativeDetail from initiative service. Notification will not be sent for user {}", sanitizedUserId);
+            handleInitiativeFetchError(evaluationDTO);
             return null;
         }
 
@@ -56,6 +50,8 @@ public abstract class BaseOnboardingNotification<R> {
 
         return null;
     }
+
+    protected void handleInitiativeFetchError(EvaluationDTO evaluationDTO) {}
 
     abstract R processOnboardingJoined(EvaluationDTO evaluationDTO);
 

@@ -8,11 +8,13 @@ import it.gov.pagopa.notification.manager.dto.NotificationDTO;
 import it.gov.pagopa.notification.manager.dto.NotificationResource;
 import it.gov.pagopa.notification.manager.dto.mapper.NotificationDTOMapper;
 import it.gov.pagopa.notification.manager.enums.NotificationEvent;
+import it.gov.pagopa.notification.manager.exception.NotFoundNotificationEventTemplate;
 import it.gov.pagopa.notification.manager.model.NotificationContent;
 import it.gov.pagopa.notification.manager.service.io.IoNotificationContentService;
 import it.gov.pagopa.notification.manager.service.io.placeholder.OnboardingPlaceholder;
 import it.gov.pagopa.notification.manager.service.io.placeholder.OnboardingPlaceholderContext;
 import lombok.extern.slf4j.Slf4j;
+import org.jspecify.annotations.Nullable;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -25,6 +27,7 @@ import static it.gov.pagopa.notification.manager.dto.OnboardingRejectionReason.O
 @Service
 public class OnboardingIoNotificationImpl extends BaseOnboardingNotification<NotificationDTO> implements OnboardingIoNotification {
 
+    public static final String NOT_FOUND_NOTIFICATION_EVENT_TEMPLATE_ERROR_MESSAGE = "[NOTIFY][ONBOARDING_OK] It's not possible notify the user %s because not found notification event for %s in the template %s";
     private final IoNotificationContentService notificationContentService;
     private final NotificationDTOMapper notificationDTOMapper;
     private final IOBackEndRestConnector ioBackEndRestConnector;
@@ -48,7 +51,9 @@ public class OnboardingIoNotificationImpl extends BaseOnboardingNotification<Not
 
     @Override
     NotificationDTO processOnboardingJoined(EvaluationDTO evaluationDTO) {
-        return createNotification(evaluationDTO, NotificationEvent.ONBOARDING_JOINED);
+        NotificationContent notificationContent = retrieveNotificationContent(evaluationDTO, NotificationEvent.ONBOARDING_JOINED)
+                .orElseThrow(() -> new NotFoundNotificationEventTemplate("[NOTIFY][ONBOARDING_JOINED] It's not possible notify the user %s because not found notification event for %s in the template %s".formatted(evaluationDTO.getUserId(), NotificationEvent.ONBOARDING_JOINED, evaluationDTO.getEmailFlux())));
+        return createNotification(evaluationDTO, notificationContent);
     }
 
     @Override
@@ -56,39 +61,53 @@ public class OnboardingIoNotificationImpl extends BaseOnboardingNotification<Not
         var reasons = evaluationDTO.getOnboardingRejectionReasons();
         var firstReason = (reasons != null && !reasons.isEmpty()) ? reasons.getFirst() : null;
 
-        NotificationEvent event = firstReason != null
-                && REJECTION_REASON_INITIATIVE_ENDED.equals(firstReason.getCode())
-                ? NotificationEvent.ONBOARDING_KO_INITIATIVE_ENDED
-                : NotificationEvent.ONBOARDING_KO_GENERIC;
-        return createNotification(evaluationDTO, event);
+        NotificationEvent notificationEvent = firstReason != null ? firstReason.getCode().getNotificationEvent() : NotificationEvent.ONBOARDING_KO_GENERIC;
+
+        NotificationContent finalContent = null;
+        if(!NotificationEvent.ONBOARDING_KO_GENERIC.equals(notificationEvent)) {
+
+            Optional<NotificationContent> content = retrieveNotificationContent(evaluationDTO, notificationEvent);
+            if (content.isPresent()) {
+                finalContent = content.get();
+            }
+        }
+
+        if(finalContent == null) {
+            finalContent = retrieveNotificationContent(evaluationDTO, NotificationEvent.ONBOARDING_KO_GENERIC).orElseThrow(() -> new NotFoundNotificationEventTemplate("[NOTIFY][ONBOARDING_KO] It's not possible notify the user %s because not found notification event for %s in the template %s".formatted(evaluationDTO.getUserId(), notificationEvent, evaluationDTO.getEmailFlux())));
+        }
+
+        return createNotification(evaluationDTO, finalContent);
     }
 
     @Override
     protected NotificationDTO generateOnboardingOkNotification(boolean isPartial, EvaluationDTO evaluationDTO) {
         log.info("[NOTIFY][ONBOARDING_STATUS_OK] Starting onboarding notification process. Beneficiary reward is{} partial.", isPartial ? "" : " not");
+        NotificationEvent notificationEvent = isPartial ? NotificationEvent.ONBOARDING_OK_PARTIAL : NotificationEvent.ONBOARDING_OK;
+        NotificationContent notificationContent = retrieveNotificationContent(evaluationDTO, notificationEvent)
+                .orElseThrow(() -> new NotFoundNotificationEventTemplate(NOT_FOUND_NOTIFICATION_EVENT_TEMPLATE_ERROR_MESSAGE.formatted(evaluationDTO.getUserId(), notificationEvent, evaluationDTO.getEmailFlux())));
         return createNotification(
                 evaluationDTO,
-                isPartial ? NotificationEvent.ONBOARDING_OK_PARTIAL : NotificationEvent.ONBOARDING_OK
+                notificationContent
         );
     }
 
-    private NotificationDTO createNotification(EvaluationDTO evaluationDTO, NotificationEvent event) {
-        Optional<NotificationContent> content = notificationContentService.resolveProfileAndFindAndRender(
+    private NotificationDTO createNotification(EvaluationDTO evaluationDTO, NotificationContent content) {
+        return notificationDTOMapper.map(
+                evaluationDTO.getFiscalCode(),
+                timeToLive,
+                content.subject(),
+                content.markdown()
+        );
+    }
+
+    private Optional<NotificationContent> retrieveNotificationContent(EvaluationDTO evaluationDTO, NotificationEvent event) {
+        return notificationContentService.resolveProfileAndFindAndRender(
                 evaluationDTO.getEmailFlux(),
                 event,
                 new OnboardingPlaceholderContext(evaluationDTO, assistedLink),
                 List.of(OnboardingPlaceholder.values())
         );
-        if (content.isEmpty()) {
-            return null;
-        }
-        NotificationContent renderedContent = content.get();
-        return notificationDTOMapper.map(
-                evaluationDTO.getFiscalCode(),
-                timeToLive,
-                renderedContent.subject(),
-                renderedContent.markdown()
-        );
+
     }
 
     @Override

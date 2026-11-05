@@ -11,6 +11,7 @@ import it.gov.pagopa.notification.manager.dto.initiative.InitiativeAdditionalInf
 import it.gov.pagopa.notification.manager.dto.mapper.NotificationDTOMapper;
 import it.gov.pagopa.notification.manager.dto.mapper.NotificationMapper;
 import it.gov.pagopa.notification.manager.event.producer.OutcomeProducer;
+import it.gov.pagopa.notification.manager.exception.NotFoundNotificationEventTemplate;
 import it.gov.pagopa.notification.manager.model.Notification;
 import it.gov.pagopa.notification.manager.model.NotificationMarkdown;
 import it.gov.pagopa.notification.manager.repository.NotificationManagerRepository;
@@ -195,18 +196,22 @@ public class NotificationManagerServiceImpl implements NotificationManagerServic
         evaluationDTO.setIoToken(notificationPreChecks.getKey());
         evaluationDTO.setFiscalCode(notificationPreChecks.getValue());
 
-        // TODO: handle notificationSendSkipException, caused by:
-        //  - profile (!= null) not found
-        //  - event not found for the profile
-        String notificationId = onboardingIoNotification.processNotification(evaluationDTO);
+        try {
+            String notificationId = onboardingIoNotification.processNotification(evaluationDTO);
 
-        if (notificationId == null) {
-            log.error("[NOTIFY][ONBOARDING_STATUS] Failed to send onboarding status notification.");
-            notificationKO(notification, startTime);
-            return;
+            if (notificationId == null) {
+                log.error("[NOTIFY][ONBOARDING_STATUS] Failed to send onboarding status notification.");
+                notificationKO(notification, startTime);
+                return;
+            }
+
+            logNotificationId(notificationId);
+        } catch (NotFoundNotificationEventTemplate e) {
+            //TODO enrich log error
+            log.error(e.getMessage());
         }
 
-        logNotificationId(notificationId);
+
     }
 
     private Pair<String, String> processAppIoGeneralNotification(Notification notification, long startTime, boolean manual) {
