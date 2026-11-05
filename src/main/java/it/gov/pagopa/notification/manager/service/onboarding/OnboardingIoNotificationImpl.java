@@ -8,11 +8,8 @@ import it.gov.pagopa.notification.manager.dto.EvaluationDTO;
 import it.gov.pagopa.notification.manager.dto.NotificationDTO;
 import it.gov.pagopa.notification.manager.dto.NotificationResource;
 import it.gov.pagopa.notification.manager.dto.mapper.NotificationDTOMapper;
-import it.gov.pagopa.notification.manager.dto.mapper.NotificationMapper;
 import it.gov.pagopa.notification.manager.enums.NotificationEvent;
-import it.gov.pagopa.notification.manager.model.Notification;
 import it.gov.pagopa.notification.manager.model.NotificationContent;
-import it.gov.pagopa.notification.manager.repository.NotificationManagerRepository;
 import it.gov.pagopa.notification.manager.service.io.IoNotificationContentService;
 import it.gov.pagopa.notification.manager.service.io.placeholder.OnboardingPlaceholder;
 import it.gov.pagopa.notification.manager.service.io.placeholder.OnboardingPlaceholderContext;
@@ -21,8 +18,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
-import java.time.LocalDateTime;
-import java.time.ZoneId;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -37,25 +32,18 @@ public class OnboardingIoNotificationImpl extends BaseOnboardingNotification<Not
     private final NotificationDTOMapper notificationDTOMapper;
     private final IOBackEndRestConnector ioBackEndRestConnector;
 
-    private final NotificationManagerRepository notificationManagerRepository;
-    private final NotificationMapper notificationMapper;
-
     private final Long timeToLive;
     private final String assistedLink;
 
     public OnboardingIoNotificationImpl(IoNotificationContentService notificationContentService,
             NotificationDTOMapper notificationDTOMapper,
             IOBackEndRestConnector ioBackEndRestConnector,
-            NotificationManagerRepository notificationManagerRepository,
-            NotificationMapper notificationMapper,
             InitiativeRestConnector initiativeRestConnector,
             @Value("${rest-client.notification.backend-io.ttl}") Long timeToLive,
             @Value("${notification.manager.email.assisted-link}") String assistedLink) {
         super(initiativeRestConnector);
         this.notificationContentService = notificationContentService;
         this.notificationDTOMapper = notificationDTOMapper;
-        this.notificationManagerRepository = notificationManagerRepository;
-        this.notificationMapper = notificationMapper;
         this.ioBackEndRestConnector = ioBackEndRestConnector;
         this.timeToLive = timeToLive;
         this.assistedLink = assistedLink;
@@ -110,13 +98,6 @@ public class OnboardingIoNotificationImpl extends BaseOnboardingNotification<Not
     String sendNotification(NotificationDTO notificationToSend, EvaluationDTO evaluationDTO, boolean initiativeFetchFailed) {
         String sanitizedUserId = sanitizeString(evaluationDTO.getUserId());
         String sanitizedInitiativeId = sanitizeString(evaluationDTO.getInitiativeId());
-        if (initiativeFetchFailed) {
-            log.error("[NOTIFY] Skipping email send for user {} due to initiative service failure. Saving as KO.", sanitizedUserId);
-            //TODO: if the call comes from the OutcomeConsumer or the notify api, we might be saving double ko notification
-            // we should remove the notificationKo from the NotificationManagerServiceImpl.processAppIoNotification
-            saveNotificationKo(evaluationDTO);
-            return null;
-        }
         try {
             NotificationResource notificationResource =
                     ioBackEndRestConnector.notify(notificationToSend, evaluationDTO.getIoToken());
@@ -126,21 +107,9 @@ public class OnboardingIoNotificationImpl extends BaseOnboardingNotification<Not
             return notificationResource.getId();
         } catch (FeignException e) {
             log.error("[NOTIFY] [{}] Cannot send notification: {}", e.status(), e.contentUTF8());
-            //saveNotificationKo(evaluationDTO);
-            // TODO: should save KO notification here as well like web or not?
-            //  I guess yes, because OutcomeConsumer and the notify api ended up doing it
             return null;
         }
 
-    }
-
-    private void saveNotificationKo(EvaluationDTO evaluationDTO){
-        Notification notification = notificationMapper.evaluationToNotification(evaluationDTO);
-        notification.setNotificationStatus(NotificationConstants.NOTIFICATION_STATUS_KO);
-        notification.setStatusKoTimestamp(LocalDateTime.now(ZoneId.of(ZONE_ID_ROME)));
-        notification.setUpdateDate(LocalDateTime.now(ZoneId.of(ZONE_ID_ROME)));
-        notificationManagerRepository.save(notification);
-        //performanceLog(startTime, "NOTIFY"); // TODO: should this be logged?
     }
 
     // TODO: unused?

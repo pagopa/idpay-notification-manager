@@ -8,11 +8,9 @@ import it.gov.pagopa.notification.manager.dto.NotificationResource;
 import it.gov.pagopa.notification.manager.dto.OnboardingRejectionReason;
 import it.gov.pagopa.notification.manager.dto.initiative.InitiativeNotificationDTO;
 import it.gov.pagopa.notification.manager.dto.mapper.NotificationDTOMapper;
-import it.gov.pagopa.notification.manager.dto.mapper.NotificationMapper;
 import it.gov.pagopa.notification.manager.enums.Channel;
 import it.gov.pagopa.notification.manager.enums.NotificationEvent;
 import it.gov.pagopa.notification.manager.model.NotificationContent;
-import it.gov.pagopa.notification.manager.repository.NotificationManagerRepository;
 import it.gov.pagopa.notification.manager.service.io.IoNotificationContentService;
 import it.gov.pagopa.notification.manager.service.io.placeholder.OnboardingPlaceholderContext;
 import org.junit.jupiter.api.BeforeEach;
@@ -48,10 +46,6 @@ class OnboardingIoNotificationTest {
     @Mock
     private IOBackEndRestConnector ioBackEndRestConnector;
     @Mock
-    private NotificationManagerRepository notificationManagerRepository;
-    @Mock
-    private NotificationMapper notificationMapper;
-    @Mock
     private InitiativeRestConnector initiativeRestConnector;
 
     private OnboardingIoNotification notification;
@@ -62,8 +56,6 @@ class OnboardingIoNotificationTest {
                 notificationContentService,
                 new NotificationDTOMapper(),
                 ioBackEndRestConnector,
-                notificationManagerRepository,
-                notificationMapper,
                 initiativeRestConnector,
                 3600L,
                 "https://assistance.example"

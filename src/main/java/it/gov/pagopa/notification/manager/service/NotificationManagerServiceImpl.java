@@ -181,9 +181,12 @@ public class NotificationManagerServiceImpl implements NotificationManagerServic
 
         evaluationDTO.setIoToken(notificationPreChecks.getKey());
         evaluationDTO.setFiscalCode(notificationPreChecks.getValue());
+
+        // TODO: handle notificationSendSkipException, caused by:
+        //  - profile (!= null) not found
+        //  - event not found for the profile
         String notificationId = onboardingIoNotification.processNotification(evaluationDTO);
 
-        // TODO: should this be removed since the OnboardingIoNotificationImpl could cover even the OnboardingNotificationControllerImpl case?
         if (notificationId == null) {
             log.error("[NOTIFY][ONBOARDING_STATUS] Failed to send onboarding status notification.");
             notificationKO(notification, startTime);

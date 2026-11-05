@@ -36,10 +36,10 @@ public abstract class BaseOnboardingNotification<R> {
                 initiativeFetchFailed = true;
         }
 
-        // TODO: is the channel always present? this should be enough not to refactor the web impl
         if (initiativeFetchFailed && evaluationDTO.getChannel().isAppIo()) {
             log.error("[PROCESS_ONBOARDING_NOTIFICATION] Failed to retrieve initiativeDetail from initiative service. Notification will not be sent for user {}", sanitizedUserId);
-            return sendNotification(null, evaluationDTO, initiativeFetchFailed);
+            // TODO: return null or throw exception so that the entry points can handle the error and retry
+            //  null should be enough since it's the value checked
         }
 
         R notificationToSend = switch (evaluationDTO.getStatus()){
