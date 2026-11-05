@@ -1,4 +1,4 @@
-package it.gov.pagopa.notification.manager.service.profile;
+package it.gov.pagopa.notification.manager.service.io.profile;
 
 import feign.FeignException;
 import it.gov.pagopa.notification.manager.connector.initiative.InitiativeRestConnector;
@@ -10,7 +10,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
 import static it.gov.pagopa.notification.manager.service.onboarding.BaseOnboardingNotification.sanitizeString;
-import static it.gov.pagopa.notification.manager.service.profile.NotificationProfileResolution.FailureReason.*;
+import static it.gov.pagopa.notification.manager.service.io.profile.NotificationProfileResolution.FailureReason.*;
 
 @Service
 @RequiredArgsConstructor
@@ -20,7 +20,7 @@ public class NotificationProfileResolver {
     private final InitiativeRestConnector initiativeRestConnector;
     private final IoNotificationCatalog catalog;
 
-    public NotificationProfileResolution resolve(String initiativeId) {
+    public NotificationProfileResolution resolveByInitiativeId(String initiativeId) {
         if (!StringUtils.hasText(initiativeId)) {
             throw new IllegalArgumentException("An initiativeId is required to resolve the IO profile");
         }
@@ -38,16 +38,16 @@ public class NotificationProfileResolver {
                     sanitizedInitiativeId);
             return new NotificationProfileResolution.Failed(EMPTY_INITIATIVE_RESPONSE);
         }
-        return resolveProfile(initiative.getEmailFlux(), sanitizedInitiativeId);
+        return resolveByInputProfile(initiative.getEmailFlux(), sanitizedInitiativeId);
     }
 
-    public NotificationProfileResolution resolveConfiguredProfile(String configuredProfile) {
-        return resolveProfile(configuredProfile, null);
+    public NotificationProfileResolution resolveByInputProfile(String inputProfile) {
+        return resolveByInputProfile(inputProfile, null);
     }
 
-    private NotificationProfileResolution resolveProfile(String configuredProfile, String sanitizedInitiativeId) {
-        String profile = StringUtils.hasText(configuredProfile)
-                ? configuredProfile
+    private NotificationProfileResolution resolveByInputProfile(String inputProfile, String sanitizedInitiativeId) {
+        String profile = StringUtils.hasText(inputProfile)
+                ? inputProfile
                 : IoNotificationCatalog.DEFAULT_PROFILE;
         if (!catalog.containsProfile(profile)) {
             if (sanitizedInitiativeId != null) {

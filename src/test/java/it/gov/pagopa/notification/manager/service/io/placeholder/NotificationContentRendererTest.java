@@ -12,6 +12,47 @@ class NotificationContentRendererTest {
     private final NotificationContentRenderer renderer = new NotificationContentRenderer();
 
     @Test
+    void render_replacesEveryOccurrenceInSubjectAndMarkdownLiterally() {
+        NotificationContent rendered = renderer.render(
+                new NotificationContent("%value% %value%", "before[%value%]after"),
+                "source",
+                List.of(placeholder("$5\\path"))
+        );
+
+        assertEquals("$5\\path $5\\path", rendered.subject());
+        assertEquals("before[$5\\path]after", rendered.markdown());
+    }
+
+    @Test
+    void render_leavesUnknownTagsUnchanged() {
+        NotificationContent rendered = renderer.render(
+                new NotificationContent("Subject", "%unknown% %value%"),
+                "source",
+                List.of(placeholder("resolved"))
+        );
+
+        assertEquals("%unknown% resolved", rendered.markdown());
+    }
+
+    @Test
+    void render_doesNotResolveUnusedPlaceholder() {
+        NotificationPlaceholder<String> unused = new NotificationPlaceholder<>() {
+            @Override
+            public String key() {
+                return "unused";
+            }
+
+            @Override
+            public String resolve(String source) {
+                throw new AssertionError("Unused placeholder must not be resolved");
+            }
+        };
+        NotificationContent content = new NotificationContent("Subject", "Markdown");
+
+        assertEquals(content, renderer.render(content, "source", List.of(unused)));
+    }
+
+    @Test
     void render_replacesEmptyPlaceholderValueWithNotAvailableMarker() {
         NotificationContent rendered = renderer.render(
                 new NotificationContent("Subject", "before[%value%]after"),

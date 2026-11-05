@@ -1,4 +1,4 @@
-package it.gov.pagopa.notification.manager.service.profile;
+package it.gov.pagopa.notification.manager.service.io.profile;
 
 public sealed interface NotificationProfileResolution {
 

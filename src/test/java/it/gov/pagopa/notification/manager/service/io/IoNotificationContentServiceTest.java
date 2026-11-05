@@ -4,8 +4,8 @@ import it.gov.pagopa.notification.manager.enums.NotificationEvent;
 import it.gov.pagopa.notification.manager.model.NotificationContent;
 import it.gov.pagopa.notification.manager.service.io.placeholder.NotificationContentRenderer;
 import it.gov.pagopa.notification.manager.service.io.placeholder.NotificationPlaceholder;
-import it.gov.pagopa.notification.manager.service.profile.NotificationProfileResolution;
-import it.gov.pagopa.notification.manager.service.profile.NotificationProfileResolver;
+import it.gov.pagopa.notification.manager.service.io.profile.NotificationProfileResolution;
+import it.gov.pagopa.notification.manager.service.io.profile.NotificationProfileResolver;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -52,7 +52,7 @@ class IoNotificationContentServiceTest {
 
     @Test
     void resolveProfileAndFindAndRender_resolvesProfileBeforeLoadingContent() {
-        when(profileResolver.resolveConfiguredProfile("BEL25"))
+        when(profileResolver.resolveByInputProfile("BEL25"))
                 .thenReturn(new NotificationProfileResolution.Resolved("BEL25"));
         when(catalog.find("BEL25", NotificationEvent.ONBOARDING_OK))
                 .thenReturn(Optional.of(new NotificationContent("Hello %name%", "Welcome %name%")));
@@ -69,7 +69,7 @@ class IoNotificationContentServiceTest {
 
     @Test
     void resolveProfileAndFindAndRender_skipsContentLookupForUnknownProfile() {
-        when(profileResolver.resolveConfiguredProfile("UNKNOWN"))
+        when(profileResolver.resolveByInputProfile("UNKNOWN"))
                 .thenReturn(new NotificationProfileResolution.Skipped("UNKNOWN"));
 
         Optional<NotificationContent> result = contentService.resolveProfileAndFindAndRender(

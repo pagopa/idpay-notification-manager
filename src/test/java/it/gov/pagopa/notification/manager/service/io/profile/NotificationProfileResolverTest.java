@@ -1,4 +1,4 @@
-package it.gov.pagopa.notification.manager.service.profile;
+package it.gov.pagopa.notification.manager.service.io.profile;
 
 import it.gov.pagopa.notification.manager.connector.initiative.InitiativeRestConnector;
 import it.gov.pagopa.notification.manager.service.io.IoNotificationCatalog;
@@ -28,7 +28,7 @@ class NotificationProfileResolverTest {
 
         assertEquals(
                 new NotificationProfileResolution.Resolved("BEL25"),
-                resolver.resolveConfiguredProfile("BEL25")
+                resolver.resolveByInputProfile("BEL25")
         );
         verify(catalog).containsProfile("BEL25");
     }
@@ -39,7 +39,7 @@ class NotificationProfileResolverTest {
 
         assertEquals(
                 new NotificationProfileResolution.Resolved(IoNotificationCatalog.DEFAULT_PROFILE),
-                resolver.resolveConfiguredProfile(" ")
+                resolver.resolveByInputProfile(" ")
         );
     }
 
@@ -49,7 +49,7 @@ class NotificationProfileResolverTest {
 
         assertEquals(
                 new NotificationProfileResolution.Skipped("UNKNOWN"),
-                resolver.resolveConfiguredProfile("UNKNOWN")
+                resolver.resolveByInputProfile("UNKNOWN")
         );
     }
 }

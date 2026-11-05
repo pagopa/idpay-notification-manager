@@ -4,8 +4,8 @@ import it.gov.pagopa.notification.manager.enums.NotificationEvent;
 import it.gov.pagopa.notification.manager.model.NotificationContent;
 import it.gov.pagopa.notification.manager.service.io.placeholder.NotificationContentRenderer;
 import it.gov.pagopa.notification.manager.service.io.placeholder.NotificationPlaceholder;
-import it.gov.pagopa.notification.manager.service.profile.NotificationProfileResolution;
-import it.gov.pagopa.notification.manager.service.profile.NotificationProfileResolver;
+import it.gov.pagopa.notification.manager.service.io.profile.NotificationProfileResolution;
+import it.gov.pagopa.notification.manager.service.io.profile.NotificationProfileResolver;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -47,7 +47,20 @@ public class IoNotificationContentService {
             T source,
             Iterable<? extends NotificationPlaceholder<T>> placeholders
     ) {
-        NotificationProfileResolution resolution = profileResolver.resolveConfiguredProfile(configuredProfile);
+        NotificationProfileResolution resolution = profileResolver.resolveByInputProfile(configuredProfile);
+        if (!(resolution instanceof NotificationProfileResolution.Resolved(String profile))) {
+            return Optional.empty();
+        }
+        return findAndRender(profile, event, source, placeholders);
+    }
+
+    public <T> Optional<NotificationContent> resolveProfileByInitiativeIdAndFindAndRender(
+            String initiativeId,
+            NotificationEvent event,
+            T source,
+            Iterable<? extends NotificationPlaceholder<T>> placeholders
+    ) {
+        NotificationProfileResolution resolution = profileResolver.resolveByInitiativeId(initiativeId);
         if (!(resolution instanceof NotificationProfileResolution.Resolved(String profile))) {
             return Optional.empty();
         }
