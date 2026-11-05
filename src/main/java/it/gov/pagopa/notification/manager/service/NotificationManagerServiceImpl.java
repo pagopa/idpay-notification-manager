@@ -16,7 +16,6 @@ import it.gov.pagopa.notification.manager.model.NotificationMarkdown;
 import it.gov.pagopa.notification.manager.repository.NotificationManagerRepository;
 import it.gov.pagopa.notification.manager.repository.NotificationManagerRepositoryExtended;
 import it.gov.pagopa.notification.manager.service.onboarding.OnboardingIoNotification;
-import it.gov.pagopa.notification.manager.service.onboarding.OnboardingIoNotificationImpl;
 import it.gov.pagopa.notification.manager.service.onboarding.OnboardingWebNotification;
 import it.gov.pagopa.notification.manager.utils.AuditUtilities;
 import jakarta.annotation.PostConstruct;
@@ -27,6 +26,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.scheduling.concurrent.CustomizableThreadFactory;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -34,6 +34,7 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -143,7 +144,7 @@ public class NotificationManagerServiceImpl implements NotificationManagerServic
         }
 
         String markdown = (manualNotificationDTO.getBodyValues() != null
-                ? OnboardingIoNotificationImpl.replaceMessageItems(
+                ? replaceMessageItems(
                     manualNotificationDTO.getContent().getMarkdown(), manualNotificationDTO.getBodyValues())
                 : manualNotificationDTO.getContent().getMarkdown()).concat(markdownDoubleNewLine);
 
@@ -160,6 +161,19 @@ public class NotificationManagerServiceImpl implements NotificationManagerServic
         performanceLog(startTime);
     }
 
+    private String replaceMessageItems(String message, Map<String, String> values) {
+        for (Map.Entry<String, String> entry : values.entrySet()) {
+            message = replaceMessageItem(message, entry.getKey(), entry.getValue());
+        }
+        return message;
+    }
+
+    private String replaceMessageItem(String message, String key, String value) {
+        return message.replace(
+                NotificationConstants.MARKDOWN_TAG + key + NotificationConstants.MARKDOWN_TAG,
+                StringUtils.hasLength(value) ? value : NotificationConstants.MARKDOWN_NA);
+    }
+
     private boolean shouldSkipNotification(EvaluationDTO evaluationDTO) {
         boolean hasFamilyCriteriaKo = evaluationDTO.getOnboardingRejectionReasons() != null &&
                 evaluationDTO.getOnboardingRejectionReasons().stream()
@@ -169,7 +183,6 @@ public class NotificationManagerServiceImpl implements NotificationManagerServic
 
         return hasFamilyCriteriaKo || isDemandedType2;
     }
-
 
     private void processAppIoNotification(EvaluationDTO evaluationDTO, long startTime) {
 

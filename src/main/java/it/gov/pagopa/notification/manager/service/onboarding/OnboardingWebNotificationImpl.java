@@ -129,8 +129,7 @@ public class OnboardingWebNotificationImpl extends BaseOnboardingNotification<Em
         return createNotification(evaluationDTO, subject, template, templateValues);
     }
 
-    @Override
-    EmailMessageDTO createNotification(EvaluationDTO evaluationDTO, String subject, String body, Map<String, String> bodyValues) {
+    private EmailMessageDTO createNotification(EvaluationDTO evaluationDTO, String subject, String body, Map<String, String> bodyValues) {
         return EmailMessageDTO.builder()
                 .templateName(body)
                 .recipientEmail(evaluationDTO.getUserMail())

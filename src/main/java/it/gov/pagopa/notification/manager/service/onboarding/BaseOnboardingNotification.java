@@ -38,8 +38,7 @@ public abstract class BaseOnboardingNotification<R> {
 
         if (initiativeFetchFailed && evaluationDTO.getChannel().isAppIo()) {
             log.error("[PROCESS_ONBOARDING_NOTIFICATION] Failed to retrieve initiativeDetail from initiative service. Notification will not be sent for user {}", sanitizedUserId);
-            // TODO: return null or throw exception so that the entry points can handle the error and retry
-            //  null should be enough since it's the value checked
+            return null;
         }
 
         R notificationToSend = switch (evaluationDTO.getStatus()){
@@ -82,8 +81,6 @@ public abstract class BaseOnboardingNotification<R> {
     }
 
     protected abstract R generateOnboardingOkNotification(boolean isPartial, EvaluationDTO evaluationDTO);
-
-    abstract R createNotification(EvaluationDTO evaluationDTO, String subject, String body, Map<String, String> bodyValues);
 
     abstract String sendNotification(R notificationToSend, EvaluationDTO evaluationDTO, boolean initiativeFetchFailed);
 

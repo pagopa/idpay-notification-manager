@@ -3,7 +3,6 @@ package it.gov.pagopa.notification.manager.service.onboarding;
 import feign.FeignException;
 import it.gov.pagopa.notification.manager.connector.IOBackEndRestConnector;
 import it.gov.pagopa.notification.manager.connector.initiative.InitiativeRestConnector;
-import it.gov.pagopa.notification.manager.constants.NotificationConstants;
 import it.gov.pagopa.notification.manager.dto.EvaluationDTO;
 import it.gov.pagopa.notification.manager.dto.NotificationDTO;
 import it.gov.pagopa.notification.manager.dto.NotificationResource;
@@ -16,10 +15,8 @@ import it.gov.pagopa.notification.manager.service.io.placeholder.OnboardingPlace
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-import org.springframework.util.StringUtils;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 
 import static it.gov.pagopa.notification.manager.dto.OnboardingRejectionReason.OnboardingRejectionReasonCode.REJECTION_REASON_INITIATIVE_ENDED;
@@ -111,27 +108,4 @@ public class OnboardingIoNotificationImpl extends BaseOnboardingNotification<Not
         }
 
     }
-
-    // TODO: unused?
-    @Override
-    NotificationDTO createNotification(EvaluationDTO evaluationDTO, String subject, String body, Map<String, String> bodyValues) {
-        String markdown = bodyValues != null ? replaceMessageItems(body, bodyValues) : body;
-        return notificationDTOMapper.map(evaluationDTO.getFiscalCode(), timeToLive, subject, markdown);
-    }
-
-    // TODO: unused here? should be put somewhere else if used by some other class
-    public static String replaceMessageItems(String message, Map<String, String> values) {
-        for (Map.Entry<String, String> entry : values.entrySet()) {
-            message = replaceMessageItem(message, entry.getKey(), entry.getValue());
-        }
-        return message;
-    }
-
-    // TODO: unused here? should be put somewhere else if used by some other class
-    public static String replaceMessageItem(String message, String key, String value) {
-        return message.replace(
-                NotificationConstants.MARKDOWN_TAG + key + NotificationConstants.MARKDOWN_TAG,
-                StringUtils.hasLength(value) ? value : NotificationConstants.MARKDOWN_NA);
-    }
-
 }
