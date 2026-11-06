@@ -5,9 +5,8 @@ import it.gov.pagopa.notification.manager.connector.initiative.InitiativeRestCon
 import it.gov.pagopa.notification.manager.dto.EvaluationDTO;
 import it.gov.pagopa.notification.manager.dto.VerifyDTO;
 import it.gov.pagopa.notification.manager.dto.initiative.InitiativeNotificationDTO;
+import it.gov.pagopa.notification.manager.utils.Utilities;
 import lombok.extern.slf4j.Slf4j;
-
-import java.util.Map;
 
 import static it.gov.pagopa.notification.manager.constants.NotificationConstants.*;
 
@@ -23,22 +22,19 @@ public abstract class BaseOnboardingNotification<R> {
     }
 
     public String processNotification(EvaluationDTO evaluationDTO){
-        String sanitizedUserId = sanitizeString(evaluationDTO.getUserId());
-        String sanitizedStatus = sanitizeString(evaluationDTO.getStatus());
+        String sanitizedUserId = Utilities.sanitizeString(evaluationDTO.getUserId());
+        String sanitizedStatus = Utilities.sanitizeString(evaluationDTO.getStatus());
 
-        InitiativeNotificationDTO initiativeNotificationDTO = null;
-        boolean initiativeFetchFailed = false;
-        try {
-             initiativeNotificationDTO = initiativeRestConnector.getInitiativeDetailInfo(evaluationDTO.getInitiativeId());
-             evaluationDTO.setEmailFlux(initiativeNotificationDTO.getEmailFlux());
-        } catch (FeignException _) {
-                log.error("[PROCESS_ONBOARDING_NOTIFICATION] Failed to retrieve initiativeDetail from initiative service.");
-                initiativeFetchFailed = true;
-        }
-
-        if (initiativeFetchFailed && evaluationDTO.getChannel().isAppIo()) {
-            log.error("[PROCESS_ONBOARDING_NOTIFICATION] Failed to retrieve initiativeDetail from initiative service. Notification will not be sent for user {}", sanitizedUserId);
-            return null;
+        boolean initiativeFetchFailed = evaluationDTO.getEmailFlux() != null;
+        if(!initiativeFetchFailed) {
+            try {
+                InitiativeNotificationDTO initiativeNotificationDTO = initiativeRestConnector.getInitiativeDetailInfo(evaluationDTO.getInitiativeId());
+                evaluationDTO.setEmailFlux(initiativeNotificationDTO.getEmailFlux());
+            } catch (FeignException _) {
+                log.error("[PROCESS_ONBOARDING_NOTIFICATION] Failed to retrieve initiativeDetail from initiative service. Notification will not be sent for user {}", sanitizedUserId);
+                handleInitiativeFetchError(evaluationDTO);
+                return null;
+            }
         }
 
         R notificationToSend = switch (evaluationDTO.getStatus()){
@@ -56,6 +52,8 @@ public abstract class BaseOnboardingNotification<R> {
 
         return null;
     }
+
+    protected void handleInitiativeFetchError(EvaluationDTO evaluationDTO) {}
 
     abstract R processOnboardingJoined(EvaluationDTO evaluationDTO);
 
@@ -84,8 +82,5 @@ public abstract class BaseOnboardingNotification<R> {
 
     abstract String sendNotification(R notificationToSend, EvaluationDTO evaluationDTO, boolean initiativeFetchFailed);
 
-    public static String sanitizeString(String str){
-        return str == null? null: str.replaceAll("[\\r\\n]", "").replaceAll("[^\\w\\s-]", "");
-    }
 
 }

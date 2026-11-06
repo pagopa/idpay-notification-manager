@@ -9,8 +9,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
-import static it.gov.pagopa.notification.manager.service.onboarding.BaseOnboardingNotification.sanitizeString;
 import static it.gov.pagopa.notification.manager.service.io.profile.NotificationProfileResolution.FailureReason.*;
+import static it.gov.pagopa.notification.manager.utils.Utilities.sanitizeString;
 
 @Service
 @RequiredArgsConstructor

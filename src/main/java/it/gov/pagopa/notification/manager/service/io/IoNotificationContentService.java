@@ -13,7 +13,8 @@ import org.springframework.util.StringUtils;
 
 import java.util.Optional;
 
-import static it.gov.pagopa.notification.manager.service.onboarding.BaseOnboardingNotification.sanitizeString;
+import static it.gov.pagopa.notification.manager.utils.Utilities.sanitizeString;
+
 
 @Service
 @RequiredArgsConstructor

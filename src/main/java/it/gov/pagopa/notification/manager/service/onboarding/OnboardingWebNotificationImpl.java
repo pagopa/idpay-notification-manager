@@ -21,6 +21,7 @@ import java.util.Map;
 
 import static it.gov.pagopa.notification.manager.constants.NotificationConstants.EmailTemplates.*;
 import static it.gov.pagopa.notification.manager.dto.OnboardingRejectionReason.OnboardingRejectionReasonCode.REJECTION_REASON_INITIATIVE_ENDED;
+import static it.gov.pagopa.notification.manager.utils.Utilities.sanitizeString;
 
 @Slf4j
 @Service
@@ -141,15 +142,16 @@ public class OnboardingWebNotificationImpl extends BaseOnboardingNotification<Em
     }
 
     @Override
+    public void handleInitiativeFetchError(EvaluationDTO evaluationDTO) {
+        Notification notification = notificationMapper.evaluationToNotification(evaluationDTO);
+        finalizeAndSave(notification, NotificationConstants.NOTIFICATION_STATUS_KO, LocalDateTime.now(ZoneId.of(ZONE_ID_ROME)));
+    }
+
+    @Override
     String sendNotification(EmailMessageDTO notificationToSend, EvaluationDTO evaluationDTO, boolean initiativeFetchFailed) {
         long startTime = System.currentTimeMillis();
         String sanitizedUserId = sanitizeString(evaluationDTO.getUserId());
         String sanitizedInitiativeId = sanitizeString(evaluationDTO.getInitiativeId());
-        if (initiativeFetchFailed) {
-            log.error("[NOTIFY] Skipping email send for user {} due to initiative service failure. Saving as KO.", sanitizedUserId);
-            saveNotification(notificationToSend, evaluationDTO, NotificationConstants.NOTIFICATION_STATUS_KO, LocalDateTime.now(ZoneId.of(ZONE_ID_ROME)), startTime);
-            return null;
-        }
         try {
             emailNotificationConnector.sendEmail(notificationToSend);
             performanceLog(startTime, "NOTIFY");
