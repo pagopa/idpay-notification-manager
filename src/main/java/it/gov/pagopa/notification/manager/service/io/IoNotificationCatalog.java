@@ -3,14 +3,11 @@ package it.gov.pagopa.notification.manager.service.io;
 import it.gov.pagopa.notification.manager.config.IoNotificationProperties;
 import it.gov.pagopa.notification.manager.enums.NotificationEvent;
 import it.gov.pagopa.notification.manager.model.NotificationContent;
-import it.gov.pagopa.notification.manager.service.io.profile.NotificationProfileResolution;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
 import java.util.Optional;
-
-import static it.gov.pagopa.notification.manager.service.onboarding.BaseOnboardingNotification.sanitizeString;
 
 @Slf4j
 @Component
