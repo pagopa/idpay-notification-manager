@@ -31,6 +31,8 @@ public class NotificationConstants {
     public static final String GENERIC_ERROR = "NOTIFICATION_MANAGER_GENERIC_ERROR";
     public static final String TOO_MANY_REQUESTS = "NOTIFICATION_MANAGER_TOO_MANY_REQUESTS";
     public static final String INVALID_REQUEST = "NOTIFICATION_MANAGER_INVALID_REQUEST";
+    public static final String NOT_FOUND_NOTIFICATION_EVENT_TEMPLATE = "NOTIFICATION_MANAGER_NOT_FOUND_NOTIFICATION_EVENT_TEMPLATE";
+
 
     private ExceptionCode() {}
   }

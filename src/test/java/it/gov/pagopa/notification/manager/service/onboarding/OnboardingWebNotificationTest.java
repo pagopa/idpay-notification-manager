@@ -12,6 +12,7 @@ import it.gov.pagopa.notification.manager.dto.initiative.InitiativeNotificationD
 import it.gov.pagopa.notification.manager.dto.mapper.NotificationMapper;
 import it.gov.pagopa.notification.manager.model.Notification;
 import it.gov.pagopa.notification.manager.repository.NotificationManagerRepository;
+import it.gov.pagopa.notification.manager.service.io.ProfilesNotificationCatalog;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -83,6 +84,9 @@ class OnboardingWebNotificationTest {
     @Mock
     InitiativeRestConnector initiativeRestConnector;
 
+    @Mock
+    private ProfilesNotificationCatalog profilesNotificationCatalog;
+
     @BeforeEach
     void setUp() {
         onboardingWebNotification = new OnboardingWebNotificationImpl(emailNotificationConnectorMock,
@@ -90,7 +94,7 @@ class OnboardingWebNotificationTest {
                 notificationManagerRepository,
                 notificationMapper,
                 initiativeRestConnector,
-                null);
+                profilesNotificationCatalog);
     }
 
     private EvaluationDTO getEvaluationDto(){
@@ -617,12 +621,8 @@ class OnboardingWebNotificationTest {
     void processNotification_whenFeignException_handlesError() {
         EvaluationDTO evaluationDTO = getEvaluationDto();
 
-        EmailNotificationProperties.Subject subjectMock = mock(EmailNotificationProperties.Subject.class);
-        when(emailNotificationPropertiesMock.getSubject()).thenReturn(subjectMock);
-        when(subjectMock.getOk()).thenReturn("TEST_OK");
-
-        when(notificationMapper.createNotificationFromEmailMessageDTO(any(EmailMessageDTO.class),
-                any(EvaluationDTO.class))).thenReturn(NOTIFICATION);
+        when(notificationMapper.evaluationToNotification(evaluationDTO))
+               .thenReturn(NOTIFICATION);
 
         when(initiativeRestConnector.getInitiativeDetailInfo(anyString()))
                 .thenThrow(new feign.FeignException.InternalServerError(

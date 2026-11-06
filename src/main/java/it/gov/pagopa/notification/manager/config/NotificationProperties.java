@@ -9,6 +9,7 @@ import org.springframework.context.annotation.Configuration;
 @ConfigurationProperties( prefix = "notification.manager")
 @Getter
 @Setter
+@Deprecated
 public class NotificationProperties {
     private Markdown markdown;
     private Subject subject;

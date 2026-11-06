@@ -1,7 +1,7 @@
 package it.gov.pagopa.common.web.exception;
 
 import it.gov.pagopa.common.web.dto.ErrorDTO;
-import it.gov.pagopa.notification.manager.constants.NotificationConstants;
+import it.gov.pagopa.notification.manager.utils.Utilities;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -22,19 +22,9 @@ public class ErrorManager {
     this.defaultErrorDTO = Optional.ofNullable(defaultErrorDTO)
             .orElse(new ErrorDTO("Error", "Something gone wrong"));
   }
-
   @ExceptionHandler(RuntimeException.class)
   protected ResponseEntity<ErrorDTO> handleException(RuntimeException error, HttpServletRequest request) {
-    if(!(error instanceof ClientException clientException) || clientException.isPrintStackTrace() || clientException.getCause() != null){
-      log.error("Something went wrong handling request {}", getRequestDetails(request), error);
-    } else {
-      log.info("A {} occurred handling request {}: HttpStatus {} - {} at {}",
-              clientException.getClass().getSimpleName(),
-              getRequestDetails(request),
-              clientException.getHttpStatus(),
-              clientException.getMessage(),
-              clientException.getStackTrace().length > 0 ? clientException.getStackTrace()[0] : "UNKNOWN");
-    }
+    logClientException(error, request);
 
     if(error instanceof ClientExceptionNoBody clientExceptionNoBody){
       return ResponseEntity.status(clientExceptionNoBody.getHttpStatus()).build();
@@ -43,11 +33,11 @@ public class ErrorManager {
       ErrorDTO errorDTO;
       HttpStatus httpStatus;
       if (error instanceof ClientExceptionWithBody clientExceptionWithBody){
-        httpStatus = clientExceptionWithBody.getHttpStatus();
+        httpStatus=clientExceptionWithBody.getHttpStatus();
         errorDTO = new ErrorDTO(clientExceptionWithBody.getCode(),  error.getMessage());
       }
       else {
-        httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
+        httpStatus=HttpStatus.INTERNAL_SERVER_ERROR;
         errorDTO = defaultErrorDTO;
       }
       return ResponseEntity.status(httpStatus)
@@ -55,9 +45,36 @@ public class ErrorManager {
               .body(errorDTO);
     }
   }
+  public static void logClientException(RuntimeException error, HttpServletRequest request) {
+    Throwable unwrappedException = error.getCause() instanceof ServiceException
+            ? error.getCause()
+            : error;
+
+    String clientExceptionMessage = "";
+    if(error instanceof ClientException clientException) {
+      clientExceptionMessage = ": HttpStatus %s - %s%s".formatted(
+              clientException.getHttpStatus(),
+              (clientException instanceof ClientExceptionWithBody clientExceptionWithBody) ? clientExceptionWithBody.getCode() + ": " : "",
+              clientException.getMessage()
+      );
+    }
+
+    if(!(error instanceof ClientException clientException) || clientException.isPrintStackTrace() || unwrappedException.getCause() != null){
+      log.error("Something went wrong handling request {}{}", getRequestDetails(request), clientExceptionMessage, unwrappedException);
+    } else {
+      log.info("A {} occurred handling request {}{} at {}",
+              unwrappedException.getClass().getSimpleName() ,
+              getRequestDetails(request),
+              clientExceptionMessage,
+              unwrappedException.getStackTrace().length > 0 ? unwrappedException.getStackTrace()[0] : "UNKNOWN");
+    }
+  }
 
   public static String getRequestDetails(HttpServletRequest request) {
-    return "%s %s".formatted(request.getMethod(), request.getRequestURI());
+    return "%s %s".formatted(
+            Utilities.sanitizeForLog(request.getMethod()),
+            Utilities.sanitizeForLog(request.getRequestURI())
+    );
   }
 
 }

@@ -183,6 +183,10 @@ spring:
   config:
     activate:
       on-profile: default
+    import:
+      - classpath:notifications/default.yml
+      - classpath:notifications/bel25.yml
+      - classpath:notifications/dec26.yml
   data:
     redis:
       url: ${REDIS_CONNECTION_URL:redis://@localhost:6379}

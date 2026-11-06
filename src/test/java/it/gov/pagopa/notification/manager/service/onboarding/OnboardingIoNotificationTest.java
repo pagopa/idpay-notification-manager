@@ -1,554 +1,224 @@
 package it.gov.pagopa.notification.manager.service.onboarding;
 
-import feign.FeignException;
-import feign.Request;
-import feign.Response;
-import it.gov.pagopa.notification.manager.config.NotificationProperties;
 import it.gov.pagopa.notification.manager.connector.IOBackEndRestConnector;
 import it.gov.pagopa.notification.manager.connector.initiative.InitiativeRestConnector;
-import it.gov.pagopa.notification.manager.constants.NotificationConstants;
-import it.gov.pagopa.notification.manager.dto.*;
+import it.gov.pagopa.notification.manager.dto.EvaluationDTO;
+import it.gov.pagopa.notification.manager.dto.NotificationDTO;
+import it.gov.pagopa.notification.manager.dto.NotificationResource;
+import it.gov.pagopa.notification.manager.dto.OnboardingRejectionReason;
 import it.gov.pagopa.notification.manager.dto.initiative.InitiativeNotificationDTO;
 import it.gov.pagopa.notification.manager.dto.mapper.NotificationDTOMapper;
-import org.junit.jupiter.api.Assertions;
+import it.gov.pagopa.notification.manager.enums.Channel;
+import it.gov.pagopa.notification.manager.enums.NotificationEvent;
+import it.gov.pagopa.notification.manager.exception.NotFoundNotificationEventTemplate;
+import it.gov.pagopa.notification.manager.model.NotificationContent;
+import it.gov.pagopa.notification.manager.service.io.IoNotificationContentService;
+import it.gov.pagopa.notification.manager.service.io.ProfilesNotificationCatalog;
+import it.gov.pagopa.notification.manager.service.io.placeholder.OnboardingPlaceholderContext;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.nio.charset.StandardCharsets;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Map;
+import java.util.Optional;
 
+import static it.gov.pagopa.notification.manager.constants.NotificationConstants.STATUS_ONBOARDING_KO;
+import static it.gov.pagopa.notification.manager.constants.NotificationConstants.STATUS_ONBOARDING_OK;
 import static it.gov.pagopa.notification.manager.dto.OnboardingRejectionReason.OnboardingRejectionReasonCode.FAMILY_CRITERIA_FAIL;
 import static it.gov.pagopa.notification.manager.dto.OnboardingRejectionReason.OnboardingRejectionReasonCode.REJECTION_REASON_INITIATIVE_ENDED;
-import static it.gov.pagopa.notification.manager.enums.Channel.IO;
+import static it.gov.pagopa.notification.manager.dto.OnboardingRejectionReason.OnboardingRejectionReasonType.INVALID_REQUEST;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class OnboardingIoNotificationTest {
-    private static final String TEST_TOKEN = "TEST_TOKEN";
-    private static final String INITIATIVE_ID = "INITIATIVE_ID";
-    private static final String INITIATIVE_NAME = "INITIATIVE_NAME";
-    private static final LocalDateTime TEST_DATE = LocalDateTime.now();
-    private static final LocalDate TEST_DATE_ONLY_DATE = LocalDate.now();
-    private static final String ORGANIZATION_NAME = "ORGANIZATION_NAME";
-    private static final String MARKDOWN_DOUBLE_LINE = "\n\n";
-    private static final String MESSAGE_ID = "ID";
-    private static final String MARKDOWN_CTA_OK = """
-            it:
-                        cta_1:
-                            text: "Vai al bonus"
-                            action: "ioit://idpay/initiative/%initiativeId%"
-                    en:
-                        cta_1:
-                            text: "Go to the bonus page"
-                            action: "ioit://idpay/initiative/%initiativeId%"
-            """;
 
-    private static final String MARKDOWN_OK_BEL = """
-            Buone notizie! Hai ottenuto il %initiativeName% da %rewardAmount%€. Sarà valido **per i prossimi 15 giorni**.
-
-            È disponibile ora nella sezione Portafoglio, dove troverai i dettagli dell'importo e la validità.
-
-            **Cosa puoi fare ora?**
-
-            Puoi usarlo per ottenere uno sconto del 30% sul prezzo d'acquisto di un elettrodomestico nuovo ad alta efficienza, fino ad un massimo di %rewardAmount%€.
-
-            **Come fare?**
-
-            Per avere più informazioni su come e dove usare il bonus, [leggi i dettagli](https://assistenza.ioapp.it/hc/it/articles/40429655391505-Come-e-dove-spendere-il-Bonus-Elettrodomestici).
-
-            **Importante:** ricorda che puoi usare il bonus solo se hai un vecchio elettrodomestico da smaltire. Concorda con il venditore quando e come consegnarlo, ma non smaltirlo autonomamente in discarica.""";
-
-    private static final String MARKDOWN_OK_PARTIAL_BEL = """
-            Dopo le verifiche con INPS, il tuo ISEE risulta difforme o diverso da quanto dichiarato. Per questo motivo, non è possibile assegnarti il bonus da 200€ che avevi richiesto, ma hai ottenuto comunque il **bonus di 100€.**
-
-            Se ritieni che ci sia un errore, verifica il tuo ISEE direttamente con INPS.
-
-            **Cosa puoi fare ora?**
-
-            Puoi usarlo per ottenere uno sconto del 30% sul prezzo d'acquisto di un elettrodomestico nuovo ad alta efficienza, fino ad un massimo di 100€,
-
-            **Come fare?**
-
-            Per avere più informazioni su come e dove usare il bonus, [leggi i dettagli](https://assistenza.ioapp.it/hc/it/articles/40429655391505-Come-e-dove-spendere-il-Bonus-Elettrodomestici).
-
-            **Importante:** ricorda che puoi usare il bonus solo se hai un vecchio elettrodomestico da smaltire. Concorda con il venditore quando e come consegnarlo, ma non smaltirlo autonomamente in discarica.""";
-
-    private static final String MARKDOWN_KO_THANKS_BEL = """
-            La tua richiesta era in lista d'attesa, ma **tutti i fondi disponibili sono stati assegnati**.
-            Ci dispiace, ma purtroppo non è possibile assegnare il bonus.
-            
-                    Grazie per aver mostrato interesse per il **Bonus Elettrodomestici**.
-            
-            Alla prossima iniziativa!""";
-
-    private static final String MARKDOWN_KO_GENERIC_BEL = """
-            Purtroppo la tua richiesta per il Bonus Elettrodomestici non è stata accettata.
-                                                                                                                                                                                                                  
-            La verifica dei requisiti non è andata a buon fine a causa di problemi di comunicazione con gli enti competenti
-            
-            **Hai dei dubbi?**
-            
-            Se pensi che ci sia stato un errore, segnalalo a %managedEntity%.""";
-
-    private static final String SUBJECT_OK = "Hai ottenuto il bonus!";
-    private static final String SUBJECT_OK_PARTIAL = "Hai ottenuto il bonus!";
+    private static final String PROFILE = "BEL25";
 
     @Mock
-    private NotificationProperties notificationPropertiesMock;
-
-    private NotificationDTOMapper notificationDTOMapper = new NotificationDTOMapper();
+    private IoNotificationContentService notificationContentService;
     @Mock
-    private IOBackEndRestConnector ioBackEndRestConnectorMock;
-
-    private OnboardingIoNotification onboardingIoNotification;
-
+    private ProfilesNotificationCatalog profilesNotificationCatalog;
+    @Mock
+    private IOBackEndRestConnector ioBackEndRestConnector;
     @Mock
     private InitiativeRestConnector initiativeRestConnector;
 
+    private OnboardingIoNotification notification;
+
     @BeforeEach
     void setUp() {
-        onboardingIoNotification = new OnboardingIoNotificationImpl(
-                notificationPropertiesMock,
-                notificationDTOMapper,
-                ioBackEndRestConnectorMock,
+        notification = new OnboardingIoNotificationImpl(
+                notificationContentService,
+                profilesNotificationCatalog,
+                new NotificationDTOMapper(),
+                ioBackEndRestConnector,
                 initiativeRestConnector,
-                10L,
-                null);
-    }
-
-    private EvaluationDTO getEvaluationDto(){
-        return new EvaluationDTO(
-                TEST_TOKEN,
-                INITIATIVE_ID,
-                INITIATIVE_NAME,
-                TEST_DATE_ONLY_DATE,
-                INITIATIVE_ID,
-                ORGANIZATION_NAME,
-                NotificationConstants.STATUS_ONBOARDING_OK,
-                TEST_DATE,
-                TEST_DATE,
-                List.of(),
-                20000L,
-                1L,
-                null,
-                null,
-                IO,
-                "Mario",
-                "Rossi",
-                "FISCAL_CODE",
-                "IO_TOKEN",
-                null
+                3600L
         );
     }
 
-    //region ONBOARDING_OK
     @Test
-    void processNotification_whenTemplateEsitoOk200() {
-        EvaluationDTO evaluationDTO = getEvaluationDto();
+    void processNotification_resolvesProfileLoadsEventAndRendersContent() {
+        EvaluationDTO evaluation = evaluation(STATUS_ONBOARDING_OK);
+        prepareInitiativeAndProfile();
+        when(notificationContentService.resolveProfileAndFindAndRender(
+                eq(PROFILE),
+                eq(NotificationEvent.ONBOARDING_OK),
+                any(OnboardingPlaceholderContext.class),
+                any()
+        ))
+                .thenReturn(Optional.of(new NotificationContent(
+                        "Bonus Bonus",
+                        "Hai ottenuto Bonus per 250 euro"
+                )));
+        mockSentNotification();
 
-        NotificationProperties.Subject subjectMock = mock(NotificationProperties.Subject.class);
-        when(notificationPropertiesMock.getSubject()).thenReturn(subjectMock);
-        when(subjectMock.getOkBel()).thenReturn(SUBJECT_OK);
+        assertEquals("notification-id", notification.processNotification(evaluation));
 
-        NotificationProperties.Markdown markdownMock = mock(NotificationProperties.Markdown.class);
-        when(notificationPropertiesMock.getMarkdown()).thenReturn(markdownMock);
-        when(markdownMock.getOkBel()).thenReturn(MARKDOWN_OK_BEL);
-        when(markdownMock.getDoubleNewLine()).thenReturn(MARKDOWN_DOUBLE_LINE);
-        when(markdownMock.getOkCta()).thenReturn(MARKDOWN_CTA_OK);
-
-        NotificationResource notificationResource = mock(NotificationResource.class);
-        when(ioBackEndRestConnectorMock.notify(Mockito.any(NotificationDTO.class), Mockito.anyString()))
-                .thenReturn(notificationResource);
-        when(notificationResource.getId()).thenReturn(MESSAGE_ID);
-
-        InitiativeNotificationDTO mockInitiative = new InitiativeNotificationDTO();
-        mockInitiative.setEmailFlux("DEC26");
-        when(initiativeRestConnector.getInitiativeDetailInfo(anyString())).thenReturn(mockInitiative);
-        String result = onboardingIoNotification.processNotification(evaluationDTO);
-
-        String expectedMarkdown = """
-                it:
-                            cta_1:
-                                text: "Vai al bonus"
-                                action: "ioit://idpay/initiative/INITIATIVE_ID"
-                        en:
-                            cta_1:
-                                text: "Go to the bonus page"
-                                action: "ioit://idpay/initiative/INITIATIVE_ID"
-
-
-                Buone notizie! Hai ottenuto il INITIATIVE_NAME da 200€. Sarà valido **per i prossimi 15 giorni**.
-
-                È disponibile ora nella sezione Portafoglio, dove troverai i dettagli dell'importo e la validità.
-
-                **Cosa puoi fare ora?**
-
-                Puoi usarlo per ottenere uno sconto del 30% sul prezzo d'acquisto di un elettrodomestico nuovo ad alta efficienza, fino ad un massimo di 200€.
-
-                **Come fare?**
-
-                Per avere più informazioni su come e dove usare il bonus, [leggi i dettagli](https://assistenza.ioapp.it/hc/it/articles/40429655391505-Come-e-dove-spendere-il-Bonus-Elettrodomestici).
-
-                **Importante:** ricorda che puoi usare il bonus solo se hai un vecchio elettrodomestico da smaltire. Concorda con il venditore quando e come consegnarlo, ma non smaltirlo autonomamente in discarica.""";
-
-        verify(ioBackEndRestConnectorMock, times(1))
-                .notify(Mockito.argThat(notificationDTO -> notificationDTO.getContent().getMarkdown().equals(expectedMarkdown)), eq("IO_TOKEN"));
-
-        Assertions.assertNotNull(result);
-        Assertions.assertEquals(MESSAGE_ID, result);
+        verify(notificationContentService).resolveProfileAndFindAndRender(
+                eq(PROFILE),
+                eq(NotificationEvent.ONBOARDING_OK),
+                any(OnboardingPlaceholderContext.class),
+                any()
+        );
+        ArgumentCaptor<NotificationDTO> sent = ArgumentCaptor.forClass(NotificationDTO.class);
+        verify(ioBackEndRestConnector).notify(sent.capture(), eq("io-token"));
+        assertEquals("Bonus Bonus", sent.getValue().getContent().getSubject());
+        assertEquals(
+                "Hai ottenuto Bonus per 250 euro",
+                sent.getValue().getContent().getMarkdown()
+        );
     }
 
     @Test
-    void processNotification_whenNoIseeVerify_shouldBuildEsitoOk100() {
-        EvaluationDTO evaluationDTO = getEvaluationDto();
-        // User opted NOT to use ISEE: verification is not performed, so even if the
-        // option's min budget matches the awarded budget it must resolve to full OK.
-        VerifyDTO verifyDTO = VerifyDTO.builder()
-                .verify(false)
-                .beneficiaryBudgetCentsMin(10000L)
-                .build();
-        evaluationDTO.setVerifies(List.of(verifyDTO));
-        evaluationDTO.setBeneficiaryBudgetCents(10000L);
-
-        NotificationProperties.Subject subjectMock = mock(NotificationProperties.Subject.class);
-        when(notificationPropertiesMock.getSubject()).thenReturn(subjectMock);
-        when(subjectMock.getOkBel()).thenReturn(SUBJECT_OK);
-
-        NotificationProperties.Markdown markdownMock = mock(NotificationProperties.Markdown.class);
-        when(notificationPropertiesMock.getMarkdown()).thenReturn(markdownMock);
-        when(markdownMock.getOkBel()).thenReturn(MARKDOWN_OK_BEL);
-        when(markdownMock.getDoubleNewLine()).thenReturn(MARKDOWN_DOUBLE_LINE);
-        when(markdownMock.getOkCta()).thenReturn(MARKDOWN_CTA_OK);
-
-        NotificationResource notificationResource = mock(NotificationResource.class);
-        when(ioBackEndRestConnectorMock.notify(Mockito.any(NotificationDTO.class), Mockito.anyString()))
-                .thenReturn(notificationResource);
-        when(notificationResource.getId()).thenReturn(MESSAGE_ID);
-
-        InitiativeNotificationDTO mockInitiative = new InitiativeNotificationDTO();
-        mockInitiative.setEmailFlux("DEC26");
-        when(initiativeRestConnector.getInitiativeDetailInfo(anyString())).thenReturn(mockInitiative);
-
-        String result = onboardingIoNotification.processNotification(evaluationDTO);
-
-        // Full OK markdown (100€), NOT the ISEE-difforme partial markdown.
-        verify(ioBackEndRestConnectorMock, times(1))
-                .notify(Mockito.argThat(notificationDTO ->
-                        notificationDTO.getContent().getMarkdown().contains("Hai ottenuto il INITIATIVE_NAME da 100€")
-                                && !notificationDTO.getContent().getMarkdown().contains("il tuo ISEE risulta difforme")),
-                        eq("IO_TOKEN"));
-
-        Assertions.assertNotNull(result);
-        Assertions.assertEquals(MESSAGE_ID, result);
-    }
-
-    @Test
-    void processNotification_whenTemplateEsitoOkNoVerifyIsee100() {
-        EvaluationDTO evaluationDTO = getEvaluationDto();
-        evaluationDTO.setBeneficiaryBudgetCents(10000L);
-
-        NotificationProperties.Subject subjectMock = mock(NotificationProperties.Subject.class);
-        when(notificationPropertiesMock.getSubject()).thenReturn(subjectMock);
-        when(subjectMock.getOkBel()).thenReturn(SUBJECT_OK);
-
-        NotificationProperties.Markdown markdownMock = mock(NotificationProperties.Markdown.class);
-        when(notificationPropertiesMock.getMarkdown()).thenReturn(markdownMock);
-        when(markdownMock.getOkBel()).thenReturn(MARKDOWN_OK_BEL);
-        when(markdownMock.getDoubleNewLine()).thenReturn(MARKDOWN_DOUBLE_LINE);
-        when(markdownMock.getOkCta()).thenReturn(MARKDOWN_CTA_OK);
-
-        NotificationResource notificationResource = mock(NotificationResource.class);
-        when(ioBackEndRestConnectorMock.notify(Mockito.any(NotificationDTO.class), Mockito.anyString()))
-                .thenReturn(notificationResource);
-        when(notificationResource.getId()).thenReturn(MESSAGE_ID);
-
-        InitiativeNotificationDTO mockInitiative = new InitiativeNotificationDTO();
-        mockInitiative.setEmailFlux("DEC26");
-        when(initiativeRestConnector.getInitiativeDetailInfo(anyString())).thenReturn(mockInitiative);
-        String result = onboardingIoNotification.processNotification(evaluationDTO);
-
-        String expectedMarkdown = """
-                it:
-                            cta_1:
-                                text: "Vai al bonus"
-                                action: "ioit://idpay/initiative/INITIATIVE_ID"
-                        en:
-                            cta_1:
-                                text: "Go to the bonus page"
-                                action: "ioit://idpay/initiative/INITIATIVE_ID"
-
-
-                Buone notizie! Hai ottenuto il INITIATIVE_NAME da 100€. Sarà valido **per i prossimi 15 giorni**.
-
-                È disponibile ora nella sezione Portafoglio, dove troverai i dettagli dell'importo e la validità.
-
-                **Cosa puoi fare ora?**
-
-                Puoi usarlo per ottenere uno sconto del 30% sul prezzo d'acquisto di un elettrodomestico nuovo ad alta efficienza, fino ad un massimo di 100€.
-
-                **Come fare?**
-
-                Per avere più informazioni su come e dove usare il bonus, [leggi i dettagli](https://assistenza.ioapp.it/hc/it/articles/40429655391505-Come-e-dove-spendere-il-Bonus-Elettrodomestici).
-
-                **Importante:** ricorda che puoi usare il bonus solo se hai un vecchio elettrodomestico da smaltire. Concorda con il venditore quando e come consegnarlo, ma non smaltirlo autonomamente in discarica.""";
-
-
-        verify(ioBackEndRestConnectorMock, times(1))
-                .notify(Mockito.argThat(notificationDTO -> notificationDTO.getContent().getMarkdown().equals(expectedMarkdown)), Mockito.anyString());
-
-        Assertions.assertNotNull(result);
-        Assertions.assertEquals(MESSAGE_ID, result);
-    }
-
-    @Test
-    void processNotification_withNullBeneficiaryBudget() {
-        EvaluationDTO evaluationDTO = getEvaluationDto();
-        evaluationDTO.setBeneficiaryBudgetCents(null);
-
-        NotificationProperties.Subject subjectMock = mock(NotificationProperties.Subject.class);
-        when(notificationPropertiesMock.getSubject()).thenReturn(subjectMock);
-        when(subjectMock.getOkBel()).thenReturn(SUBJECT_OK);
-
-        NotificationProperties.Markdown markdownMock = mock(NotificationProperties.Markdown.class);
-        when(notificationPropertiesMock.getMarkdown()).thenReturn(markdownMock);
-        when(markdownMock.getOkBel()).thenReturn(MARKDOWN_OK_BEL);
-        when(markdownMock.getDoubleNewLine()).thenReturn(MARKDOWN_DOUBLE_LINE);
-        when(markdownMock.getOkCta()).thenReturn(MARKDOWN_CTA_OK);
-
-        NotificationResource notificationResource = mock(NotificationResource.class);
-        when(ioBackEndRestConnectorMock.notify(Mockito.any(NotificationDTO.class), Mockito.anyString()))
-                .thenReturn(notificationResource);
-        when(notificationResource.getId()).thenReturn(MESSAGE_ID);
-
-        InitiativeNotificationDTO mockInitiative = new InitiativeNotificationDTO();
-        mockInitiative.setEmailFlux("DEC26");
-        when(initiativeRestConnector.getInitiativeDetailInfo(anyString())).thenReturn(mockInitiative);
-
-        String result = onboardingIoNotification.processNotification(evaluationDTO);
-
-        String expectedMarkdown = """
-                it:
-                            cta_1:
-                                text: "Vai al bonus"
-                                action: "ioit://idpay/initiative/INITIATIVE_ID"
-                        en:
-                            cta_1:
-                                text: "Go to the bonus page"
-                                action: "ioit://idpay/initiative/INITIATIVE_ID"
-
-
-                Buone notizie! Hai ottenuto il INITIATIVE_NAME da N.A.€. Sarà valido **per i prossimi 15 giorni**.
-
-                È disponibile ora nella sezione Portafoglio, dove troverai i dettagli dell'importo e la validità.
-
-                **Cosa puoi fare ora?**
-
-                Puoi usarlo per ottenere uno sconto del 30% sul prezzo d'acquisto di un elettrodomestico nuovo ad alta efficienza, fino ad un massimo di N.A.€.
-
-                **Come fare?**
-
-                Per avere più informazioni su come e dove usare il bonus, [leggi i dettagli](https://assistenza.ioapp.it/hc/it/articles/40429655391505-Come-e-dove-spendere-il-Bonus-Elettrodomestici).
-
-                **Importante:** ricorda che puoi usare il bonus solo se hai un vecchio elettrodomestico da smaltire. Concorda con il venditore quando e come consegnarlo, ma non smaltirlo autonomamente in discarica.""";
-
-
-        verify(ioBackEndRestConnectorMock, times(1))
-                .notify(Mockito.argThat(notificationDTO -> notificationDTO.getContent().getMarkdown().equals(expectedMarkdown)), Mockito.anyString());
-
-        Assertions.assertNotNull(result);
-        Assertions.assertEquals(MESSAGE_ID, result);
-    }
-
-    @Test
-    void processNotification_templateEsitoOkParziale() {
-        EvaluationDTO evaluationDTO = getEvaluationDto();
-        VerifyDTO verifyDTO = VerifyDTO.builder()
-                .verify(true)
-                .beneficiaryBudgetCentsMin(10000L)
-                .build();
-        List<VerifyDTO> verifies = List.of(verifyDTO);
-        evaluationDTO.setVerifies(verifies);
-        evaluationDTO.setBeneficiaryBudgetCents(10000L);
-
-        NotificationProperties.Subject subjectMock = mock(NotificationProperties.Subject.class);
-        when(notificationPropertiesMock.getSubject()).thenReturn(subjectMock);
-        when(subjectMock.getOkPartialBel()).thenReturn(SUBJECT_OK_PARTIAL);
-
-        NotificationProperties.Markdown markdownMock = mock(NotificationProperties.Markdown.class);
-        when(notificationPropertiesMock.getMarkdown()).thenReturn(markdownMock);
-        when(markdownMock.getOkPartialBel()).thenReturn(MARKDOWN_OK_PARTIAL_BEL);
-        when(markdownMock.getDoubleNewLine()).thenReturn(MARKDOWN_DOUBLE_LINE);
-        when(markdownMock.getOkCta()).thenReturn(MARKDOWN_CTA_OK);
-
-        NotificationResource notificationResource = mock(NotificationResource.class);
-        when(ioBackEndRestConnectorMock.notify(Mockito.any(NotificationDTO.class), Mockito.anyString()))
-                .thenReturn(notificationResource);
-        when(notificationResource.getId()).thenReturn(MESSAGE_ID);
-        InitiativeNotificationDTO mockInitiative = new InitiativeNotificationDTO();
-        mockInitiative.setEmailFlux("DEC26");
-        when(initiativeRestConnector.getInitiativeDetailInfo(anyString())).thenReturn(mockInitiative);
-
-        String result = onboardingIoNotification.processNotification(evaluationDTO);
-
-        String expectedMarkdown = """
-                it:
-                            cta_1:
-                                text: "Vai al bonus"
-                                action: "ioit://idpay/initiative/INITIATIVE_ID"
-                        en:
-                            cta_1:
-                                text: "Go to the bonus page"
-                                action: "ioit://idpay/initiative/INITIATIVE_ID"
-
-
-                Dopo le verifiche con INPS, il tuo ISEE risulta difforme o diverso da quanto dichiarato. Per questo motivo, non è possibile assegnarti il bonus da 200€ che avevi richiesto, ma hai ottenuto comunque il **bonus di 100€.**
-
-                Se ritieni che ci sia un errore, verifica il tuo ISEE direttamente con INPS.
-
-                **Cosa puoi fare ora?**
-
-                Puoi usarlo per ottenere uno sconto del 30% sul prezzo d'acquisto di un elettrodomestico nuovo ad alta efficienza, fino ad un massimo di 100€,
-
-                **Come fare?**
-
-                Per avere più informazioni su come e dove usare il bonus, [leggi i dettagli](https://assistenza.ioapp.it/hc/it/articles/40429655391505-Come-e-dove-spendere-il-Bonus-Elettrodomestici).
-
-                **Importante:** ricorda che puoi usare il bonus solo se hai un vecchio elettrodomestico da smaltire. Concorda con il venditore quando e come consegnarlo, ma non smaltirlo autonomamente in discarica.""";
-
-        verify(ioBackEndRestConnectorMock, times(1))
-                .notify(Mockito.argThat(notificationDTO -> notificationDTO.getContent().getMarkdown().equals(expectedMarkdown)), Mockito.anyString());
-
-        Assertions.assertNotNull(result);
-        Assertions.assertEquals("ID", result);
-    }
-
-    @Test
-    void processNotification_callNotificationEmail_Error() {
-        EvaluationDTO evaluationDTO = getEvaluationDto();
-        evaluationDTO.setBeneficiaryBudgetCents(10000L);
-
-        NotificationProperties.Subject subjectMock = mock(NotificationProperties.Subject.class);
-        when(notificationPropertiesMock.getSubject()).thenReturn(subjectMock);
-        when(subjectMock.getOkBel()).thenReturn(SUBJECT_OK);
-
-        NotificationProperties.Markdown markdownMock = mock(NotificationProperties.Markdown.class);
-        when(notificationPropertiesMock.getMarkdown()).thenReturn(markdownMock);
-        when(markdownMock.getOkBel()).thenReturn(MARKDOWN_OK_BEL);
-        when(markdownMock.getDoubleNewLine()).thenReturn(MARKDOWN_DOUBLE_LINE);
-        when(markdownMock.getOkCta()).thenReturn(MARKDOWN_CTA_OK);
-
-        InitiativeNotificationDTO mockInitiative = new InitiativeNotificationDTO();
-        mockInitiative.setEmailFlux("DEC26");
-        when(initiativeRestConnector.getInitiativeDetailInfo(anyString())).thenReturn(mockInitiative);
-
-
-        Request request = Request.create(Request.HttpMethod.GET, "/dummy", Map.of(), null, StandardCharsets.UTF_8, null);
-        Response response = Response.builder()
-                .status(429)
-                .reason("DUMMY_EXCEPTION")
-                .request(request)
-                .build();
-        when(ioBackEndRestConnectorMock.notify(Mockito.any(NotificationDTO.class), Mockito.anyString()))
-                .thenThrow(FeignException.errorStatus("DUMMY_CLIENT", response));
-
-        String result = onboardingIoNotification.processNotification(evaluationDTO);
-
-        Assertions.assertNull(result);
-    }
-
-    @Test
-    void onboardingInvalidStatus(){
-        EvaluationDTO evaluationDTO = getEvaluationDto();
-        evaluationDTO.setStatus("ANOTHER_STATUS");
-        evaluationDTO.setInitiativeId("initiative123");
-        InitiativeNotificationDTO mockInitiative = new InitiativeNotificationDTO();
-        mockInitiative.setEmailFlux("DEC26");
-        when(initiativeRestConnector.getInitiativeDetailInfo(anyString())).thenReturn(mockInitiative);
-
-        String result = onboardingIoNotification.processNotification(evaluationDTO);
-
-        Assertions.assertNull(result);
-    }
-
-    @Test
-    void processOnboardingJoined_buildsSubjectAndMarkdown() {
-        EvaluationDTO evaluationDTO = getEvaluationDto();
-
-        NotificationProperties.Subject subjectMock = mock(NotificationProperties.Subject.class);
-        when(notificationPropertiesMock.getSubject()).thenReturn(subjectMock);
-        when(subjectMock.getJoinedBel()).thenReturn("SUBJECT_JOINED_BEL");
-
-        NotificationProperties.Markdown markdownMock = mock(NotificationProperties.Markdown.class);
-        when(notificationPropertiesMock.getMarkdown()).thenReturn(markdownMock);
-        when(markdownMock.getJoinedBel()).thenReturn("MD_JOINED");
-        when(markdownMock.getDoubleNewLine()).thenReturn(MARKDOWN_DOUBLE_LINE);
-
-        NotificationDTO dto = ((OnboardingIoNotificationImpl) onboardingIoNotification)
-                .processOnboardingJoined(evaluationDTO);
-
-        Assertions.assertNotNull(dto);
-        Assertions.assertEquals("SUBJECT_JOINED_BEL", dto.getContent().getSubject());
-        Assertions.assertEquals("MD_JOINED" + MARKDOWN_DOUBLE_LINE, dto.getContent().getMarkdown());
-    }
-
-    @Test
-    void processOnboardingKo_whenInitiativeEnded_true_usesThanksSubject_andNoPlaceholders() {
-        EvaluationDTO evaluationDTO = getEvaluationDto();
-
-        OnboardingRejectionReason reason = OnboardingRejectionReason
-                .builder()
+    void processNotification_usesInitiativeEndedEvent() {
+        EvaluationDTO evaluation = evaluation(STATUS_ONBOARDING_KO);
+        evaluation.setOnboardingRejectionReasons(List.of(OnboardingRejectionReason.builder()
+                .type(INVALID_REQUEST)
                 .code(REJECTION_REASON_INITIATIVE_ENDED)
-                .detail("Dettaglio che non verrà usato nel ramo 'ended'")
-                .authorityLabel("ENTE XYZ")
-                .build();
-        evaluationDTO.setOnboardingRejectionReasons(List.of(reason));
+                .build()));
+        prepareInitiativeAndProfile();
+        when(notificationContentService.resolveProfileAndFindAndRender(
+                eq(PROFILE),
+                eq(NotificationEvent.ONBOARDING_KO_INITIATIVE_ENDED),
+                any(OnboardingPlaceholderContext.class),
+                any()
+        )).thenReturn(Optional.of(new NotificationContent("Esito", "L'iniziativa Bonus è terminata")));
+        mockSentNotification();
 
-        NotificationProperties.Markdown markdownMock = mock(NotificationProperties.Markdown.class);
-        when(notificationPropertiesMock.getMarkdown()).thenReturn(markdownMock);
-        when(markdownMock.getKoThanksBel()).thenReturn(MARKDOWN_KO_THANKS_BEL);
-        NotificationProperties.Subject subjectMock = mock(NotificationProperties.Subject.class);
-        when(notificationPropertiesMock.getSubject()).thenReturn(subjectMock);
-        when(subjectMock.getKoThanksBel()).thenReturn("SUBJECT_KO_THANKS_BEL");
+        assertEquals("notification-id", notification.processNotification(evaluation));
 
-        NotificationDTO dto = ((OnboardingIoNotificationImpl) onboardingIoNotification)
-                .processOnboardingKo(evaluationDTO);
-
-        Assertions.assertNotNull(dto);
-        Assertions.assertEquals("SUBJECT_KO_THANKS_BEL", dto.getContent().getSubject());
+        verify(notificationContentService).resolveProfileAndFindAndRender(
+                eq(PROFILE),
+                eq(NotificationEvent.ONBOARDING_KO_INITIATIVE_ENDED),
+                any(OnboardingPlaceholderContext.class),
+                any()
+        );
     }
 
     @Test
-    void processOnboardingKo_whenGeneric_withReason_buildsPlaceholdersAndSubject() {
-        EvaluationDTO evaluationDTO = getEvaluationDto();
-
-        NotificationProperties.Markdown markdownMock = mock(NotificationProperties.Markdown.class);
-        when(notificationPropertiesMock.getMarkdown()).thenReturn(markdownMock);
-        when(markdownMock.getKoGenericBel()).thenReturn(MARKDOWN_KO_GENERIC_BEL);
-        OnboardingRejectionReason reason = OnboardingRejectionReason
-                .builder()
+    void processNotification_usesGenericKoEventAndRendersManagedEntity() {
+        EvaluationDTO evaluation = evaluation(STATUS_ONBOARDING_KO);
+        evaluation.setOnboardingRejectionReasons(List.of(OnboardingRejectionReason.builder()
+                .type(INVALID_REQUEST)
                 .code(FAMILY_CRITERIA_FAIL)
-                .detail("Documento mancante")
-                .authorityLabel("Comune di Test")
-                .build();
-        evaluationDTO.setOnboardingRejectionReasons(List.of(reason));
+                .authority("Comune di Test")
+                .build()));
+        prepareInitiativeAndProfile();
+        when(notificationContentService.resolveProfileAndFindAndRender(
+                eq(PROFILE),
+                eq(NotificationEvent.ONBOARDING_KO_GENERIC),
+                any(OnboardingPlaceholderContext.class),
+                any()
+        )).thenReturn(Optional.of(new NotificationContent("Esito", "Contatta Comune di Test")));
+        mockSentNotification();
 
-        NotificationProperties.Subject subjectMock = mock(NotificationProperties.Subject.class);
-        when(notificationPropertiesMock.getSubject()).thenReturn(subjectMock);
-        when(subjectMock.getKoGenericBel()).thenReturn("SUBJECT_KO_GENERIC_BEL");
+        assertEquals("notification-id", notification.processNotification(evaluation));
 
-        NotificationDTO dto = ((OnboardingIoNotificationImpl) onboardingIoNotification)
-                .processOnboardingKo(evaluationDTO);
+        ArgumentCaptor<NotificationDTO> sent = ArgumentCaptor.forClass(NotificationDTO.class);
+        verify(ioBackEndRestConnector).notify(sent.capture(), eq("io-token"));
+        assertEquals("Contatta Comune di Test", sent.getValue().getContent().getMarkdown());
+    }
 
-        Assertions.assertNotNull(dto);
-        Assertions.assertEquals("SUBJECT_KO_GENERIC_BEL", dto.getContent().getSubject());
+    @Test
+    void processNotification_skipsUnknownProfileWithoutLookingUpContent() {
+        EvaluationDTO evaluation = evaluation(STATUS_ONBOARDING_OK);
+        when(initiativeRestConnector.getInitiativeDetailInfo(anyString())).thenReturn(initiative("UNKNOWN"));
+        when(notificationContentService.resolveProfileAndFindAndRender(
+                eq("UNKNOWN"),
+                eq(NotificationEvent.ONBOARDING_OK),
+                any(OnboardingPlaceholderContext.class),
+                any()
+        )).thenReturn(Optional.empty());
+
+        NotFoundNotificationEventTemplate errorResult = assertThrows(NotFoundNotificationEventTemplate.class, () -> notification.processNotification(evaluation));
+
+        assertEquals("Unable to notify user user-id: notification event ONBOARDING_OK was not found for profile UNKNOWN", errorResult.getMessage());
+
+        verify(notificationContentService).resolveProfileAndFindAndRender(
+                eq("UNKNOWN"),
+                eq(NotificationEvent.ONBOARDING_OK),
+                any(OnboardingPlaceholderContext.class),
+                any()
+        );
+        verifyNoInteractions(ioBackEndRestConnector);
+    }
+
+    @Test
+    void processNotification_skipsWhenEventContentIsMissing() {
+        EvaluationDTO evaluation = evaluation(STATUS_ONBOARDING_OK);
+        prepareInitiativeAndProfile();
+        when(notificationContentService.resolveProfileAndFindAndRender(
+                eq(PROFILE),
+                eq(NotificationEvent.ONBOARDING_OK),
+                any(OnboardingPlaceholderContext.class),
+                any()
+        ))
+                .thenReturn(Optional.empty());
+
+        NotFoundNotificationEventTemplate errorResult = assertThrows(NotFoundNotificationEventTemplate.class, () -> notification.processNotification(evaluation));
+
+        assertEquals("Unable to notify user user-id: notification event ONBOARDING_OK was not found for profile BEL25", errorResult.getMessage());
+
+
+        verifyNoInteractions(ioBackEndRestConnector);
+    }
+
+    private void prepareInitiativeAndProfile() {
+        when(initiativeRestConnector.getInitiativeDetailInfo(anyString())).thenReturn(initiative(PROFILE));
+    }
+
+    private InitiativeNotificationDTO initiative(String profile) {
+        InitiativeNotificationDTO initiative = new InitiativeNotificationDTO();
+        initiative.setEmailFlux(profile);
+        return initiative;
+    }
+
+    private void mockSentNotification() {
+        NotificationResource sent = mock(NotificationResource.class);
+        when(sent.getId()).thenReturn("notification-id");
+        when(ioBackEndRestConnector.notify(any(NotificationDTO.class), anyString())).thenReturn(sent);
+    }
+
+    private EvaluationDTO evaluation(String status) {
+        EvaluationDTO evaluation = new EvaluationDTO();
+        evaluation.setUserId("user-id");
+        evaluation.setInitiativeId("initiative-id");
+        evaluation.setInitiativeName("Bonus");
+        evaluation.setStatus(status);
+        evaluation.setAdmissibilityCheckDate(LocalDateTime.now());
+        evaluation.setBeneficiaryBudgetCents(25000L);
+        evaluation.setChannel(Channel.IO);
+        evaluation.setFiscalCode("fiscal-code");
+        evaluation.setIoToken("io-token");
+        return evaluation;
     }
 }
