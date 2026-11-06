@@ -75,7 +75,7 @@ class OnboardingPlaceholderTest {
         evaluation.setOnboardingRejectionReasons(reason == null ? null : List.of(reason));
         NotificationContent rendered = renderer.render(
                 new NotificationContent("Subject", markdown),
-                new OnboardingPlaceholderContext(evaluation, assistedLink),
+                OnboardingPlaceholderContext.from(evaluation, assistedLink),
                 List.of(OnboardingPlaceholder.values())
         );
         return rendered.markdown();

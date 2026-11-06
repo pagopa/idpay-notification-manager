@@ -96,7 +96,7 @@ notification:
             markdown: |-
               ${MARKDOWN_KO_PDND:Purtroppo non hai i requisiti necessari per aderire a %initiativeName% per i seguenti motivi:}${MARKDOWN_DOUBLE_NEW_LINE:
               
-              }${MARKDOWN_KO_PDND_REJECT_REASONS:%pdndRejectReasons%}${MARKDOWN_KO_MISTAKE:Se ritieni che ci sia stato un errore puoi segnalarlo direttamente all'Ente erogatore dell'iniziativa.}${MARKDOWN_DOUBLE_NEW_LINE:
+              }${MARKDOWN_KO_PDND_REJECT_REASONS:%pdndRejectReasonsList%}${MARKDOWN_KO_MISTAKE:Se ritieni che ci sia stato un errore puoi segnalarlo direttamente all'Ente erogatore dell'iniziativa.}${MARKDOWN_DOUBLE_NEW_LINE:
               
               }${MARKDOWN_APOLOGY:Ci scusiamo per il disagio.}
           ONBOARDING_KO_RANKING:
@@ -118,7 +118,7 @@ notification:
             markdown: |-
               ${MARKDOWN_KO_REJECTED_NO_RETRY:Purtroppo non è stato possibile aderire a %initiativeName% per i seguenti motivi:}${MARKDOWN_DOUBLE_NEW_LINE:
               
-              }${MARKDOWN_KO_REJECTED_NO_RETRY_REJECT_REASONS:%noRetryRejectReasons%}${MARKDOWN_KO_MISTAKE:Se ritieni che ci sia stato un errore puoi segnalarlo direttamente all'Ente erogatore dell'iniziativa.}${MARKDOWN_DOUBLE_NEW_LINE:
+              }${MARKDOWN_KO_REJECTED_NO_RETRY_REJECT_REASONS:%noRetryRejectReasonsList%}${MARKDOWN_KO_MISTAKE:Se ritieni che ci sia stato un errore puoi segnalarlo direttamente all'Ente erogatore dell'iniziativa.}${MARKDOWN_DOUBLE_NEW_LINE:
               
               }${MARKDOWN_APOLOGY:Ci scusiamo per il disagio.}
           ONBOARDING_KO_TECHNICAL:

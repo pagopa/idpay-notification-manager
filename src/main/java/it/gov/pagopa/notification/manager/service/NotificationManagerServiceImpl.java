@@ -1,6 +1,7 @@
 package it.gov.pagopa.notification.manager.service;
 
 import feign.FeignException;
+import it.gov.pagopa.notification.manager.config.ProfilesNotificationProperties;
 import it.gov.pagopa.notification.manager.connector.IOBackEndRestConnector;
 import it.gov.pagopa.notification.manager.connector.PdvDecryptRestConnector;
 import it.gov.pagopa.notification.manager.connector.initiative.InitiativeRestConnector;
@@ -21,12 +22,8 @@ import it.gov.pagopa.notification.manager.repository.NotificationManagerReposito
 import it.gov.pagopa.notification.manager.repository.NotificationManagerRepositoryExtended;
 import it.gov.pagopa.notification.manager.service.io.IoNotificationContentService;
 import it.gov.pagopa.notification.manager.service.io.NotificationEventResolver;
-import it.gov.pagopa.notification.manager.service.io.placeholder.InitiativePlaceholder;
-import it.gov.pagopa.notification.manager.service.io.placeholder.InitiativePlaceholderContext;
-import it.gov.pagopa.notification.manager.service.io.placeholder.RefundPlaceholder;
-import it.gov.pagopa.notification.manager.service.io.placeholder.RefundPlaceholderContext;
-import it.gov.pagopa.notification.manager.service.io.placeholder.ReminderPlaceholder;
-import it.gov.pagopa.notification.manager.service.io.placeholder.ReminderPlaceholderContext;
+import it.gov.pagopa.notification.manager.service.io.ProfilesNotificationCatalog;
+import it.gov.pagopa.notification.manager.service.io.placeholder.*;
 import it.gov.pagopa.notification.manager.service.onboarding.OnboardingIoNotification;
 import it.gov.pagopa.notification.manager.service.onboarding.OnboardingWebNotification;
 import it.gov.pagopa.notification.manager.utils.AuditUtilities;
@@ -55,6 +52,7 @@ import java.util.concurrent.Future;
 import java.util.stream.IntStream;
 
 import static it.gov.pagopa.notification.manager.constants.NotificationConstants.AnyNotificationConsumer.SubTypes.*;
+import static it.gov.pagopa.notification.manager.constants.NotificationConstants.STATUS_ONBOARDING_KO;
 
 
 @Service
@@ -76,6 +74,7 @@ public class NotificationManagerServiceImpl implements NotificationManagerServic
     private final OnboardingIoNotification onboardingIoNotification;
     private final OnboardingWebNotification onboardingWebNotification;
     private final IoNotificationContentService ioNotificationContentService;
+    private final ProfilesNotificationCatalog profilesNotificationCatalog;
     @Value("${rest-client.notification.backend-io.ttl}")
     private Long timeToLive;
     @Value("${notification.manager.recover.parallelism}")
@@ -112,7 +111,8 @@ public class NotificationManagerServiceImpl implements NotificationManagerServic
                                           AuditUtilities auditUtilities,
                                           OnboardingIoNotification onboardingIoNotification,
                                           OnboardingWebNotification onboardingWebNotification,
-                                          IoNotificationContentService ioNotificationContentService) {
+                                          IoNotificationContentService ioNotificationContentService,
+                                          ProfilesNotificationCatalog profilesNotificationCatalog) {
         this.pageSize = pageSize;
         this.delay = delay;
         this.outcomeProducer = outcomeProducer;
@@ -128,6 +128,7 @@ public class NotificationManagerServiceImpl implements NotificationManagerServic
         this.onboardingIoNotification = onboardingIoNotification;
         this.onboardingWebNotification = onboardingWebNotification;
         this.ioNotificationContentService = ioNotificationContentService;
+        this.profilesNotificationCatalog = profilesNotificationCatalog;
     }
 
     @PostConstruct
@@ -334,33 +335,50 @@ public class NotificationManagerServiceImpl implements NotificationManagerServic
         // retrieve initiative configured profile
         InitiativeNotificationDTO initiativeDetailInfo = getInitiativeDetailInfo(notification.getInitiativeId());
         if (initiativeDetailInfo == null) {
-            notificationKO(notification, startTime);
             return false;
         }
         String configuredProfile = initiativeDetailInfo.getEmailFlux();
 
         // resolve notification content based on the notification type and initiative configured profile
         Optional<NotificationContent> content;
-        String subject;
-        String markdown;
         switch (notification.getOperationType()) {
             case ONBOARDING -> {
-                subject = notificationMarkdown.getSubject(notification);
-                markdown = notificationMarkdown.getMarkdown(notification);
+                Optional<NotificationEvent> optEvent =
+                        NotificationEventResolver.resolveOnboardingEvent(notification);
+
+                if (optEvent.isPresent()) {
+                    NotificationEvent notificationEventToRender = optEvent.get();
+
+                    // handle the case where the notification event is ONBOARDING_KO
+                    // and the notification content is not configured for the given profile and event
+                    if (STATUS_ONBOARDING_KO.equals(notification.getOnboardingOutcome())) {
+                        Optional<NotificationContent> optContent =
+                                ioNotificationContentService.find(configuredProfile, optEvent.get());
+
+                        if (optContent.isEmpty()) {
+                            notificationEventToRender = NotificationEvent.ONBOARDING_KO_GENERIC;
+                        }
+                    }
+
+                    // resolve profile, find event and render notification content with placeholders
+                    String assistedLink = recoverAssistedLink(configuredProfile);
+                    content = ioNotificationContentService.resolveProfileAndFindAndRender(
+                            configuredProfile,
+                            notificationEventToRender,
+                            OnboardingPlaceholderContext.from(notification, assistedLink),
+                            List.of(OnboardingPlaceholder.values()));
+                } else {
+                    log.error("[NOTIFY][ONBOARDING] Cannot resolve notification event for user {} and initiative {}",
+                            sanitizedUserId, sanitizedInitiativeId);
+                    content = Optional.empty();
+                }
             }
             case CHECKIBAN_KO -> {
-                subject = notificationMarkdown.getSubjectCheckIbanKo();
-                markdown = notificationMarkdown.getMarkdownCheckIbanKo();
-
                 content = ioNotificationContentService.resolveProfileAndFind(
                         configuredProfile,
                         NotificationEvent.CHECK_IBAN_KO);
             }
             case REFUND -> {
-                subject = notificationMarkdown.getSubjectRefund(notification.getRefundStatus());
-                markdown = notificationMarkdown.getMarkdownRefund(notification.getRefundStatus(), notification.getRefundReward());
-
-                // TODO: this conversion code was missing
                 BigDecimal refund = notification.getRefundReward() == null
                         ? null
                         : notification.getRefundReward()
@@ -373,9 +391,6 @@ public class NotificationManagerServiceImpl implements NotificationManagerServic
                         List.of(RefundPlaceholder.values()));
             }
             case SUSPENSION -> {
-                subject = notificationMarkdown.getSubjectSuspension(notification.getInitiativeName());
-                markdown = notificationMarkdown.getMarkdownSuspension();
-
                 content = ioNotificationContentService.resolveProfileAndFindAndRender(
                         configuredProfile,
                         NotificationEvent.SUSPENSION,
@@ -383,9 +398,6 @@ public class NotificationManagerServiceImpl implements NotificationManagerServic
                         List.of(InitiativePlaceholder.values()));
             }
             case READMISSION -> {
-                subject = notificationMarkdown.getSubjectReadmission(notification.getInitiativeName());
-                markdown = notificationMarkdown.getMarkdownReadmission();
-
                 content = ioNotificationContentService.resolveProfileAndFindAndRender(
                         configuredProfile,
                         NotificationEvent.READMISSION,
@@ -398,17 +410,18 @@ public class NotificationManagerServiceImpl implements NotificationManagerServic
         }
 
         // if content is empty, it means that the notification is not configured for the given profile and event
-        /*if (content.isEmpty()) {
+        if (content.isEmpty()) {
+            notificationKO(notification, startTime);
             return false;
-        }*/
+        }
 
         // build notification and then send it
-        /*NotificationContent rendered = content.get();*/
+        NotificationContent rendered = content.get();
         NotificationDTO notificationDTO = notificationDTOMapper.map(
                 fiscalCode,
                 timeToLive,
-                subject,
-                markdown);
+                rendered.subject(),
+                rendered.markdown());
 
         String notificationId = sendNotification(notificationDTO, tokenDecrypt);
 
@@ -423,6 +436,16 @@ public class NotificationManagerServiceImpl implements NotificationManagerServic
         performanceLog(startTime);
 
         return true;
+    }
+
+    private String recoverAssistedLink(String configuredProfile) {
+        String assistedLink = null;
+        Optional<ProfilesNotificationProperties.ProfileConfigVariables> profileConfigVariables =
+                profilesNotificationCatalog.retrieveProfileVariables(configuredProfile);
+        if (profileConfigVariables.isPresent()) {
+            assistedLink = profileConfigVariables.get().getAssistedLink();
+        }
+        return assistedLink;
     }
 
     @Override
@@ -577,7 +600,6 @@ public class NotificationManagerServiceImpl implements NotificationManagerServic
                         NotificationEvent.CHECK_IBAN_KO);
             }
             case NotificationRefundQueueDTO notificationRefundOnQueueDTO -> {
-                // TODO: this could throw NPE if refundReward is null
                 BigDecimal refund = BigDecimal.valueOf(notificationRefundOnQueueDTO.getRefundReward())
                         .divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_DOWN);
                 content = ioNotificationContentService.resolveProfileAndFindAndRender(

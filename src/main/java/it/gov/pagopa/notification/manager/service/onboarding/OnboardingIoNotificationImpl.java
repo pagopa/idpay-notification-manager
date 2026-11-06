@@ -112,7 +112,7 @@ public class OnboardingIoNotificationImpl extends BaseOnboardingNotification<Not
         return notificationContentService.resolveProfileAndFindAndRender(
                 evaluationDTO.getEmailFlux(),
                 event,
-                new OnboardingPlaceholderContext(evaluationDTO, assistedLink),
+                OnboardingPlaceholderContext.from(evaluationDTO, assistedLink),
                 List.of(OnboardingPlaceholder.values())
         );
 
