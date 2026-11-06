@@ -8,6 +8,8 @@ import it.gov.pagopa.notification.manager.dto.initiative.InitiativeNotificationD
 import it.gov.pagopa.notification.manager.utils.Utilities;
 import lombok.extern.slf4j.Slf4j;
 
+import java.util.List;
+
 import static it.gov.pagopa.notification.manager.constants.NotificationConstants.*;
 
 
@@ -25,10 +27,9 @@ public abstract class BaseOnboardingNotification<R> {
         String sanitizedUserId = Utilities.sanitizeString(evaluationDTO.getUserId());
         String sanitizedStatus = Utilities.sanitizeString(evaluationDTO.getStatus());
 
-        InitiativeNotificationDTO initiativeNotificationDTO = null;
         boolean initiativeFetchFailed = false;
         try {
-             initiativeNotificationDTO = initiativeRestConnector.getInitiativeDetailInfo(evaluationDTO.getInitiativeId());
+            InitiativeNotificationDTO initiativeNotificationDTO = initiativeRestConnector.getInitiativeDetailInfo(evaluationDTO.getInitiativeId());
              evaluationDTO.setEmailFlux(initiativeNotificationDTO.getEmailFlux());
         } catch (FeignException _) {
             log.error("[PROCESS_ONBOARDING_NOTIFICATION] Failed to retrieve initiativeDetail from initiative service. Notification will not be sent for user {}", sanitizedUserId);
@@ -59,22 +60,26 @@ public abstract class BaseOnboardingNotification<R> {
     abstract R processOnboardingKo(EvaluationDTO evaluationDTO);
 
     private R processOnboardingOk(EvaluationDTO evaluationDTO) {
+        boolean isPartial = isOnboardingOkPartial(evaluationDTO.getVerifies(), evaluationDTO.getBeneficiaryBudgetCents());
+        return generateOnboardingOkNotification(isPartial, evaluationDTO);
+
+    }
+
+    public static boolean isOnboardingOkPartial(List<VerifyDTO> verifies, Long  beneficiaryBudgetCents) {
         boolean isPartial = Boolean.FALSE;
-        if(evaluationDTO.getVerifies() != null && !evaluationDTO.getVerifies().isEmpty()){
-            for(VerifyDTO verify : evaluationDTO.getVerifies()){
+        if(verifies != null && !verifies.isEmpty()){
+            for(VerifyDTO verify : verifies){
                 // Partial outcome only when an ISEE verification was actually performed
                 // and the awarded budget dropped to the lower bracket (ISEE difforme).
                 if(verify.isVerify()
-                        && evaluationDTO.getBeneficiaryBudgetCents() != null
-                        && verify.getBeneficiaryBudgetCentsMin() == evaluationDTO.getBeneficiaryBudgetCents()){
+                        && beneficiaryBudgetCents != null
+                        && verify.getBeneficiaryBudgetCentsMin() == beneficiaryBudgetCents){
                     isPartial = Boolean.TRUE;
                     break;
                 }
             }
         }
-
-        return generateOnboardingOkNotification(isPartial, evaluationDTO);
-
+        return isPartial;
     }
 
     protected abstract R generateOnboardingOkNotification(boolean isPartial, EvaluationDTO evaluationDTO);

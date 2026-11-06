@@ -49,6 +49,8 @@ public class Notification {
 
   private List<VerifyDTO> verifies;
 
+  private Long beneficiaryBudgetCents;
+
   private LocalDateTime retryDate;
 
   private Integer retry;
