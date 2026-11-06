@@ -9,6 +9,7 @@ import it.gov.pagopa.notification.manager.service.io.profile.NotificationProfile
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 
 import java.util.Optional;
 
@@ -54,16 +55,21 @@ public class IoNotificationContentService {
         return findAndRender(profile, event, source, placeholders);
     }
 
-    public <T> Optional<NotificationContent> resolveProfileByInitiativeIdAndFindAndRender(
-            String initiativeId,
+    public <T> Optional<NotificationContent> resolveProfileByCatalogAndFindAndRender(
+            String configuredProfile,
             NotificationEvent event,
             T source,
             Iterable<? extends NotificationPlaceholder<T>> placeholders
     ) {
-        NotificationProfileResolution resolution = profileResolver.resolveByInitiativeId(initiativeId);
-        if (!(resolution instanceof NotificationProfileResolution.Resolved(String profile))) {
-            return Optional.empty();
-        }
-        return findAndRender(profile, event, source, placeholders);
+        return catalog.resolveProfile(configuredProfile)
+                .flatMap(profile -> findAndRender(profile, event, source, placeholders));
+    }
+
+    public <T> Optional<NotificationContent> resolveProfileByCatalogAndFind(
+            String configuredProfile,
+            NotificationEvent event
+    ) {
+        return catalog.resolveProfile(configuredProfile)
+                .flatMap(profile -> find(profile, event));
     }
 }

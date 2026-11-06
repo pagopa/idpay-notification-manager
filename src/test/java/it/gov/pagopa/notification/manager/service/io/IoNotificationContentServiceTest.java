@@ -17,6 +17,11 @@ import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.never;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 
 @ExtendWith(MockitoExtension.class)
 class IoNotificationContentServiceTest {
@@ -80,6 +85,33 @@ class IoNotificationContentServiceTest {
         );
 
         assertEquals(Optional.empty(), result);
+    }
+
+    @Test
+    void resolveProfileByCatalogAndFindAndRender_rendersResolvedProfile() {
+        when(catalog.resolveProfile("BEL25")).thenReturn(Optional.of("BEL25"));
+        when(catalog.find("BEL25", NotificationEvent.ONBOARDING_OK))
+                .thenReturn(Optional.of(new NotificationContent("Hello %name%", "Welcome %name%")));
+
+        assertEquals(
+                Optional.of(new NotificationContent("Hello Ada", "Welcome Ada")),
+                contentService.resolveProfileByCatalogAndFindAndRender(
+                        "BEL25", NotificationEvent.ONBOARDING_OK, "Ada", List.of(namePlaceholder()))
+        );
+        verifyNoInteractions(profileResolver);
+    }
+
+    @Test
+    void resolveProfileByCatalogAndFindAndRender_skipsUnknownProfile() {
+        when(catalog.resolveProfile("UNKNOWN")).thenReturn(Optional.empty());
+
+        assertEquals(
+                Optional.empty(),
+                contentService.resolveProfileByCatalogAndFindAndRender(
+                        "UNKNOWN", NotificationEvent.ONBOARDING_OK, "Ada", List.of(namePlaceholder()))
+        );
+        verify(catalog, never()).find(anyString(), any());
+        verifyNoInteractions(profileResolver);
     }
 
     private NotificationPlaceholder<String> namePlaceholder() {

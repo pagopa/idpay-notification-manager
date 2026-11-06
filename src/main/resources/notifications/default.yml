@@ -138,7 +138,7 @@ notification:
               Puoi controllare il bonus disponibile direttamente nella pagina dell'iniziativa.}
           REFUND_KO:
             subject: "${SUBJECT_KO_REFUND:Non è stato possibile effettuare il rimborso}"
-            markdown: |-
+            markdown:
               ${MARKDOWN_KO_REFUND:Purtroppo non è stato possibile accreditarti il rimborso.
               
               Ti chiediamo di modificare l'IBAN.
@@ -146,13 +146,13 @@ notification:
               }
           SUSPENSION:
             subject: "${SUBJECT_SUSPENSION:Sospensione temporanea da iniziativa %initiativeName%}"
-            markdown: |-
+            markdown:
               ${MARKDOWN_SUSPENSION:In seguito ad alcune verifiche, il tuo profilo è stato sospeso dall'iniziativa.
               Gli importi ancora da erogare saranno sospesi e le transazioni a partire da questo momento non saranno riconosciute come valide ai fini dell'iniziativa.
               Contatta l'assistenza al numero XXXXX per capire come risolvere entro 60 giorni a partire da oggi e comunica il codice protocollo XXXX.}
           READMISSION:
             subject: "${SUBJECT_READMISSION:Riammissione a iniziativa %initiativeName%}"
-            markdown: |-
+            markdown:
               ${MARKDOWN_READMISSION:In seguito ad alcune verifiche, il tuo profilo è stato riammesso all'iniziativa.
               Gli importi precedentemente sospesi saranno riammessi e rimborsati nel prossimo ordine di rimborso a tuo favore.}
           INITIATIVE_PUBLISHING:

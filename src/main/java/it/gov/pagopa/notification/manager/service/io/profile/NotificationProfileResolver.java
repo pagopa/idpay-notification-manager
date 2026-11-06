@@ -41,20 +41,20 @@ public class NotificationProfileResolver {
         return resolveByInputProfile(initiative.getEmailFlux(), sanitizedInitiativeId);
     }
 
-    public NotificationProfileResolution resolveByInputProfile(String inputProfile) {
-        return resolveByInputProfile(inputProfile, null);
+    public NotificationProfileResolution resolveByInputProfile(String configuredProfile) {
+        return resolveByInputProfile(configuredProfile, null);
     }
 
-    private NotificationProfileResolution resolveByInputProfile(String inputProfile, String sanitizedInitiativeId) {
-        String profile = StringUtils.hasText(inputProfile)
-                ? inputProfile
+    private NotificationProfileResolution resolveByInputProfile(String configuredProfile, String sanitizedInitiativeId) {
+        String profile = StringUtils.hasText(configuredProfile)
+                ? configuredProfile
                 : IoNotificationCatalog.DEFAULT_PROFILE;
         if (!catalog.containsProfile(profile)) {
             if (sanitizedInitiativeId != null) {
-                log.error("[NOTIFY][IO][UNKNOWN_NOTIFICATION_PROFILE] initiativeId={}, profile={}",
+                log.warn("[NOTIFY][IO][UNKNOWN_NOTIFICATION_PROFILE] initiativeId={}, profile={}",
                         sanitizedInitiativeId, sanitizeString(profile));
             } else {
-                log.error("[NOTIFY][IO][UNKNOWN_NOTIFICATION_PROFILE] profile={}", sanitizeString(profile));
+                log.warn("[NOTIFY][IO][UNKNOWN_NOTIFICATION_PROFILE] profile={}", sanitizeString(profile));
             }
             return new NotificationProfileResolution.Skipped(profile);
         }
