@@ -25,16 +25,15 @@ public abstract class BaseOnboardingNotification<R> {
         String sanitizedUserId = Utilities.sanitizeString(evaluationDTO.getUserId());
         String sanitizedStatus = Utilities.sanitizeString(evaluationDTO.getStatus());
 
-        boolean initiativeFetchFailed = evaluationDTO.getEmailFlux() != null;
-        if(!initiativeFetchFailed) {
-            try {
-                InitiativeNotificationDTO initiativeNotificationDTO = initiativeRestConnector.getInitiativeDetailInfo(evaluationDTO.getInitiativeId());
-                evaluationDTO.setEmailFlux(initiativeNotificationDTO.getEmailFlux());
-            } catch (FeignException _) {
-                log.error("[PROCESS_ONBOARDING_NOTIFICATION] Failed to retrieve initiativeDetail from initiative service. Notification will not be sent for user {}", sanitizedUserId);
-                handleInitiativeFetchError(evaluationDTO);
-                return null;
-            }
+        InitiativeNotificationDTO initiativeNotificationDTO = null;
+        boolean initiativeFetchFailed = false;
+        try {
+             initiativeNotificationDTO = initiativeRestConnector.getInitiativeDetailInfo(evaluationDTO.getInitiativeId());
+             evaluationDTO.setEmailFlux(initiativeNotificationDTO.getEmailFlux());
+        } catch (FeignException _) {
+            log.error("[PROCESS_ONBOARDING_NOTIFICATION] Failed to retrieve initiativeDetail from initiative service. Notification will not be sent for user {}", sanitizedUserId);
+            handleInitiativeFetchError(evaluationDTO);
+            return null;
         }
 
         R notificationToSend = switch (evaluationDTO.getStatus()){
