@@ -10,6 +10,7 @@ import it.gov.pagopa.notification.manager.dto.initiative.InitiativeNotificationD
 import it.gov.pagopa.notification.manager.dto.mapper.NotificationDTOMapper;
 import it.gov.pagopa.notification.manager.enums.Channel;
 import it.gov.pagopa.notification.manager.enums.NotificationEvent;
+import it.gov.pagopa.notification.manager.exception.NotFoundNotificationEventTemplate;
 import it.gov.pagopa.notification.manager.model.NotificationContent;
 import it.gov.pagopa.notification.manager.service.io.IoNotificationContentService;
 import it.gov.pagopa.notification.manager.service.io.placeholder.OnboardingPlaceholderContext;
@@ -29,8 +30,7 @@ import static it.gov.pagopa.notification.manager.constants.NotificationConstants
 import static it.gov.pagopa.notification.manager.dto.OnboardingRejectionReason.OnboardingRejectionReasonCode.FAMILY_CRITERIA_FAIL;
 import static it.gov.pagopa.notification.manager.dto.OnboardingRejectionReason.OnboardingRejectionReasonCode.REJECTION_REASON_INITIATIVE_ENDED;
 import static it.gov.pagopa.notification.manager.dto.OnboardingRejectionReason.OnboardingRejectionReasonType.INVALID_REQUEST;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
@@ -156,7 +156,9 @@ class OnboardingIoNotificationTest {
                 any()
         )).thenReturn(Optional.empty());
 
-        assertNull(notification.processNotification(evaluation));
+        NotFoundNotificationEventTemplate errorResult = assertThrows(NotFoundNotificationEventTemplate.class, () -> notification.processNotification(evaluation));
+
+        assertEquals("Unable to notify user user-id: notification event ONBOARDING_OK was not found for profile UNKNOWN", errorResult.getMessage());
 
         verify(notificationContentService).resolveProfileAndFindAndRender(
                 eq("UNKNOWN"),
@@ -179,7 +181,10 @@ class OnboardingIoNotificationTest {
         ))
                 .thenReturn(Optional.empty());
 
-        assertNull(notification.processNotification(evaluation));
+        NotFoundNotificationEventTemplate errorResult = assertThrows(NotFoundNotificationEventTemplate.class, () -> notification.processNotification(evaluation));
+
+        assertEquals("Unable to notify user user-id: notification event ONBOARDING_OK was not found for profile BEL25", errorResult.getMessage());
+
 
         verifyNoInteractions(ioBackEndRestConnector);
     }

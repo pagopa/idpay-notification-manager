@@ -617,12 +617,8 @@ class OnboardingWebNotificationTest {
     void processNotification_whenFeignException_handlesError() {
         EvaluationDTO evaluationDTO = getEvaluationDto();
 
-        EmailNotificationProperties.Subject subjectMock = mock(EmailNotificationProperties.Subject.class);
-        when(emailNotificationPropertiesMock.getSubject()).thenReturn(subjectMock);
-        when(subjectMock.getOk()).thenReturn("TEST_OK");
-
-        when(notificationMapper.createNotificationFromEmailMessageDTO(any(EmailMessageDTO.class),
-                any(EvaluationDTO.class))).thenReturn(NOTIFICATION);
+        when(notificationMapper.evaluationToNotification(evaluationDTO))
+               .thenReturn(NOTIFICATION);
 
         when(initiativeRestConnector.getInitiativeDetailInfo(anyString()))
                 .thenThrow(new feign.FeignException.InternalServerError(
