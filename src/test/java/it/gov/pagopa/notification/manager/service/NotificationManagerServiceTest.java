@@ -11,18 +11,24 @@ import it.gov.pagopa.notification.manager.constants.NotificationConstants;
 import it.gov.pagopa.notification.manager.dto.*;
 import it.gov.pagopa.notification.manager.dto.event.*;
 import it.gov.pagopa.notification.manager.dto.initiative.InitiativeAdditionalInfoDTO;
+import it.gov.pagopa.notification.manager.dto.initiative.InitiativeNotificationDTO;
 import it.gov.pagopa.notification.manager.dto.mapper.NotificationDTOMapper;
 import it.gov.pagopa.notification.manager.dto.mapper.NotificationMapper;
 import it.gov.pagopa.notification.manager.enums.Channel;
+import it.gov.pagopa.notification.manager.enums.NotificationEvent;
 import it.gov.pagopa.notification.manager.event.producer.OutcomeProducer;
 import it.gov.pagopa.notification.manager.model.Notification;
+import it.gov.pagopa.notification.manager.model.NotificationContent;
 import it.gov.pagopa.notification.manager.model.NotificationMarkdown;
 import it.gov.pagopa.notification.manager.repository.NotificationManagerRepository;
 import it.gov.pagopa.notification.manager.repository.NotificationManagerRepositoryExtended;
+import it.gov.pagopa.notification.manager.service.io.IoNotificationContentService;
+import it.gov.pagopa.notification.manager.service.io.NotificationEventResolver;
 import it.gov.pagopa.notification.manager.service.onboarding.OnboardingIoNotification;
 import it.gov.pagopa.notification.manager.service.onboarding.OnboardingWebNotification;
 import it.gov.pagopa.notification.manager.utils.AuditUtilities;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
@@ -419,8 +425,23 @@ class NotificationManagerServiceTest {
     @MockitoBean AuditUtilities auditUtilities;
     @MockitoBean OnboardingIoNotification onboardingIoNotification;
     @MockitoBean OnboardingWebNotification onboardingWebNotification;
+    @MockitoBean IoNotificationContentService ioNotificationContentService;
+    @MockitoBean NotificationEventResolver notificationEventResolver;
+
+    @BeforeEach
+    void prepareQueueContent() {
+        InitiativeNotificationDTO initiative = new InitiativeNotificationDTO();
+        initiative.setEmailFlux("DEFAULT");
+        when(initiativeRestConnector.getInitiativeDetailInfo(anyString())).thenReturn(initiative);
+        when(notificationEventResolver.resolveRefundEvent(anyString()))
+                .thenAnswer(invocation -> new NotificationEventResolver().resolveRefundEvent(invocation.getArgument(0)));
+        when(ioNotificationContentService.resolveProfileByCatalogAndFindAndRender(
+                anyString(), any(NotificationEvent.class), any(), any()))
+                .thenReturn(Optional.of(new NotificationContent(SUBJECT, MARKDOWN)));
+    }
 
     // ===== TESTS =====
+
 
     @Test
     void sendToQueue() {
@@ -665,9 +686,10 @@ class NotificationManagerServiceTest {
                 .thenReturn(PROFILE_RESOURCE);
         when(initiativeRestConnector.getIOTokens(NOTIFICATION_IBAN_QUEUE_DTO.getInitiativeId()))
                 .thenReturn(INITIATIVE_ADDITIONAL_INFO_DTO);
-        when(notificationMarkdown.getSubjectCheckIbanKo()).thenReturn(SUBJECT);
-        when(notificationMarkdown.getMarkdownCheckIbanKo()).thenReturn(MARKDOWN);
-        when(notificationDTOMapper.map(eq(FISCAL_CODE), anyLong(), anyString(), anyString()))
+        when(ioNotificationContentService.resolveProfileByCatalogAndFind(
+                "DEFAULT", NotificationEvent.CHECK_IBAN_KO))
+                .thenReturn(Optional.of(new NotificationContent(SUBJECT, MARKDOWN)));
+        when(notificationDTOMapper.map(eq(FISCAL_CODE), anyLong(), eq(SUBJECT), eq(MARKDOWN)))
                 .thenReturn(NOTIFICATION_DTO);
         when(notificationMapper.toEntity(NOTIFICATION_IBAN_QUEUE_DTO)).thenReturn(NOTIFICATION);
 
@@ -675,11 +697,12 @@ class NotificationManagerServiceTest {
         doThrow(new FeignException.BadRequest("", request, new byte[0], null))
                 .when(ioBackEndRestConnector).notify(NOTIFICATION_DTO, TOKEN);
 
-        try {
-            notificationManagerService.sendNotificationFromOperationType(NOTIFICATION_IBAN_QUEUE_DTO);
-        } catch (FeignException e) {
-            assertEquals(HttpStatus.BAD_REQUEST.value(), e.status());
-        }
+        assertDoesNotThrow(() ->
+                notificationManagerService.sendNotificationFromOperationType(NOTIFICATION_IBAN_QUEUE_DTO));
+        verify(ioNotificationContentService).resolveProfileByCatalogAndFind(
+                "DEFAULT", NotificationEvent.CHECK_IBAN_KO);
+        verify(ioBackEndRestConnector).notify(NOTIFICATION_DTO, TOKEN);
+        verifyNoInteractions(notificationMarkdown);
         verify(notificationManagerRepository, times(1)).save(any(Notification.class));
     }
 

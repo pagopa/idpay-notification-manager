@@ -1,18 +1,16 @@
 package it.gov.pagopa.notification.manager.service.io.placeholder;
 
-import it.gov.pagopa.notification.manager.model.Notification;
-
 import java.util.function.Function;
 
-public enum InitiativePlaceholder implements NotificationPlaceholder<Notification> {
+public enum InitiativePlaceholder implements NotificationPlaceholder<InitiativePlaceholderContext> {
 
-    INITIATIVE_ID("initiativeId", Notification::getInitiativeId),
-    INITIATIVE_NAME("initiativeName", Notification::getInitiativeName);
+    INITIATIVE_ID("initiativeId", InitiativePlaceholderContext::initiativeId),
+    INITIATIVE_NAME("initiativeName", InitiativePlaceholderContext::initiativeName);
 
     private final String key;
-    private final Function<Notification, String> resolver;
+    private final Function<InitiativePlaceholderContext, String> resolver;
 
-    InitiativePlaceholder(String key, Function<Notification, String> resolver) {
+    InitiativePlaceholder(String key, Function<InitiativePlaceholderContext, String> resolver) {
         this.key = key;
         this.resolver = resolver;
     }
@@ -23,7 +21,7 @@ public enum InitiativePlaceholder implements NotificationPlaceholder<Notificatio
     }
 
     @Override
-    public String resolve(Notification source) {
+    public String resolve(InitiativePlaceholderContext source) {
         return resolver.apply(source);
     }
 }

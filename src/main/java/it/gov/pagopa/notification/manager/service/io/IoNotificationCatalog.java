@@ -5,6 +5,7 @@ import it.gov.pagopa.notification.manager.enums.NotificationEvent;
 import it.gov.pagopa.notification.manager.model.NotificationContent;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
+import org.springframework.util.StringUtils;
 
 import java.util.Optional;
 
@@ -27,6 +28,18 @@ public class IoNotificationCatalog {
 
     public boolean containsProfile(String profile) {
         return properties.getProfiles().containsKey(profile);
+    }
+
+    public Optional<String> resolveProfile(String configuredProfile) {
+        String profile = StringUtils.hasText(configuredProfile)
+                ? configuredProfile
+                : DEFAULT_PROFILE;
+        if (!containsProfile(profile)) {
+            log.warn("[NOTIFY][IO][UNKNOWN_NOTIFICATION_PROFILE] profile={}", profile);
+            return Optional.empty();
+        }
+        log.info("[NOTIFY][IO][PROFILE_RESOLVED] profile={}", profile);
+        return Optional.of(profile);
     }
 
     public Optional<NotificationContent> find(String profile, NotificationEvent event) {
