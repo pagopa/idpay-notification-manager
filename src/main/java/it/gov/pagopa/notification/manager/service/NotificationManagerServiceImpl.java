@@ -393,12 +393,12 @@ public class NotificationManagerServiceImpl implements NotificationManagerServic
         }
 
         // if content is empty, it means that the notification is not configured for the given profile and event
-        if (content.isEmpty()) {
+        /*if (content.isEmpty()) {
             return false;
-        }
+        }*/
 
         // build notification and then send it
-        NotificationContent rendered = content.get();
+        /*NotificationContent rendered = content.get();*/
         NotificationDTO notificationDTO = notificationDTOMapper.map(
                 fiscalCode,
                 timeToLive,
