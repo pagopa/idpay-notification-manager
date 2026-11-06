@@ -5,6 +5,7 @@ import it.gov.pagopa.notification.manager.connector.initiative.InitiativeRestCon
 import it.gov.pagopa.notification.manager.dto.EvaluationDTO;
 import it.gov.pagopa.notification.manager.dto.VerifyDTO;
 import it.gov.pagopa.notification.manager.dto.initiative.InitiativeNotificationDTO;
+import it.gov.pagopa.notification.manager.utils.Utilities;
 import lombok.extern.slf4j.Slf4j;
 
 import static it.gov.pagopa.notification.manager.constants.NotificationConstants.*;
@@ -21,8 +22,8 @@ public abstract class BaseOnboardingNotification<R> {
     }
 
     public String processNotification(EvaluationDTO evaluationDTO){
-        String sanitizedUserId = sanitizeString(evaluationDTO.getUserId());
-        String sanitizedStatus = sanitizeString(evaluationDTO.getStatus());
+        String sanitizedUserId = Utilities.sanitizeString(evaluationDTO.getUserId());
+        String sanitizedStatus = Utilities.sanitizeString(evaluationDTO.getStatus());
 
         InitiativeNotificationDTO initiativeNotificationDTO = null;
         boolean initiativeFetchFailed = false;
@@ -80,8 +81,5 @@ public abstract class BaseOnboardingNotification<R> {
 
     abstract String sendNotification(R notificationToSend, EvaluationDTO evaluationDTO, boolean initiativeFetchFailed);
 
-    public static String sanitizeString(String str){
-        return str == null? null: str.replaceAll("[\\r\\n]", "").replaceAll("[^\\w\\s-]", "");
-    }
 
 }

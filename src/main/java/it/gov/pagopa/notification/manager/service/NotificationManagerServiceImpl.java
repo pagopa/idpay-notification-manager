@@ -206,9 +206,12 @@ public class NotificationManagerServiceImpl implements NotificationManagerServic
             }
 
             logNotificationId(notificationId);
-        } catch (NotFoundNotificationEventTemplate e) {
-            //TODO enrich log error
-            log.error(e.getMessage());
+        } catch (NotFoundNotificationEventTemplate _) {
+            log.info(
+                    "[NOTIFY][IO] Notification event {} not configured for initiative {}. Notification skipped",
+                    evaluationDTO.getStatus(),
+                    sanitizeString(evaluationDTO.getInitiativeId())
+            );
         }
 
 

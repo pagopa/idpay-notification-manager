@@ -21,6 +21,7 @@ import java.util.Map;
 
 import static it.gov.pagopa.notification.manager.constants.NotificationConstants.EmailTemplates.*;
 import static it.gov.pagopa.notification.manager.dto.OnboardingRejectionReason.OnboardingRejectionReasonCode.REJECTION_REASON_INITIATIVE_ENDED;
+import static it.gov.pagopa.notification.manager.utils.Utilities.sanitizeString;
 
 @Slf4j
 @Service

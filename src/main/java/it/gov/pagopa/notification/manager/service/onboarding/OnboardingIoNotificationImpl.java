@@ -14,20 +14,19 @@ import it.gov.pagopa.notification.manager.service.io.IoNotificationContentServic
 import it.gov.pagopa.notification.manager.service.io.placeholder.OnboardingPlaceholder;
 import it.gov.pagopa.notification.manager.service.io.placeholder.OnboardingPlaceholderContext;
 import lombok.extern.slf4j.Slf4j;
-import org.jspecify.annotations.Nullable;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Optional;
 
-import static it.gov.pagopa.notification.manager.dto.OnboardingRejectionReason.OnboardingRejectionReasonCode.REJECTION_REASON_INITIATIVE_ENDED;
+import static it.gov.pagopa.notification.manager.utils.Utilities.sanitizeString;
 
 @Slf4j
 @Service
 public class OnboardingIoNotificationImpl extends BaseOnboardingNotification<NotificationDTO> implements OnboardingIoNotification {
 
-    public static final String NOT_FOUND_NOTIFICATION_EVENT_TEMPLATE_ERROR_MESSAGE = "[NOTIFY][ONBOARDING_OK] It's not possible notify the user %s because not found notification event for %s in the template %s";
+    public static final String NOT_FOUND_NOTIFICATION_EVENT_TEMPLATE_ERROR_MESSAGE = "Unable to notify user %s: notification event %s was not found for profile %s";
     private final IoNotificationContentService notificationContentService;
     private final NotificationDTOMapper notificationDTOMapper;
     private final IOBackEndRestConnector ioBackEndRestConnector;
@@ -52,7 +51,7 @@ public class OnboardingIoNotificationImpl extends BaseOnboardingNotification<Not
     @Override
     NotificationDTO processOnboardingJoined(EvaluationDTO evaluationDTO) {
         NotificationContent notificationContent = retrieveNotificationContent(evaluationDTO, NotificationEvent.ONBOARDING_JOINED)
-                .orElseThrow(() -> new NotFoundNotificationEventTemplate("[NOTIFY][ONBOARDING_JOINED] It's not possible notify the user %s because not found notification event for %s in the template %s".formatted(evaluationDTO.getUserId(), NotificationEvent.ONBOARDING_JOINED, evaluationDTO.getEmailFlux())));
+                .orElseThrow(() -> new NotFoundNotificationEventTemplate(NOT_FOUND_NOTIFICATION_EVENT_TEMPLATE_ERROR_MESSAGE.formatted(sanitizeString(evaluationDTO.getUserId()), NotificationEvent.ONBOARDING_JOINED, evaluationDTO.getEmailFlux())));
         return createNotification(evaluationDTO, notificationContent);
     }
 
@@ -73,7 +72,7 @@ public class OnboardingIoNotificationImpl extends BaseOnboardingNotification<Not
         }
 
         if(finalContent == null) {
-            finalContent = retrieveNotificationContent(evaluationDTO, NotificationEvent.ONBOARDING_KO_GENERIC).orElseThrow(() -> new NotFoundNotificationEventTemplate("[NOTIFY][ONBOARDING_KO] It's not possible notify the user %s because not found notification event for %s in the template %s".formatted(evaluationDTO.getUserId(), notificationEvent, evaluationDTO.getEmailFlux())));
+            finalContent = retrieveNotificationContent(evaluationDTO, NotificationEvent.ONBOARDING_KO_GENERIC).orElseThrow(() -> new NotFoundNotificationEventTemplate(NOT_FOUND_NOTIFICATION_EVENT_TEMPLATE_ERROR_MESSAGE.formatted(sanitizeString(evaluationDTO.getUserId()), notificationEvent, evaluationDTO.getEmailFlux())));
         }
 
         return createNotification(evaluationDTO, finalContent);
