@@ -4,12 +4,9 @@ import it.gov.pagopa.notification.manager.enums.NotificationEvent;
 import it.gov.pagopa.notification.manager.model.NotificationContent;
 import it.gov.pagopa.notification.manager.service.io.placeholder.NotificationContentRenderer;
 import it.gov.pagopa.notification.manager.service.io.placeholder.NotificationPlaceholder;
-import it.gov.pagopa.notification.manager.service.io.profile.NotificationProfileResolution;
-import it.gov.pagopa.notification.manager.service.io.profile.NotificationProfileResolver;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import org.springframework.util.StringUtils;
 
 import java.util.Optional;
 
@@ -23,7 +20,6 @@ public class IoNotificationContentService {
 
     private final IoNotificationCatalog catalog;
     private final NotificationContentRenderer renderer;
-    private final NotificationProfileResolver profileResolver;
 
     public Optional<NotificationContent> find(String profile, NotificationEvent event) {
         Optional<NotificationContent> content = catalog.find(profile, event);
@@ -49,24 +45,11 @@ public class IoNotificationContentService {
             T source,
             Iterable<? extends NotificationPlaceholder<T>> placeholders
     ) {
-        NotificationProfileResolution resolution = profileResolver.resolveByInputProfile(configuredProfile);
-        if (!(resolution instanceof NotificationProfileResolution.Resolved(String profile))) {
-            return Optional.empty();
-        }
-        return findAndRender(profile, event, source, placeholders);
-    }
-
-    public <T> Optional<NotificationContent> resolveProfileByCatalogAndFindAndRender(
-            String configuredProfile,
-            NotificationEvent event,
-            T source,
-            Iterable<? extends NotificationPlaceholder<T>> placeholders
-    ) {
         return catalog.resolveProfile(configuredProfile)
                 .flatMap(profile -> findAndRender(profile, event, source, placeholders));
     }
 
-    public <T> Optional<NotificationContent> resolveProfileByCatalogAndFind(
+    public Optional<NotificationContent> resolveProfileAndFind(
             String configuredProfile,
             NotificationEvent event
     ) {

@@ -4,8 +4,6 @@ import it.gov.pagopa.notification.manager.enums.NotificationEvent;
 import it.gov.pagopa.notification.manager.model.NotificationContent;
 import it.gov.pagopa.notification.manager.service.io.placeholder.NotificationContentRenderer;
 import it.gov.pagopa.notification.manager.service.io.placeholder.NotificationPlaceholder;
-import it.gov.pagopa.notification.manager.service.io.profile.NotificationProfileResolution;
-import it.gov.pagopa.notification.manager.service.io.profile.NotificationProfileResolver;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -17,7 +15,6 @@ import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.when;
-import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.never;
 import static org.mockito.ArgumentMatchers.any;
@@ -30,14 +27,12 @@ class IoNotificationContentServiceTest {
 
     @Mock
     private IoNotificationCatalog catalog;
-    @Mock
-    private NotificationProfileResolver profileResolver;
 
     private IoNotificationContentService contentService;
 
     @BeforeEach
     void setUp() {
-        contentService = new IoNotificationContentService(catalog, renderer, profileResolver);
+        contentService = new IoNotificationContentService(catalog, renderer);
     }
 
     @Test
@@ -57,8 +52,7 @@ class IoNotificationContentServiceTest {
 
     @Test
     void resolveProfileAndFindAndRender_resolvesProfileBeforeLoadingContent() {
-        when(profileResolver.resolveByInputProfile("BEL25"))
-                .thenReturn(new NotificationProfileResolution.Resolved("BEL25"));
+        when(catalog.resolveProfile("BEL25")).thenReturn(Optional.of("BEL25"));
         when(catalog.find("BEL25", NotificationEvent.ONBOARDING_OK))
                 .thenReturn(Optional.of(new NotificationContent("Hello %name%", "Welcome %name%")));
 
@@ -74,8 +68,7 @@ class IoNotificationContentServiceTest {
 
     @Test
     void resolveProfileAndFindAndRender_skipsContentLookupForUnknownProfile() {
-        when(profileResolver.resolveByInputProfile("UNKNOWN"))
-                .thenReturn(new NotificationProfileResolution.Skipped("UNKNOWN"));
+        when(catalog.resolveProfile("UNKNOWN")).thenReturn(Optional.empty());
 
         Optional<NotificationContent> result = contentService.resolveProfileAndFindAndRender(
                 "UNKNOWN",
@@ -85,33 +78,56 @@ class IoNotificationContentServiceTest {
         );
 
         assertEquals(Optional.empty(), result);
+        verify(catalog, never()).find(anyString(), any());
     }
 
     @Test
-    void resolveProfileByCatalogAndFindAndRender_rendersResolvedProfile() {
+    void resolveProfileAndFind_returnsContentWithoutRendering() {
         when(catalog.resolveProfile("BEL25")).thenReturn(Optional.of("BEL25"));
         when(catalog.find("BEL25", NotificationEvent.ONBOARDING_OK))
                 .thenReturn(Optional.of(new NotificationContent("Hello %name%", "Welcome %name%")));
 
         assertEquals(
-                Optional.of(new NotificationContent("Hello Ada", "Welcome Ada")),
-                contentService.resolveProfileByCatalogAndFindAndRender(
-                        "BEL25", NotificationEvent.ONBOARDING_OK, "Ada", List.of(namePlaceholder()))
+                Optional.of(new NotificationContent("Hello %name%", "Welcome %name%")),
+                contentService.resolveProfileAndFind("BEL25", NotificationEvent.ONBOARDING_OK)
         );
-        verifyNoInteractions(profileResolver);
     }
 
     @Test
-    void resolveProfileByCatalogAndFindAndRender_skipsUnknownProfile() {
+    void resolveProfileAndFind_skipsUnknownProfile() {
         when(catalog.resolveProfile("UNKNOWN")).thenReturn(Optional.empty());
 
         assertEquals(
                 Optional.empty(),
-                contentService.resolveProfileByCatalogAndFindAndRender(
-                        "UNKNOWN", NotificationEvent.ONBOARDING_OK, "Ada", List.of(namePlaceholder()))
+                contentService.resolveProfileAndFind("UNKNOWN", NotificationEvent.ONBOARDING_OK)
         );
         verify(catalog, never()).find(anyString(), any());
-        verifyNoInteractions(profileResolver);
+    }
+
+    @Test
+    void resolveProfileAndFindAndRender_usesProfileReturnedByCatalog() {
+        when(catalog.resolveProfile(null)).thenReturn(Optional.of("DEFAULT"));
+        when(catalog.find("DEFAULT", NotificationEvent.ONBOARDING_OK))
+                .thenReturn(Optional.of(new NotificationContent("Hello %name%", "Welcome %name%")));
+
+        assertEquals(
+                Optional.of(new NotificationContent("Hello Ada", "Welcome Ada")),
+                contentService.resolveProfileAndFindAndRender(
+                        null, NotificationEvent.ONBOARDING_OK, "Ada", List.of(namePlaceholder()))
+        );
+    }
+
+    @Test
+    void resolveProfileAndFindAndRender_skipsMissingEvent() {
+        when(catalog.resolveProfile("BEL25")).thenReturn(Optional.of("BEL25"));
+        when(catalog.find("BEL25", NotificationEvent.ONBOARDING_OK)).thenReturn(Optional.empty());
+
+        assertEquals(
+                Optional.empty(),
+                contentService.resolveProfileAndFindAndRender(
+                        "BEL25", NotificationEvent.ONBOARDING_OK, "Ada", List.of(namePlaceholder()))
+        );
+        verify(catalog, never()).find("DEFAULT", NotificationEvent.ONBOARDING_OK);
     }
 
     private NotificationPlaceholder<String> namePlaceholder() {
