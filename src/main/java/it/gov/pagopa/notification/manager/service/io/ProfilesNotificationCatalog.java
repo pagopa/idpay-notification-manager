@@ -1,6 +1,6 @@
 package it.gov.pagopa.notification.manager.service.io;
 
-import it.gov.pagopa.notification.manager.config.IoNotificationProperties;
+import it.gov.pagopa.notification.manager.config.ProfilesNotificationProperties;
 import it.gov.pagopa.notification.manager.enums.NotificationEvent;
 import it.gov.pagopa.notification.manager.model.NotificationContent;
 import lombok.extern.slf4j.Slf4j;
@@ -11,18 +11,18 @@ import java.util.Optional;
 
 @Slf4j
 @Component
-public class IoNotificationCatalog {
+public class ProfilesNotificationCatalog {
 
     public static final String DEFAULT_PROFILE = "DEFAULT";
 
-    private final IoNotificationProperties properties;
+    private final ProfilesNotificationProperties properties;
 
-    public IoNotificationCatalog(IoNotificationProperties properties) {
+    public ProfilesNotificationCatalog(ProfilesNotificationProperties properties) {
         this.properties = properties;
 
-        log.info("[NOTIFY][IO][CATALOG_LOADED] profiles={}", properties.getProfiles().keySet());
+        log.info("[NOTIFY][CATALOG_LOADED] profiles={}", properties.getProfiles().keySet());
         if (!properties.getProfiles().containsKey(DEFAULT_PROFILE)) {
-            throw new IllegalArgumentException("The DEFAULT IO notification profile must be declared");
+            throw new IllegalArgumentException("The DEFAULT notification profile must be declared");
         }
     }
 
@@ -35,15 +35,22 @@ public class IoNotificationCatalog {
                 ? configuredProfile
                 : DEFAULT_PROFILE;
         if (!containsProfile(profile)) {
-            log.warn("[NOTIFY][IO][UNKNOWN_NOTIFICATION_PROFILE] profile={}", profile);
+            log.warn("[NOTIFY][UNKNOWN_NOTIFICATION_PROFILE] profile={}", profile);
             return Optional.empty();
         }
-        log.info("[NOTIFY][IO][PROFILE_RESOLVED] profile={}", profile);
+        log.info("[NOTIFY][PROFILE_RESOLVED] profile={}", profile);
         return Optional.of(profile);
     }
 
     public Optional<NotificationContent> find(String profile, NotificationEvent event) {
         return Optional.ofNullable(properties.getProfiles().get(profile))
+                .map(ProfilesNotificationProperties.ProfileConfig::getEvents)
                 .map(events -> events.get(event));
+    }
+
+    public Optional<ProfilesNotificationProperties.ProfileConfigVariables> retrieveProfileVariables(String configuredProfile) {
+        return resolveProfile(configuredProfile)
+                .map(profile -> properties.getProfiles().get(profile))
+                .map(ProfilesNotificationProperties.ProfileConfig::getVariables);
     }
 }

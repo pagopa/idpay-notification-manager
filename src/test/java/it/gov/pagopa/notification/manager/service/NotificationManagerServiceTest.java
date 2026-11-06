@@ -23,7 +23,6 @@ import it.gov.pagopa.notification.manager.model.NotificationMarkdown;
 import it.gov.pagopa.notification.manager.repository.NotificationManagerRepository;
 import it.gov.pagopa.notification.manager.repository.NotificationManagerRepositoryExtended;
 import it.gov.pagopa.notification.manager.service.io.IoNotificationContentService;
-import it.gov.pagopa.notification.manager.service.io.NotificationEventResolver;
 import it.gov.pagopa.notification.manager.service.onboarding.OnboardingIoNotification;
 import it.gov.pagopa.notification.manager.service.onboarding.OnboardingWebNotification;
 import it.gov.pagopa.notification.manager.utils.AuditUtilities;
@@ -426,16 +425,13 @@ class NotificationManagerServiceTest {
     @MockitoBean OnboardingIoNotification onboardingIoNotification;
     @MockitoBean OnboardingWebNotification onboardingWebNotification;
     @MockitoBean IoNotificationContentService ioNotificationContentService;
-    @MockitoBean NotificationEventResolver notificationEventResolver;
 
     @BeforeEach
     void prepareQueueContent() {
         InitiativeNotificationDTO initiative = new InitiativeNotificationDTO();
         initiative.setEmailFlux("DEFAULT");
         when(initiativeRestConnector.getInitiativeDetailInfo(anyString())).thenReturn(initiative);
-        when(notificationEventResolver.resolveRefundEvent(anyString()))
-                .thenAnswer(invocation -> new NotificationEventResolver().resolveRefundEvent(invocation.getArgument(0)));
-        when(ioNotificationContentService.resolveProfileByCatalogAndFindAndRender(
+        when(ioNotificationContentService.resolveProfileAndFindAndRender(
                 anyString(), any(NotificationEvent.class), any(), any()))
                 .thenReturn(Optional.of(new NotificationContent(SUBJECT, MARKDOWN)));
     }
@@ -686,7 +682,7 @@ class NotificationManagerServiceTest {
                 .thenReturn(PROFILE_RESOURCE);
         when(initiativeRestConnector.getIOTokens(NOTIFICATION_IBAN_QUEUE_DTO.getInitiativeId()))
                 .thenReturn(INITIATIVE_ADDITIONAL_INFO_DTO);
-        when(ioNotificationContentService.resolveProfileByCatalogAndFind(
+        when(ioNotificationContentService.resolveProfileAndFind(
                 "DEFAULT", NotificationEvent.CHECK_IBAN_KO))
                 .thenReturn(Optional.of(new NotificationContent(SUBJECT, MARKDOWN)));
         when(notificationDTOMapper.map(eq(FISCAL_CODE), anyLong(), eq(SUBJECT), eq(MARKDOWN)))
@@ -699,7 +695,7 @@ class NotificationManagerServiceTest {
 
         assertDoesNotThrow(() ->
                 notificationManagerService.sendNotificationFromOperationType(NOTIFICATION_IBAN_QUEUE_DTO));
-        verify(ioNotificationContentService).resolveProfileByCatalogAndFind(
+        verify(ioNotificationContentService).resolveProfileAndFind(
                 "DEFAULT", NotificationEvent.CHECK_IBAN_KO);
         verify(ioBackEndRestConnector).notify(NOTIFICATION_DTO, TOKEN);
         verifyNoInteractions(notificationMarkdown);

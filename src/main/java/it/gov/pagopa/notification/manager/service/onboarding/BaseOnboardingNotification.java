@@ -3,14 +3,12 @@ package it.gov.pagopa.notification.manager.service.onboarding;
 import feign.FeignException;
 import it.gov.pagopa.notification.manager.connector.initiative.InitiativeRestConnector;
 import it.gov.pagopa.notification.manager.dto.EvaluationDTO;
-import it.gov.pagopa.notification.manager.dto.VerifyDTO;
 import it.gov.pagopa.notification.manager.dto.initiative.InitiativeNotificationDTO;
 import it.gov.pagopa.notification.manager.utils.Utilities;
 import lombok.extern.slf4j.Slf4j;
 
-import java.util.List;
-
 import static it.gov.pagopa.notification.manager.constants.NotificationConstants.*;
+import static it.gov.pagopa.notification.manager.service.io.NotificationEventResolver.isOnboardingOkPartial;
 
 
 @Slf4j
@@ -63,23 +61,6 @@ public abstract class BaseOnboardingNotification<R> {
         boolean isPartial = isOnboardingOkPartial(evaluationDTO.getVerifies(), evaluationDTO.getBeneficiaryBudgetCents());
         return generateOnboardingOkNotification(isPartial, evaluationDTO);
 
-    }
-
-    public static boolean isOnboardingOkPartial(List<VerifyDTO> verifies, Long  beneficiaryBudgetCents) {
-        boolean isPartial = Boolean.FALSE;
-        if(verifies != null && !verifies.isEmpty()){
-            for(VerifyDTO verify : verifies){
-                // Partial outcome only when an ISEE verification was actually performed
-                // and the awarded budget dropped to the lower bracket (ISEE difforme).
-                if(verify.isVerify()
-                        && beneficiaryBudgetCents != null
-                        && verify.getBeneficiaryBudgetCentsMin() == beneficiaryBudgetCents){
-                    isPartial = Boolean.TRUE;
-                    break;
-                }
-            }
-        }
-        return isPartial;
     }
 
     protected abstract R generateOnboardingOkNotification(boolean isPartial, EvaluationDTO evaluationDTO);

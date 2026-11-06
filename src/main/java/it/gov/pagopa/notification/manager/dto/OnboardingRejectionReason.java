@@ -37,21 +37,21 @@ public class OnboardingRejectionReason {
   }
 
   public enum OnboardingRejectionReasonCode {
-    AUTOMATED_CRITERIA_ISEE_FAIL("ISEE non idoneo", ONBOARDING_KO_GENERIC),
-    AUTOMATED_CRITERIA_BIRTHDATE_FAIL("Data di nascita non idonea", ONBOARDING_KO_GENERIC),
-    AUTOMATED_CRITERIA_RESIDENCE_FAIL("Residenza non idonea", ONBOARDING_KO_GENERIC),
-    CITIZEN_OUT_OF_RANKING("Graduatoria", ONBOARDING_KO_GENERIC),
-    INITIATIVE_BUDGET_EXHAUSTED("Budget iniziativa", ONBOARDING_KO_GENERIC),
-    ISEE_TYPE_FAIL("Tipo ISEE", ONBOARDING_KO_GENERIC),
+    AUTOMATED_CRITERIA_ISEE_FAIL("ISEE non idoneo", ONBOARDING_KO_REJECTED_NO_RETRY),
+    AUTOMATED_CRITERIA_BIRTHDATE_FAIL("Data di nascita non idonea", ONBOARDING_KO_REJECTED_NO_RETRY),
+    AUTOMATED_CRITERIA_RESIDENCE_FAIL("Residenza non idonea", ONBOARDING_KO_REJECTED_NO_RETRY),
+    CITIZEN_OUT_OF_RANKING("Graduatoria", ONBOARDING_KO_RANKING),
+    INITIATIVE_BUDGET_EXHAUSTED("Budget iniziativa", ONBOARDING_KO_BUDGET),
+    ISEE_TYPE_FAIL("Tipo ISEE", ONBOARDING_KO_PDND),
     FAMILY_CRITERIA_FAIL("Criteri di famiglia", ONBOARDING_KO_GENERIC),
     REJECTION_REASON_INITIATIVE_ENDED( "L'iniziativa è terminata", ONBOARDING_KO_INITIATIVE_ENDED),
 
     //region possible onboarding rejection reason added for robust code
-    CONSENSUS_CHECK_TC_FAIL("Mancato consenso dei termini e condizioni", ONBOARDING_KO_GENERIC),
-    CONSENSUS_CHECK_PDND_FAIL("Mancato consenso PDND", ONBOARDING_KO_PDND),
-    CONSENSUS_CHECK_TC_ACCEPT_FAIL("Consenso termini e condizioni fornito fuori dal periodo di validità", ONBOARDING_KO_GENERIC),
-    CONSENSUS_CHECK_CRITERIA_CONSENSUS_FAIL("Consenso ai criteri fornito fuori dal periodo di validità", ONBOARDING_KO_GENERIC),
-    INVALID_INITIATIVE_ID ("Iniziativa non trovata", ONBOARDING_KO_GENERIC),
+    CONSENSUS_CHECK_TC_FAIL("Mancato consenso dei termini e condizioni", ONBOARDING_KO_REJECTED_NO_RETRY),
+    CONSENSUS_CHECK_PDND_FAIL("Mancato consenso PDND", ONBOARDING_KO_REJECTED_NO_RETRY),
+    CONSENSUS_CHECK_TC_ACCEPT_FAIL("Consenso termini e condizioni fornito fuori dal periodo di validità", ONBOARDING_KO_REJECTED_NO_RETRY),
+    CONSENSUS_CHECK_CRITERIA_CONSENSUS_FAIL("Consenso ai criteri fornito fuori dal periodo di validità", ONBOARDING_KO_REJECTED_NO_RETRY),
+    INVALID_INITIATIVE_ID ("Iniziativa non trovata", ONBOARDING_KO_REJECTED_NO_RETRY),
     //endregion
 
     RESIDENCE_FAIL("Residenza non disponibile", ONBOARDING_KO_PDND),

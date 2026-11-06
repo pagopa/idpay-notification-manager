@@ -76,7 +76,6 @@ public class NotificationManagerServiceImpl implements NotificationManagerServic
     private final OnboardingIoNotification onboardingIoNotification;
     private final OnboardingWebNotification onboardingWebNotification;
     private final IoNotificationContentService ioNotificationContentService;
-    private final NotificationEventResolver notificationEventResolver;
     @Value("${rest-client.notification.backend-io.ttl}")
     private Long timeToLive;
     @Value("${notification.manager.recover.parallelism}")
@@ -113,8 +112,7 @@ public class NotificationManagerServiceImpl implements NotificationManagerServic
                                           AuditUtilities auditUtilities,
                                           OnboardingIoNotification onboardingIoNotification,
                                           OnboardingWebNotification onboardingWebNotification,
-                                          IoNotificationContentService ioNotificationContentService,
-                                          NotificationEventResolver notificationEventResolver) {
+                                          IoNotificationContentService ioNotificationContentService) {
         this.pageSize = pageSize;
         this.delay = delay;
         this.outcomeProducer = outcomeProducer;
@@ -130,7 +128,6 @@ public class NotificationManagerServiceImpl implements NotificationManagerServic
         this.onboardingIoNotification = onboardingIoNotification;
         this.onboardingWebNotification = onboardingWebNotification;
         this.ioNotificationContentService = ioNotificationContentService;
-        this.notificationEventResolver = notificationEventResolver;
     }
 
     @PostConstruct
@@ -355,7 +352,7 @@ public class NotificationManagerServiceImpl implements NotificationManagerServic
                 subject = notificationMarkdown.getSubjectCheckIbanKo();
                 markdown = notificationMarkdown.getMarkdownCheckIbanKo();
 
-                content = ioNotificationContentService.resolveProfileByCatalogAndFind(
+                content = ioNotificationContentService.resolveProfileAndFind(
                         configuredProfile,
                         NotificationEvent.CHECK_IBAN_KO);
             }
@@ -369,9 +366,9 @@ public class NotificationManagerServiceImpl implements NotificationManagerServic
                         : notification.getRefundReward()
                         .divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_DOWN);
 
-                content = ioNotificationContentService.resolveProfileByCatalogAndFindAndRender(
+                content = ioNotificationContentService.resolveProfileAndFindAndRender(
                         configuredProfile,
-                        notificationEventResolver.resolveRefundEvent(notification.getRefundStatus()),
+                        NotificationEventResolver.resolveRefundEvent(notification.getRefundStatus()),
                         RefundPlaceholderContext.from(refund),
                         List.of(RefundPlaceholder.values()));
             }
@@ -379,7 +376,7 @@ public class NotificationManagerServiceImpl implements NotificationManagerServic
                 subject = notificationMarkdown.getSubjectSuspension(notification.getInitiativeName());
                 markdown = notificationMarkdown.getMarkdownSuspension();
 
-                content = ioNotificationContentService.resolveProfileByCatalogAndFindAndRender(
+                content = ioNotificationContentService.resolveProfileAndFindAndRender(
                         configuredProfile,
                         NotificationEvent.SUSPENSION,
                         InitiativePlaceholderContext.from(notification),
@@ -389,7 +386,7 @@ public class NotificationManagerServiceImpl implements NotificationManagerServic
                 subject = notificationMarkdown.getSubjectReadmission(notification.getInitiativeName());
                 markdown = notificationMarkdown.getMarkdownReadmission();
 
-                content = ioNotificationContentService.resolveProfileByCatalogAndFindAndRender(
+                content = ioNotificationContentService.resolveProfileAndFindAndRender(
                         configuredProfile,
                         NotificationEvent.READMISSION,
                         InitiativePlaceholderContext.from(notification),
@@ -568,14 +565,14 @@ public class NotificationManagerServiceImpl implements NotificationManagerServic
         Optional<NotificationContent> content;
         switch (anyOfNotificationQueueDTO) {
             case NotificationCitizenOnQueueDTO ignored -> {
-                content = ioNotificationContentService.resolveProfileByCatalogAndFindAndRender(
+                content = ioNotificationContentService.resolveProfileAndFindAndRender(
                         configuredProfile,
                         NotificationEvent.INITIATIVE_PUBLISHING,
                         InitiativePlaceholderContext.from(notification),
                         List.of(InitiativePlaceholder.values()));
             }
             case NotificationIbanQueueDTO ignored -> {
-                content = ioNotificationContentService.resolveProfileByCatalogAndFind(
+                content = ioNotificationContentService.resolveProfileAndFind(
                         configuredProfile,
                         NotificationEvent.CHECK_IBAN_KO);
             }
@@ -583,35 +580,35 @@ public class NotificationManagerServiceImpl implements NotificationManagerServic
                 // TODO: this could throw NPE if refundReward is null
                 BigDecimal refund = BigDecimal.valueOf(notificationRefundOnQueueDTO.getRefundReward())
                         .divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_DOWN);
-                content = ioNotificationContentService.resolveProfileByCatalogAndFindAndRender(
+                content = ioNotificationContentService.resolveProfileAndFindAndRender(
                         configuredProfile,
-                        notificationEventResolver.resolveRefundEvent(notificationRefundOnQueueDTO.getStatus()),
+                        NotificationEventResolver.resolveRefundEvent(notificationRefundOnQueueDTO.getStatus()),
                         RefundPlaceholderContext.from(refund),
                         List.of(RefundPlaceholder.values()));
             }
             case NotificationSuspensionQueueDTO ignored -> {
-                content = ioNotificationContentService.resolveProfileByCatalogAndFindAndRender(
+                content = ioNotificationContentService.resolveProfileAndFindAndRender(
                         configuredProfile,
                         NotificationEvent.SUSPENSION,
                         InitiativePlaceholderContext.from(notification),
                         List.of(InitiativePlaceholder.values()));
             }
             case NotificationReadmissionQueueDTO ignored -> {
-                content = ioNotificationContentService.resolveProfileByCatalogAndFindAndRender(
+                content = ioNotificationContentService.resolveProfileAndFindAndRender(
                         configuredProfile,
                         NotificationEvent.READMISSION,
                         InitiativePlaceholderContext.from(notification),
                         List.of(InitiativePlaceholder.values()));
             }
             case NotificationReminderQueueDTO notificationReminderQueueDTO -> {
-                content = ioNotificationContentService.resolveProfileByCatalogAndFindAndRender(
+                content = ioNotificationContentService.resolveProfileAndFindAndRender(
                         configuredProfile,
                         NotificationEvent.VOUCHER_EXPIRING,
                         ReminderPlaceholderContext.from(notificationReminderQueueDTO),
                         List.of(ReminderPlaceholder.values()));
             }
             case NotificationOnboardingQueueDTO ignored -> {
-                content = ioNotificationContentService.resolveProfileByCatalogAndFindAndRender(
+                content = ioNotificationContentService.resolveProfileAndFindAndRender(
                         configuredProfile,
                         NotificationEvent.ONBOARDING_WAITING_LIST,
                         InitiativePlaceholderContext.from(notification),

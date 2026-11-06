@@ -1,8 +1,10 @@
 notification:
   manager:
-    io:
-      profiles:
-        BEL25:
+    profiles:
+      BEL25:
+        variables:
+          assisted-link: ${ASSISTED_LINK_BEL:https://pari.pagopa.it/bonuselettrodomestici/utente/assistenza}
+        events:
           ONBOARDING_OK:
             subject: "${SUBJECT_OK_BEL:Hai ottenuto il bonus!}"
             markdown: |-

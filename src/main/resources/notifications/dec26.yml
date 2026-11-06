@@ -1,8 +1,10 @@
 notification:
   manager:
-    io:
-      profiles:
-        DEC26:
+    profiles:
+      DEC26:
+        variables:
+          assisted-link: ${ASSISTED_LINK_DEC:https://pari.pagopa.it/bonusdecoder/utente/assistenza}
+        events:
           ONBOARDING_OK:
             subject: "${SUBJECT_OK_DEC:Hai ottenuto il bonus!}"
             markdown: |-

@@ -9,4 +9,8 @@ public record OnboardingPlaceholderContext(EvaluationDTO evaluation, String assi
     public OnboardingPlaceholderContext {
         Objects.requireNonNull(evaluation, "Onboarding evaluation is required");
     }
+
+    public static OnboardingPlaceholderContext from(EvaluationDTO evaluation, String assistedLink) {
+        return new OnboardingPlaceholderContext(evaluation, assistedLink);
+    }
 }

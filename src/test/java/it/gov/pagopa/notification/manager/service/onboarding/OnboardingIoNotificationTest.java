@@ -13,6 +13,7 @@ import it.gov.pagopa.notification.manager.enums.NotificationEvent;
 import it.gov.pagopa.notification.manager.exception.NotFoundNotificationEventTemplate;
 import it.gov.pagopa.notification.manager.model.NotificationContent;
 import it.gov.pagopa.notification.manager.service.io.IoNotificationContentService;
+import it.gov.pagopa.notification.manager.service.io.ProfilesNotificationCatalog;
 import it.gov.pagopa.notification.manager.service.io.placeholder.OnboardingPlaceholderContext;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -44,6 +45,8 @@ class OnboardingIoNotificationTest {
     @Mock
     private IoNotificationContentService notificationContentService;
     @Mock
+    private ProfilesNotificationCatalog profilesNotificationCatalog;
+    @Mock
     private IOBackEndRestConnector ioBackEndRestConnector;
     @Mock
     private InitiativeRestConnector initiativeRestConnector;
@@ -54,11 +57,11 @@ class OnboardingIoNotificationTest {
     void setUp() {
         notification = new OnboardingIoNotificationImpl(
                 notificationContentService,
+                profilesNotificationCatalog,
                 new NotificationDTOMapper(),
                 ioBackEndRestConnector,
                 initiativeRestConnector,
-                3600L,
-                "https://assistance.example"
+                3600L
         );
     }
 

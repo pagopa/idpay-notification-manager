@@ -26,7 +26,7 @@ class IoNotificationContentServiceTest {
     private final NotificationContentRenderer renderer = new NotificationContentRenderer();
 
     @Mock
-    private IoNotificationCatalog catalog;
+    private ProfilesNotificationCatalog catalog;
 
     private IoNotificationContentService contentService;
 

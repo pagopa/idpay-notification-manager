@@ -1,8 +1,10 @@
 notification:
   manager:
-    io:
-      profiles:
-        DEFAULT:
+    profiles:
+      DEFAULT:
+        variables:
+          assisted-link: ${ASSISTED_LINK:https://pari.pagopa.it/bonusnotfound/utente/assistenza}
+        events:
           ONBOARDING_OK:
             subject: "${SUBJECT_OK:Il tuo Bonus è attivo}"
             markdown: |-

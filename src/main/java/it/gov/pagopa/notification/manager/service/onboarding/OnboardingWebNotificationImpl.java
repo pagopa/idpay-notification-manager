@@ -1,6 +1,7 @@
 package it.gov.pagopa.notification.manager.service.onboarding;
 
 import it.gov.pagopa.notification.manager.config.EmailNotificationProperties;
+import it.gov.pagopa.notification.manager.config.ProfilesNotificationProperties;
 import it.gov.pagopa.notification.manager.connector.EmailNotificationConnector;
 import it.gov.pagopa.notification.manager.connector.initiative.InitiativeRestConnector;
 import it.gov.pagopa.notification.manager.constants.NotificationConstants;
@@ -10,14 +11,15 @@ import it.gov.pagopa.notification.manager.dto.OnboardingRejectionReason;
 import it.gov.pagopa.notification.manager.dto.mapper.NotificationMapper;
 import it.gov.pagopa.notification.manager.model.Notification;
 import it.gov.pagopa.notification.manager.repository.NotificationManagerRepository;
+import it.gov.pagopa.notification.manager.service.io.ProfilesNotificationCatalog;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 
 import static it.gov.pagopa.notification.manager.constants.NotificationConstants.EmailTemplates.*;
 import static it.gov.pagopa.notification.manager.dto.OnboardingRejectionReason.OnboardingRejectionReasonCode.REJECTION_REASON_INITIATIVE_ENDED;
@@ -33,26 +35,24 @@ public class OnboardingWebNotificationImpl extends BaseOnboardingNotification<Em
     private final NotificationManagerRepository notificationManagerRepository;
     private final NotificationMapper notificationMapper;
 
+    private final ProfilesNotificationCatalog profilesNotificationCatalog;
+
     private static final String MANAGED_ENTITY = "managedEntity";
     private static final String REASON = "reason";
-
-    private final String assistedLink;
-
 
     public OnboardingWebNotificationImpl(EmailNotificationConnector emailNotificationConnector,
                                          EmailNotificationProperties emailNotificationProperties,
                                          NotificationManagerRepository notificationManagerRepository,
                                          NotificationMapper notificationMapper,
                                          InitiativeRestConnector initiativeRestConnector,
-                                         @Value("${notification.manager.email.assisted-link}") String assistedLink){
+                                         ProfilesNotificationCatalog profilesNotificationCatalog){
         super(initiativeRestConnector);
         this.emailNotificationConnector = emailNotificationConnector;
         this.emailNotificationProperties = emailNotificationProperties;
         this.notificationManagerRepository = notificationManagerRepository;
         this.notificationMapper = notificationMapper;
-        this.assistedLink = assistedLink;
+        this.profilesNotificationCatalog = profilesNotificationCatalog;
     }
-
 
     @Override
     EmailMessageDTO processOnboardingJoined(EvaluationDTO evaluationDTO) {
@@ -86,6 +86,12 @@ public class OnboardingWebNotificationImpl extends BaseOnboardingNotification<Em
                     ? firstReason.getAuthority()
                     : "Assistenza");
             if(templateValues.get(MANAGED_ENTITY) != null && templateValues.get(MANAGED_ENTITY).equalsIgnoreCase("Assistenza")){
+                String assistedLink = null;
+                Optional<ProfilesNotificationProperties.ProfileConfigVariables> profileConfigVariables =
+                        profilesNotificationCatalog.retrieveProfileVariables(evaluationDTO.getEmailFlux());
+                if (profileConfigVariables.isPresent()) {
+                    assistedLink = profileConfigVariables.get().getAssistedLink();
+                }
                 templateValues.put("assistedLink", assistedLink);
             }
             setReasonDetail(firstReason, templateValues);

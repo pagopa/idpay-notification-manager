@@ -18,7 +18,7 @@ import static it.gov.pagopa.notification.manager.utils.Utilities.sanitizeString;
 @Slf4j
 public class IoNotificationContentService {
 
-    private final IoNotificationCatalog catalog;
+    private final ProfilesNotificationCatalog catalog;
     private final NotificationContentRenderer renderer;
 
     public Optional<NotificationContent> find(String profile, NotificationEvent event) {

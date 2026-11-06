@@ -1,6 +1,7 @@
 package it.gov.pagopa.notification.manager.service.onboarding;
 
 import feign.FeignException;
+import it.gov.pagopa.notification.manager.config.ProfilesNotificationProperties;
 import it.gov.pagopa.notification.manager.connector.IOBackEndRestConnector;
 import it.gov.pagopa.notification.manager.connector.initiative.InitiativeRestConnector;
 import it.gov.pagopa.notification.manager.dto.EvaluationDTO;
@@ -11,6 +12,8 @@ import it.gov.pagopa.notification.manager.enums.NotificationEvent;
 import it.gov.pagopa.notification.manager.exception.NotFoundNotificationEventTemplate;
 import it.gov.pagopa.notification.manager.model.NotificationContent;
 import it.gov.pagopa.notification.manager.service.io.IoNotificationContentService;
+import it.gov.pagopa.notification.manager.service.io.NotificationEventResolver;
+import it.gov.pagopa.notification.manager.service.io.ProfilesNotificationCatalog;
 import it.gov.pagopa.notification.manager.service.io.placeholder.OnboardingPlaceholder;
 import it.gov.pagopa.notification.manager.service.io.placeholder.OnboardingPlaceholderContext;
 import lombok.extern.slf4j.Slf4j;
@@ -28,24 +31,24 @@ public class OnboardingIoNotificationImpl extends BaseOnboardingNotification<Not
 
     public static final String NOT_FOUND_NOTIFICATION_EVENT_TEMPLATE_ERROR_MESSAGE = "Unable to notify user %s: notification event %s was not found for profile %s";
     private final IoNotificationContentService notificationContentService;
+    private final ProfilesNotificationCatalog profilesNotificationCatalog;
     private final NotificationDTOMapper notificationDTOMapper;
     private final IOBackEndRestConnector ioBackEndRestConnector;
 
     private final Long timeToLive;
-    private final String assistedLink;
 
     public OnboardingIoNotificationImpl(IoNotificationContentService notificationContentService,
+            ProfilesNotificationCatalog profilesNotificationCatalog,
             NotificationDTOMapper notificationDTOMapper,
             IOBackEndRestConnector ioBackEndRestConnector,
             InitiativeRestConnector initiativeRestConnector,
-            @Value("${rest-client.notification.backend-io.ttl}") Long timeToLive,
-            @Value("${notification.manager.email.assisted-link}") String assistedLink) {
+            @Value("${rest-client.notification.backend-io.ttl}") Long timeToLive) {
         super(initiativeRestConnector);
         this.notificationContentService = notificationContentService;
+        this.profilesNotificationCatalog = profilesNotificationCatalog;
         this.notificationDTOMapper = notificationDTOMapper;
         this.ioBackEndRestConnector = ioBackEndRestConnector;
         this.timeToLive = timeToLive;
-        this.assistedLink = assistedLink;
     }
 
     @Override
@@ -57,10 +60,8 @@ public class OnboardingIoNotificationImpl extends BaseOnboardingNotification<Not
 
     @Override
     NotificationDTO processOnboardingKo(EvaluationDTO evaluationDTO) {
-        var reasons = evaluationDTO.getOnboardingRejectionReasons();
-        var firstReason = (reasons != null && !reasons.isEmpty()) ? reasons.getFirst() : null;
-
-        NotificationEvent notificationEvent = firstReason != null ? firstReason.getCode().getNotificationEvent() : NotificationEvent.ONBOARDING_KO_GENERIC;
+        NotificationEvent notificationEvent =
+                NotificationEventResolver.resolveOnboardingStatusKoEventByRejectionReasons(evaluationDTO.getOnboardingRejectionReasons());
 
         NotificationContent finalContent = null;
         if(!NotificationEvent.ONBOARDING_KO_GENERIC.equals(notificationEvent)) {
@@ -72,7 +73,8 @@ public class OnboardingIoNotificationImpl extends BaseOnboardingNotification<Not
         }
 
         if(finalContent == null) {
-            finalContent = retrieveNotificationContent(evaluationDTO, NotificationEvent.ONBOARDING_KO_GENERIC).orElseThrow(() -> new NotFoundNotificationEventTemplate(NOT_FOUND_NOTIFICATION_EVENT_TEMPLATE_ERROR_MESSAGE.formatted(sanitizeString(evaluationDTO.getUserId()), notificationEvent, evaluationDTO.getEmailFlux())));
+            finalContent = retrieveNotificationContent(evaluationDTO, NotificationEvent.ONBOARDING_KO_GENERIC)
+                    .orElseThrow(() -> new NotFoundNotificationEventTemplate(NOT_FOUND_NOTIFICATION_EVENT_TEMPLATE_ERROR_MESSAGE.formatted(sanitizeString(evaluationDTO.getUserId()), notificationEvent, evaluationDTO.getEmailFlux())));
         }
 
         return createNotification(evaluationDTO, finalContent);
@@ -100,6 +102,13 @@ public class OnboardingIoNotificationImpl extends BaseOnboardingNotification<Not
     }
 
     private Optional<NotificationContent> retrieveNotificationContent(EvaluationDTO evaluationDTO, NotificationEvent event) {
+        String assistedLink = null;
+        Optional<ProfilesNotificationProperties.ProfileConfigVariables> profileConfigVariables =
+                profilesNotificationCatalog.retrieveProfileVariables(evaluationDTO.getEmailFlux());
+        if (profileConfigVariables.isPresent()) {
+            assistedLink = profileConfigVariables.get().getAssistedLink();
+        }
+
         return notificationContentService.resolveProfileAndFindAndRender(
                 evaluationDTO.getEmailFlux(),
                 event,
