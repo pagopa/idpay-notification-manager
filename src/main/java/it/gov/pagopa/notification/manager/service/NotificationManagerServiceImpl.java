@@ -17,7 +17,6 @@ import it.gov.pagopa.notification.manager.event.producer.OutcomeProducer;
 import it.gov.pagopa.notification.manager.exception.NotFoundNotificationEventTemplate;
 import it.gov.pagopa.notification.manager.model.Notification;
 import it.gov.pagopa.notification.manager.model.NotificationContent;
-import it.gov.pagopa.notification.manager.model.NotificationMarkdown;
 import it.gov.pagopa.notification.manager.repository.NotificationManagerRepository;
 import it.gov.pagopa.notification.manager.repository.NotificationManagerRepositoryExtended;
 import it.gov.pagopa.notification.manager.service.io.IoNotificationContentService;
@@ -69,7 +68,6 @@ public class NotificationManagerServiceImpl implements NotificationManagerServic
     private final NotificationDTOMapper notificationDTOMapper;
     private final PdvDecryptRestConnector pdvDecryptRestConnector;
     private final NotificationMapper notificationMapper;
-    private final NotificationMarkdown notificationMarkdown;
     private final AuditUtilities auditUtilities;
     private final OnboardingIoNotification onboardingIoNotification;
     private final OnboardingWebNotification onboardingWebNotification;
@@ -107,7 +105,6 @@ public class NotificationManagerServiceImpl implements NotificationManagerServic
                                           NotificationDTOMapper notificationDTOMapper,
                                           PdvDecryptRestConnector pdvDecryptRestConnector,
                                           NotificationMapper notificationMapper,
-                                          NotificationMarkdown notificationMarkdown,
                                           AuditUtilities auditUtilities,
                                           OnboardingIoNotification onboardingIoNotification,
                                           OnboardingWebNotification onboardingWebNotification,
@@ -123,7 +120,6 @@ public class NotificationManagerServiceImpl implements NotificationManagerServic
         this.notificationDTOMapper = notificationDTOMapper;
         this.pdvDecryptRestConnector = pdvDecryptRestConnector;
         this.notificationMapper = notificationMapper;
-        this.notificationMarkdown = notificationMarkdown;
         this.auditUtilities = auditUtilities;
         this.onboardingIoNotification = onboardingIoNotification;
         this.onboardingWebNotification = onboardingWebNotification;
