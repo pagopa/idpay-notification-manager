@@ -338,42 +338,12 @@ public class NotificationManagerServiceImpl implements NotificationManagerServic
         // resolve notification content based on the notification type and initiative configured profile
         Optional<NotificationContent> content;
         switch (notification.getOperationType()) {
-            case ONBOARDING -> {
-                Optional<NotificationEvent> optEvent =
-                        NotificationEventResolver.resolveOnboardingEvent(notification);
-
-                if (optEvent.isPresent()) {
-                    NotificationEvent notificationEventToRender = optEvent.get();
-
-                    // handle the case where the notification event is ONBOARDING_KO
-                    // and the notification content is not configured for the given profile and event
-                    if (STATUS_ONBOARDING_KO.equals(notification.getOnboardingOutcome())) {
-                        Optional<NotificationContent> optContent =
-                                ioNotificationContentService.find(configuredProfile, optEvent.get());
-
-                        if (optContent.isEmpty()) {
-                            notificationEventToRender = NotificationEvent.ONBOARDING_KO_GENERIC;
-                        }
-                    }
-
-                    // resolve profile, find event and render notification content with placeholders
-                    String assistedLink = recoverAssistedLink(configuredProfile);
-                    content = ioNotificationContentService.resolveProfileAndFindAndRender(
-                            configuredProfile,
-                            notificationEventToRender,
-                            OnboardingPlaceholderContext.from(notification, assistedLink),
-                            List.of(OnboardingPlaceholder.values()));
-                } else {
-                    log.error("[NOTIFY][ONBOARDING] Cannot resolve notification event for user {} and initiative {}",
-                            sanitizedUserId, sanitizedInitiativeId);
-                    content = Optional.empty();
-                }
-            }
-            case CHECKIBAN_KO -> {
+            case ONBOARDING ->
+                content = handleOnboardingNotificationRecovery(notification, configuredProfile);
+            case CHECKIBAN_KO ->
                 content = ioNotificationContentService.resolveProfileAndFind(
                         configuredProfile,
                         NotificationEvent.CHECK_IBAN_KO);
-            }
             case REFUND -> {
                 BigDecimal refund = notification.getRefundReward() == null
                         ? null
@@ -386,20 +356,18 @@ public class NotificationManagerServiceImpl implements NotificationManagerServic
                         RefundPlaceholderContext.from(refund),
                         List.of(RefundPlaceholder.values()));
             }
-            case SUSPENSION -> {
+            case SUSPENSION ->
                 content = ioNotificationContentService.resolveProfileAndFindAndRender(
                         configuredProfile,
                         NotificationEvent.SUSPENSION,
                         InitiativePlaceholderContext.from(notification),
                         List.of(InitiativePlaceholder.values()));
-            }
-            case READMISSION -> {
+            case READMISSION ->
                 content = ioNotificationContentService.resolveProfileAndFindAndRender(
                         configuredProfile,
                         NotificationEvent.READMISSION,
                         InitiativePlaceholderContext.from(notification),
                         List.of(InitiativePlaceholder.values()));
-            }
             default -> {
                 return false;
             }
@@ -442,6 +410,46 @@ public class NotificationManagerServiceImpl implements NotificationManagerServic
             assistedLink = profileConfigVariables.get().getAssistedLink();
         }
         return assistedLink;
+    }
+
+    private Optional<NotificationContent> handleOnboardingNotificationRecovery(Notification notification, String configuredProfile) {
+        String sanitizedUserId = sanitizeString(notification.getUserId());
+        String sanitizedInitiativeId = sanitizeString(notification.getInitiativeId());
+
+        // optional content to return
+        Optional<NotificationContent> content;
+
+        Optional<NotificationEvent> optEvent =
+                NotificationEventResolver.resolveOnboardingEvent(notification);
+
+        if (optEvent.isPresent()) {
+            NotificationEvent notificationEventToRender = optEvent.get();
+
+            // handle the case where the notification event is ONBOARDING_KO
+            // and the notification content is not configured for the given profile and event
+            if (STATUS_ONBOARDING_KO.equals(notification.getOnboardingOutcome())) {
+                Optional<NotificationContent> optContent =
+                        ioNotificationContentService.find(configuredProfile, optEvent.get());
+
+                if (optContent.isEmpty()) {
+                    notificationEventToRender = NotificationEvent.ONBOARDING_KO_GENERIC;
+                }
+            }
+
+            // resolve profile, find event and render notification content with placeholders
+            String assistedLink = recoverAssistedLink(configuredProfile);
+            content = ioNotificationContentService.resolveProfileAndFindAndRender(
+                    configuredProfile,
+                    notificationEventToRender,
+                    OnboardingPlaceholderContext.from(notification, assistedLink),
+                    List.of(OnboardingPlaceholder.values()));
+        } else {
+            log.error("[NOTIFY][ONBOARDING] Cannot resolve notification event for user {} and initiative {}",
+                    sanitizedUserId, sanitizedInitiativeId);
+            content = Optional.empty();
+        }
+
+        return content;
     }
 
     @Override
@@ -583,18 +591,16 @@ public class NotificationManagerServiceImpl implements NotificationManagerServic
         // resolve notification content based on the notification type and initiative configured profile
         Optional<NotificationContent> content;
         switch (anyOfNotificationQueueDTO) {
-            case NotificationCitizenOnQueueDTO ignored -> {
+            case NotificationCitizenOnQueueDTO _ ->
                 content = ioNotificationContentService.resolveProfileAndFindAndRender(
                         configuredProfile,
                         NotificationEvent.INITIATIVE_PUBLISHING,
                         InitiativePlaceholderContext.from(notification),
                         List.of(InitiativePlaceholder.values()));
-            }
-            case NotificationIbanQueueDTO ignored -> {
+            case NotificationIbanQueueDTO _ ->
                 content = ioNotificationContentService.resolveProfileAndFind(
                         configuredProfile,
                         NotificationEvent.CHECK_IBAN_KO);
-            }
             case NotificationRefundQueueDTO notificationRefundOnQueueDTO -> {
                 BigDecimal refund = BigDecimal.valueOf(notificationRefundOnQueueDTO.getRefundReward())
                         .divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_DOWN);
@@ -604,34 +610,30 @@ public class NotificationManagerServiceImpl implements NotificationManagerServic
                         RefundPlaceholderContext.from(refund),
                         List.of(RefundPlaceholder.values()));
             }
-            case NotificationSuspensionQueueDTO ignored -> {
+            case NotificationSuspensionQueueDTO _ ->
                 content = ioNotificationContentService.resolveProfileAndFindAndRender(
                         configuredProfile,
                         NotificationEvent.SUSPENSION,
                         InitiativePlaceholderContext.from(notification),
                         List.of(InitiativePlaceholder.values()));
-            }
-            case NotificationReadmissionQueueDTO ignored -> {
+            case NotificationReadmissionQueueDTO _ ->
                 content = ioNotificationContentService.resolveProfileAndFindAndRender(
                         configuredProfile,
                         NotificationEvent.READMISSION,
                         InitiativePlaceholderContext.from(notification),
                         List.of(InitiativePlaceholder.values()));
-            }
-            case NotificationReminderQueueDTO notificationReminderQueueDTO -> {
+            case NotificationReminderQueueDTO notificationReminderQueueDTO ->
                 content = ioNotificationContentService.resolveProfileAndFindAndRender(
                         configuredProfile,
                         NotificationEvent.VOUCHER_EXPIRING,
                         ReminderPlaceholderContext.from(notificationReminderQueueDTO),
                         List.of(ReminderPlaceholder.values()));
-            }
-            case NotificationOnboardingQueueDTO ignored -> {
+            case NotificationOnboardingQueueDTO _ ->
                 content = ioNotificationContentService.resolveProfileAndFindAndRender(
                         configuredProfile,
                         NotificationEvent.ONBOARDING_WAITING_LIST,
                         InitiativePlaceholderContext.from(notification),
                         List.of(InitiativePlaceholder.values()));
-            }
             default -> {
                 return;
             }

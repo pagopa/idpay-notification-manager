@@ -84,8 +84,11 @@ class NotificationEventResolverTest {
 
     @Test
     void resolveOnboardingEvent_rejectsMissingInputs() {
+        Notification notificationWithoutOutcome = Notification.builder().build();
+
         assertThrows(IllegalArgumentException.class, () -> resolveOnboardingEvent(null));
-        assertThrows(IllegalArgumentException.class, () -> resolveOnboardingEvent(Notification.builder().build()));
+        assertThrows(IllegalArgumentException.class, () -> resolveOnboardingEvent(notificationWithoutOutcome));
+
         Notification notification = Notification.builder().onboardingOutcome(STATUS_ONBOARDING_KO).build();
         assertEquals(Optional.of(NotificationEvent.ONBOARDING_KO_GENERIC), resolveOnboardingEvent(notification));
         notification.setRejectReasons(List.of(OnboardingRejectionReason.builder().build()));

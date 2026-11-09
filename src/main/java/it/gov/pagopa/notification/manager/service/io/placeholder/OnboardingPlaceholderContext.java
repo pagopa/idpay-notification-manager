@@ -5,7 +5,6 @@ import it.gov.pagopa.notification.manager.dto.OnboardingRejectionReason;
 import it.gov.pagopa.notification.manager.model.Notification;
 
 import java.util.List;
-import java.util.Objects;
 
 public record OnboardingPlaceholderContext(String initiativeId, String initiativeName, Long beneficiaryBudgetCents,
                                            List<OnboardingRejectionReason> onboardingRejectionReasons, String assistedLink) {

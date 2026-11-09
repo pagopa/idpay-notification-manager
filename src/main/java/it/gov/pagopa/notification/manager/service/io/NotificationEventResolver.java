@@ -12,6 +12,8 @@ import static it.gov.pagopa.notification.manager.constants.NotificationConstants
 
 public class NotificationEventResolver {
 
+    private NotificationEventResolver() {}
+
     private static final String REFUND_STATUS_ACCEPTED = "ACCEPTED";
 
     public static NotificationEvent resolveRefundEvent(String status) {
