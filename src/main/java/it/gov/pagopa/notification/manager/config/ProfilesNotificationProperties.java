@@ -8,6 +8,7 @@ import lombok.ToString;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
 
+import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -24,7 +25,7 @@ public class ProfilesNotificationProperties {
     @ToString
     public static class ProfileConfig {
         private ProfileConfigVariables variables = new ProfileConfigVariables();
-        private Map<NotificationEvent, NotificationContent> events = new HashMap<>();
+        private Map<NotificationEvent, NotificationContent> events = new EnumMap<>(NotificationEvent.class);
     }
 
     @Getter
