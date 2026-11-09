@@ -331,6 +331,7 @@ public class NotificationManagerServiceImpl implements NotificationManagerServic
         // retrieve initiative configured profile
         InitiativeNotificationDTO initiativeDetailInfo = getInitiativeDetailInfo(notification.getInitiativeId());
         if (initiativeDetailInfo == null) {
+            notificationKO(notification, startTime);
             return false;
         }
         String configuredProfile = initiativeDetailInfo.getEmailFlux();
