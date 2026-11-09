@@ -1,7 +1,5 @@
 package it.gov.pagopa.notification.manager.service.onboarding;
 
-import feign.FeignException;
-import feign.Request;
 import it.gov.pagopa.notification.manager.config.EmailNotificationProperties;
 import it.gov.pagopa.notification.manager.config.ProfilesNotificationProperties;
 import it.gov.pagopa.notification.manager.connector.EmailNotificationConnector;
@@ -871,6 +869,117 @@ class OnboardingWebNotificationTest {
 
         assertNull(result);
         verify(emailNotificationConnectorMock, never()).sendEmail(any());
+    }
+
+    @Test
+    void notify_whenBadTemplateName_shouldReplaceTemplateName() {
+        Notification notification = Notification.builder()
+                .id("NOTIFICATION_ID")
+                .userId("USER_ID")
+                .initiativeId(INITIATIVE_ID)
+                .templateName("Email_null/EsitoOk")
+                .build();
+
+        InitiativeNotificationDTO initiative = new InitiativeNotificationDTO();
+        initiative.setEmailFlux("DEC26");
+
+        when(initiativeRestConnector.getInitiativeDetailInfo(INITIATIVE_ID))
+                .thenReturn(initiative);
+
+        when(notificationMapper.notificationToEmailMessageDTO(notification))
+                .thenReturn(EMAIL_MESSAGE_DTO);
+
+        when(emailNotificationConnectorMock.sendEmail(EMAIL_MESSAGE_DTO))
+                .thenReturn(new ResponseEntity<>(HttpStatus.OK));
+
+        boolean result = onboardingWebNotification.notify(notification);
+
+        assertTrue(result);
+        assertEquals("Email_DEC26/EsitoOk", notification.getTemplateName());
+
+        verify(initiativeRestConnector, times(1))
+                .getInitiativeDetailInfo(INITIATIVE_ID);
+
+        verify(notificationMapper, times(1))
+                .notificationToEmailMessageDTO(notification);
+
+        verify(emailNotificationConnectorMock, times(1))
+                .sendEmail(EMAIL_MESSAGE_DTO);
+    }
+
+    @Test
+    void notify_whenTemplateNameIsValid_shouldNotReplaceTemplateName() {
+        Notification notification = Notification.builder()
+                .id("NOTIFICATION_ID")
+                .userId("USER_ID")
+                .initiativeId(INITIATIVE_ID)
+                .templateName("Email_DEC26/EsitoOk")
+                .build();
+
+        when(notificationMapper.notificationToEmailMessageDTO(notification))
+                .thenReturn(EMAIL_MESSAGE_DTO);
+
+        when(emailNotificationConnectorMock.sendEmail(EMAIL_MESSAGE_DTO))
+                .thenReturn(new ResponseEntity<>(HttpStatus.OK));
+
+        boolean result = onboardingWebNotification.notify(notification);
+
+        assertTrue(result);
+        assertEquals("Email_DEC26/EsitoOk", notification.getTemplateName());
+
+        verify(initiativeRestConnector, never())
+                .getInitiativeDetailInfo(anyString());
+
+        verify(notificationMapper, times(1))
+                .notificationToEmailMessageDTO(notification);
+    }
+
+    @Test
+    void notify_whenTemplateNameIsNull_shouldNotReplaceTemplateName() {
+        Notification notification = Notification.builder()
+                .id("NOTIFICATION_ID")
+                .userId("USER_ID")
+                .initiativeId(INITIATIVE_ID)
+                .templateName(null)
+                .build();
+
+        when(notificationMapper.notificationToEmailMessageDTO(notification))
+                .thenReturn(EMAIL_MESSAGE_DTO);
+
+        when(emailNotificationConnectorMock.sendEmail(EMAIL_MESSAGE_DTO))
+                .thenReturn(new ResponseEntity<>(HttpStatus.OK));
+
+        boolean result = onboardingWebNotification.notify(notification);
+
+        assertTrue(result);
+        assertNull(notification.getTemplateName());
+
+        verify(initiativeRestConnector, never())
+                .getInitiativeDetailInfo(anyString());
+    }
+
+    @Test
+    void notify_whenTemplateNameIsBlank_shouldNotReplaceTemplateName() {
+        Notification notification = Notification.builder()
+                .id("NOTIFICATION_ID")
+                .userId("USER_ID")
+                .initiativeId(INITIATIVE_ID)
+                .templateName(" ")
+                .build();
+
+        when(notificationMapper.notificationToEmailMessageDTO(notification))
+                .thenReturn(EMAIL_MESSAGE_DTO);
+
+        when(emailNotificationConnectorMock.sendEmail(EMAIL_MESSAGE_DTO))
+                .thenReturn(new ResponseEntity<>(HttpStatus.OK));
+
+        boolean result = onboardingWebNotification.notify(notification);
+
+        assertTrue(result);
+        assertEquals(" ", notification.getTemplateName());
+
+        verify(initiativeRestConnector, never())
+                .getInitiativeDetailInfo(anyString());
     }
 
 }

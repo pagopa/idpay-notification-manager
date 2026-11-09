@@ -218,7 +218,6 @@ class NotificationManagerServiceTest {
             50000L, 1L, null, "user@email.com", WEB, null, null, null, null, null
     );
 
-    private static final FiscalCodeDTO FISCAL_CODE_DTO = new FiscalCodeDTO(FISCAL_CODE);
     private static final NotificationResource NOTIFICATION_RESOURCE = new NotificationResource();
     private static final NotificationDTO NOTIFICATION_DTO = new NotificationDTO();
     private static final Notification NOTIFICATION =
@@ -1237,5 +1236,98 @@ class NotificationManagerServiceTest {
 
         assertDoesNotThrow(() -> notificationManagerService.manualNotify(request));
         verifyNoMoreInteractions(notificationManagerRepository);
+    }
+
+    @Test
+    void recovery_notify_whenInitiativeDetailInfoIsNull_shouldSaveNotificationKo() {
+        Notification notification = Notification.builder()
+                .initiativeId(INITIATIVE_ID)
+                .userId(TEST_TOKEN)
+                .operationType(ONBOARDING)
+                .channel(Channel.IO)
+                .build();
+
+        when(initiativeRestConnector.getIOTokens(INITIATIVE_ID))
+                .thenReturn(INITIATIVE_ADDITIONAL_INFO_DTO);
+
+        when(pdvDecryptRestConnector.getPii(TEST_TOKEN))
+                .thenReturn(FISCAL_CODE_RESOURCE);
+
+        when(ioBackEndRestConnector.getProfile(
+                argThat(fc -> FISCAL_CODE.equals(fc.getFiscalCode())),
+                eq(TOKEN)))
+                .thenReturn(PROFILE_RESOURCE);
+
+        when(initiativeRestConnector.getInitiativeDetailInfo(INITIATIVE_ID))
+                .thenReturn(null);
+
+        boolean result = notificationManagerService.notify(notification);
+
+        assertFalse(result);
+
+        verify(initiativeRestConnector, times(1))
+                .getInitiativeDetailInfo(INITIATIVE_ID);
+
+        verify(notificationManagerRepository, times(1))
+                .save(argThat(saved ->
+                        NotificationConstants.NOTIFICATION_STATUS_KO
+                                .equals(saved.getNotificationStatus())
+                                && saved.getStatusKoTimestamp() != null
+                                && saved.getUpdateDate() != null
+                ));
+
+        verifyNoInteractions(ioNotificationContentService);
+    }
+
+    @Test
+    void recovery_notify_whenInitiativeDetailInfoThrowsFeignException_shouldSaveNotificationKo() {
+        Notification notification = Notification.builder()
+                .initiativeId(INITIATIVE_ID)
+                .userId(TEST_TOKEN)
+                .operationType(ONBOARDING)
+                .channel(Channel.IO)
+                .build();
+
+        when(initiativeRestConnector.getIOTokens(INITIATIVE_ID))
+                .thenReturn(INITIATIVE_ADDITIONAL_INFO_DTO);
+
+        when(pdvDecryptRestConnector.getPii(TEST_TOKEN))
+                .thenReturn(FISCAL_CODE_RESOURCE);
+
+        when(ioBackEndRestConnector.getProfile(
+                argThat(fc -> FISCAL_CODE.equals(fc.getFiscalCode())),
+                eq(TOKEN)))
+                .thenReturn(PROFILE_RESOURCE);
+
+        Request request = Request.create(
+                Request.HttpMethod.GET,
+                "url",
+                new HashMap<>(),
+                null,
+                new RequestTemplate()
+        );
+
+        doThrow(new FeignException.NotFound(
+                "Initiative not found",
+                request,
+                new byte[0],
+                null
+        ))
+                .when(initiativeRestConnector)
+                .getInitiativeDetailInfo(INITIATIVE_ID);
+
+        boolean result = notificationManagerService.notify(notification);
+
+        assertFalse(result);
+
+        verify(notificationManagerRepository, times(1))
+                .save(argThat(saved ->
+                        NotificationConstants.NOTIFICATION_STATUS_KO
+                                .equals(saved.getNotificationStatus())
+                                && saved.getStatusKoTimestamp() != null
+                                && saved.getUpdateDate() != null
+                ));
+
+        verifyNoInteractions(ioNotificationContentService);
     }
 }
