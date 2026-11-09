@@ -59,5 +59,6 @@ public class NotificationConstants {
     public static final String EMAIL_OUTCOME_THREE_DAY_REMINDER = "Email_%s/ThreeDayReminder";
     public static final String EMAIL_OUTCOME_FAMILY_UNIT = "Email_%s/FamilyUnit";
     public static final String EMAIL_OUTCOME_GENERIC_ERROR = "Email_%s/GenericError";
+    public static final String BAD_START_EMAIL_TEMPLATE = "Email_null";
   }
 }

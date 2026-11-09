@@ -1,5 +1,7 @@
 package it.gov.pagopa.notification.manager.service.onboarding;
 
+import feign.FeignException;
+import io.micrometer.common.util.StringUtils;
 import it.gov.pagopa.notification.manager.config.EmailNotificationProperties;
 import it.gov.pagopa.notification.manager.config.ProfilesNotificationProperties;
 import it.gov.pagopa.notification.manager.connector.EmailNotificationConnector;
@@ -8,6 +10,7 @@ import it.gov.pagopa.notification.manager.constants.NotificationConstants;
 import it.gov.pagopa.notification.manager.dto.EmailMessageDTO;
 import it.gov.pagopa.notification.manager.dto.EvaluationDTO;
 import it.gov.pagopa.notification.manager.dto.OnboardingRejectionReason;
+import it.gov.pagopa.notification.manager.dto.initiative.InitiativeNotificationDTO;
 import it.gov.pagopa.notification.manager.dto.mapper.NotificationMapper;
 import it.gov.pagopa.notification.manager.model.Notification;
 import it.gov.pagopa.notification.manager.repository.NotificationManagerRepository;
@@ -149,8 +152,11 @@ public class OnboardingWebNotificationImpl extends BaseOnboardingNotification<Em
 
     @Override
     public void handleInitiativeFetchError(EvaluationDTO evaluationDTO) {
-        Notification notification = notificationMapper.evaluationToNotification(evaluationDTO);
-        finalizeAndSave(notification, NotificationConstants.NOTIFICATION_STATUS_KO, LocalDateTime.now(ZoneId.of(ZONE_ID_ROME)));
+        EmailMessageDTO emailMessageDTO = getNotificationFromEvalStatus(evaluationDTO);
+        if (emailMessageDTO == null) {
+            return;
+        }
+        saveNotification(emailMessageDTO, evaluationDTO, NotificationConstants.NOTIFICATION_STATUS_KO, LocalDateTime.now(ZoneId.of(ZONE_ID_ROME)), System.currentTimeMillis());
     }
 
     @Override
@@ -175,6 +181,7 @@ public class OnboardingWebNotificationImpl extends BaseOnboardingNotification<Em
         String sanitizedUserId = sanitizeString(notification.getUserId());
         String sanitizedInitiativeId = sanitizeString(notification.getInitiativeId());
         try {
+            replaceBadTemplateName(notification);
             EmailMessageDTO emailMessageDTO = notificationMapper.notificationToEmailMessageDTO(notification);
             emailNotificationConnector.sendEmail(emailMessageDTO);
             if(notification.getId() != null){
@@ -188,6 +195,17 @@ public class OnboardingWebNotificationImpl extends BaseOnboardingNotification<Em
             finalizeAndSave(notification, NotificationConstants.NOTIFICATION_STATUS_KO, LocalDateTime.now(ZoneId.of(ZONE_ID_ROME)));
             performanceLog(startTime, "NOTIFY");
             return false;
+        }
+    }
+
+    private void replaceBadTemplateName(Notification notification) {
+        if (!StringUtils.isBlank(notification.getTemplateName()) && notification.getTemplateName().startsWith(BAD_START_EMAIL_TEMPLATE)) {
+            log.info("[NOTIFY] Replacing bad template name for notification with id {} and initiativeId {}",
+                    sanitizeString(notification.getId()),
+                    sanitizeString(notification.getInitiativeId()));
+            InitiativeNotificationDTO initiativeNotificationDTO = initiativeRestConnector.getInitiativeDetailInfo(notification.getInitiativeId());
+            String replacement = notification.getTemplateName().replace(BAD_START_EMAIL_TEMPLATE, "Email_" + initiativeNotificationDTO.getEmailFlux());
+            notification.setTemplateName(replacement);
         }
     }
 
