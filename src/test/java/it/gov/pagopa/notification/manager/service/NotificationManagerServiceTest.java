@@ -11,18 +11,23 @@ import it.gov.pagopa.notification.manager.constants.NotificationConstants;
 import it.gov.pagopa.notification.manager.dto.*;
 import it.gov.pagopa.notification.manager.dto.event.*;
 import it.gov.pagopa.notification.manager.dto.initiative.InitiativeAdditionalInfoDTO;
+import it.gov.pagopa.notification.manager.dto.initiative.InitiativeNotificationDTO;
 import it.gov.pagopa.notification.manager.dto.mapper.NotificationDTOMapper;
 import it.gov.pagopa.notification.manager.dto.mapper.NotificationMapper;
 import it.gov.pagopa.notification.manager.enums.Channel;
+import it.gov.pagopa.notification.manager.enums.NotificationEvent;
 import it.gov.pagopa.notification.manager.event.producer.OutcomeProducer;
 import it.gov.pagopa.notification.manager.model.Notification;
-import it.gov.pagopa.notification.manager.model.NotificationMarkdown;
+import it.gov.pagopa.notification.manager.model.NotificationContent;
 import it.gov.pagopa.notification.manager.repository.NotificationManagerRepository;
 import it.gov.pagopa.notification.manager.repository.NotificationManagerRepositoryExtended;
+import it.gov.pagopa.notification.manager.service.io.IoNotificationContentService;
+import it.gov.pagopa.notification.manager.service.io.ProfilesNotificationCatalog;
 import it.gov.pagopa.notification.manager.service.onboarding.OnboardingIoNotification;
 import it.gov.pagopa.notification.manager.service.onboarding.OnboardingWebNotification;
 import it.gov.pagopa.notification.manager.utils.AuditUtilities;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
@@ -415,12 +420,24 @@ class NotificationManagerServiceTest {
     @MockitoBean NotificationDTOMapper notificationDTOMapper;
     @MockitoBean PdvDecryptRestConnector pdvDecryptRestConnector;
     @MockitoBean NotificationMapper notificationMapper;
-    @MockitoBean NotificationMarkdown notificationMarkdown;
     @MockitoBean AuditUtilities auditUtilities;
     @MockitoBean OnboardingIoNotification onboardingIoNotification;
     @MockitoBean OnboardingWebNotification onboardingWebNotification;
+    @MockitoBean IoNotificationContentService ioNotificationContentService;
+    @MockitoBean ProfilesNotificationCatalog profilesNotificationCatalog;
+
+    @BeforeEach
+    void prepareQueueContent() {
+        InitiativeNotificationDTO initiative = new InitiativeNotificationDTO();
+        initiative.setEmailFlux("DEFAULT");
+        when(initiativeRestConnector.getInitiativeDetailInfo(anyString())).thenReturn(initiative);
+        when(ioNotificationContentService.resolveProfileAndFindAndRender(
+                anyString(), any(NotificationEvent.class), any(), any()))
+                .thenReturn(Optional.of(new NotificationContent(SUBJECT, MARKDOWN)));
+    }
 
     // ===== TESTS =====
+
 
     @Test
     void sendToQueue() {
@@ -544,8 +561,6 @@ class NotificationManagerServiceTest {
         when(ioBackEndRestConnector.getProfile(argThat(fc -> FISCAL_CODE.equals(fc.getFiscalCode())), eq(TOKEN)))
                 .thenReturn(PROFILE_RESOURCE);
         when(initiativeRestConnector.getIOTokens(evaluationDTO.getInitiativeId())).thenReturn(INITIATIVE_ADDITIONAL_INFO_DTO);
-        when(notificationMarkdown.getSubject(evaluationDTO)).thenReturn(SUBJECT);
-        when(notificationMarkdown.getMarkdown(evaluationDTO)).thenReturn(MARKDOWN);
         when(notificationDTOMapper.map(eq(FISCAL_CODE), anyLong(), anyString(), anyString()))
                 .thenReturn(NOTIFICATION_DTO);
         Notification notification =
@@ -640,8 +655,6 @@ class NotificationManagerServiceTest {
         when(initiativeRestConnector.getIOTokens(NOTIFICATION_IBAN_QUEUE_DTO.getInitiativeId()))
                 .thenReturn(INITIATIVE_ADDITIONAL_INFO_DTO);
         when(pdvDecryptRestConnector.getPii(TEST_TOKEN)).thenReturn(FISCAL_CODE_RESOURCE);
-        when(notificationMarkdown.getSubjectCheckIbanKo()).thenReturn(SUBJECT);
-        when(notificationMarkdown.getMarkdownCheckIbanKo()).thenReturn(MARKDOWN);
         when(ioBackEndRestConnector.getProfile(argThat(fc -> FISCAL_CODE.equals(fc.getFiscalCode())), eq(TOKEN)))
                 .thenReturn(PROFILE_RESOURCE);
         when(notificationDTOMapper.map(eq(FISCAL_CODE), anyLong(), anyString(), anyString()))
@@ -665,9 +678,10 @@ class NotificationManagerServiceTest {
                 .thenReturn(PROFILE_RESOURCE);
         when(initiativeRestConnector.getIOTokens(NOTIFICATION_IBAN_QUEUE_DTO.getInitiativeId()))
                 .thenReturn(INITIATIVE_ADDITIONAL_INFO_DTO);
-        when(notificationMarkdown.getSubjectCheckIbanKo()).thenReturn(SUBJECT);
-        when(notificationMarkdown.getMarkdownCheckIbanKo()).thenReturn(MARKDOWN);
-        when(notificationDTOMapper.map(eq(FISCAL_CODE), anyLong(), anyString(), anyString()))
+        when(ioNotificationContentService.resolveProfileAndFind(
+                "DEFAULT", NotificationEvent.CHECK_IBAN_KO))
+                .thenReturn(Optional.of(new NotificationContent(SUBJECT, MARKDOWN)));
+        when(notificationDTOMapper.map(eq(FISCAL_CODE), anyLong(), eq(SUBJECT), eq(MARKDOWN)))
                 .thenReturn(NOTIFICATION_DTO);
         when(notificationMapper.toEntity(NOTIFICATION_IBAN_QUEUE_DTO)).thenReturn(NOTIFICATION);
 
@@ -675,11 +689,11 @@ class NotificationManagerServiceTest {
         doThrow(new FeignException.BadRequest("", request, new byte[0], null))
                 .when(ioBackEndRestConnector).notify(NOTIFICATION_DTO, TOKEN);
 
-        try {
-            notificationManagerService.sendNotificationFromOperationType(NOTIFICATION_IBAN_QUEUE_DTO);
-        } catch (FeignException e) {
-            assertEquals(HttpStatus.BAD_REQUEST.value(), e.status());
-        }
+        assertDoesNotThrow(() ->
+                notificationManagerService.sendNotificationFromOperationType(NOTIFICATION_IBAN_QUEUE_DTO));
+        verify(ioNotificationContentService).resolveProfileAndFind(
+                "DEFAULT", NotificationEvent.CHECK_IBAN_KO);
+        verify(ioBackEndRestConnector).notify(NOTIFICATION_DTO, TOKEN);
         verify(notificationManagerRepository, times(1)).save(any(Notification.class));
     }
 
@@ -688,8 +702,6 @@ class NotificationManagerServiceTest {
         when(notificationMapper.toEntity(NOTIFICATION_CITIZEN_ON_QUEUE_DTO)).thenReturn(NOTIFICATION);
         when(initiativeRestConnector.getIOTokens(INITIATIVE_ID)).thenReturn(INITIATIVE_ADDITIONAL_INFO_DTO);
         when(pdvDecryptRestConnector.getPii(TEST_TOKEN)).thenReturn(FISCAL_CODE_RESOURCE);
-        when(notificationMarkdown.getMarkdownInitiativePublishing()).thenReturn(SUBJECT);
-        when(notificationMarkdown.getSubjectInitiativePublishing()).thenReturn(MARKDOWN);
         when(ioBackEndRestConnector.getProfile(argThat(fc -> FISCAL_CODE.equals(fc.getFiscalCode())), eq(TOKEN)))
                 .thenReturn(PROFILE_RESOURCE);
         when(notificationDTOMapper.map(eq(FISCAL_CODE), anyLong(), anyString(), anyString()))
@@ -704,8 +716,6 @@ class NotificationManagerServiceTest {
         when(notificationMapper.toEntity(NOTIFICATION_ONBOARDING_QUEUE_DTO)).thenReturn(NOTIFICATION);
         when(initiativeRestConnector.getIOTokens(INITIATIVE_ID)).thenReturn(INITIATIVE_ADDITIONAL_INFO_DTO);
         when(pdvDecryptRestConnector.getPii(TEST_TOKEN)).thenReturn(FISCAL_CODE_RESOURCE);
-        when(notificationMarkdown.getSubjectOnWaitingList(NOTIFICATION_ONBOARDING_QUEUE_DTO)).thenReturn(SUBJECT);
-        when(notificationMarkdown.getMarkdownOnWaitingList(NOTIFICATION_ONBOARDING_QUEUE_DTO)).thenReturn(MARKDOWN);
         when(ioBackEndRestConnector.getProfile(argThat(fc -> FISCAL_CODE.equals(fc.getFiscalCode())), eq(TOKEN)))
                 .thenReturn(PROFILE_RESOURCE);
         when(notificationDTOMapper.map(eq(FISCAL_CODE), anyLong(), anyString(), anyString()))
@@ -823,8 +833,6 @@ class NotificationManagerServiceTest {
         when(notificationMapper.toEntity(NOTIFICATION_CITIZEN_ON_QUEUE_DTO)).thenReturn(NOTIFICATION);
         when(initiativeRestConnector.getIOTokens(INITIATIVE_ID)).thenReturn(null);
         when(pdvDecryptRestConnector.getPii(TEST_TOKEN)).thenReturn(FISCAL_CODE_RESOURCE);
-        when(notificationMarkdown.getMarkdownInitiativePublishing()).thenReturn(SUBJECT);
-        when(notificationMarkdown.getSubjectInitiativePublishing()).thenReturn(MARKDOWN);
 
         assertDoesNotThrow(() -> notificationManagerService.sendNotificationFromOperationType(NOTIFICATION_CITIZEN_ON_QUEUE_DTO));
         verify(notificationManagerRepository, times(1)).save(NOTIFICATION);
@@ -839,8 +847,6 @@ class NotificationManagerServiceTest {
         when(notificationMapper.toEntity(NOTIFICATION_IBAN_QUEUE_DTO)).thenReturn(dto);
         when(initiativeRestConnector.getIOTokens(INITIATIVE_ID)).thenReturn(null);
         when(pdvDecryptRestConnector.getPii(TEST_TOKEN)).thenReturn(FISCAL_CODE_RESOURCE);
-        when(notificationMarkdown.getMarkdownInitiativePublishing()).thenReturn(SUBJECT);
-        when(notificationMarkdown.getSubjectInitiativePublishing()).thenReturn(MARKDOWN);
 
         assertDoesNotThrow(() -> notificationManagerService.sendNotificationFromOperationType(NOTIFICATION_IBAN_QUEUE_DTO));
     }
@@ -851,9 +857,6 @@ class NotificationManagerServiceTest {
         when(initiativeRestConnector.getIOTokens(NOTIFICATION_REFUND_QUEUE_DTO.getInitiativeId()))
                 .thenReturn(INITIATIVE_ADDITIONAL_INFO_DTO);
         when(pdvDecryptRestConnector.getPii(TEST_TOKEN)).thenReturn(FISCAL_CODE_RESOURCE);
-        when(notificationMarkdown.getSubjectRefund(NOTIFICATION_REFUND_QUEUE_DTO.getStatus())).thenReturn(SUBJECT);
-        when(notificationMarkdown.getMarkdownRefund(eq(NOTIFICATION_REFUND_QUEUE_DTO.getStatus()), any()))
-                .thenReturn(MARKDOWN);
         when(ioBackEndRestConnector.getProfile(argThat(fc -> FISCAL_CODE.equals(fc.getFiscalCode())), eq(TOKEN)))
                 .thenReturn(PROFILE_RESOURCE);
         when(notificationDTOMapper.map(eq(FISCAL_CODE), anyLong(), anyString(), anyString()))
@@ -876,18 +879,6 @@ class NotificationManagerServiceTest {
         when(pdvDecryptRestConnector.getPii(TEST_TOKEN)).thenReturn(FISCAL_CODE_RESOURCE);
         when(ioBackEndRestConnector.getProfile(argThat(fc -> FISCAL_CODE.equals(fc.getFiscalCode())), eq(TOKEN)))
                 .thenReturn(PROFILE_RESOURCE);
-
-        when(notificationMarkdown.getSubject(any(Notification.class))).thenReturn(SUBJECT);
-        when(notificationMarkdown.getSubjectCheckIbanKo()).thenReturn(SUBJECT);
-        when(notificationMarkdown.getSubjectRefund(anyString())).thenReturn(SUBJECT);
-        when(notificationMarkdown.getSubjectSuspension(anyString())).thenReturn(SUBJECT);
-        when(notificationMarkdown.getSubjectReadmission(anyString())).thenReturn(SUBJECT);
-
-        when(notificationMarkdown.getMarkdown(any(Notification.class))).thenReturn(MARKDOWN);
-        when(notificationMarkdown.getMarkdownCheckIbanKo()).thenReturn(MARKDOWN);
-        when(notificationMarkdown.getMarkdownRefund(anyString(), any())).thenReturn(MARKDOWN);
-        when(notificationMarkdown.getMarkdownSuspension()).thenReturn(MARKDOWN);
-        when(notificationMarkdown.getMarkdownReadmission()).thenReturn(MARKDOWN);
 
         when(notificationDTOMapper.map(eq(FISCAL_CODE), anyLong(), anyString(), anyString()))
                 .thenReturn(NOTIFICATION_DTO);
@@ -927,8 +918,6 @@ class NotificationManagerServiceTest {
                 .thenReturn(PROFILE_RESOURCE);
         when(initiativeRestConnector.getIOTokens(EVALUATION_DTO.getInitiativeId()))
                 .thenReturn(INITIATIVE_ADDITIONAL_INFO_DTO);
-        when(notificationMarkdown.getSubject(any(Notification.class))).thenReturn(SUBJECT);
-        when(notificationMarkdown.getMarkdown(any(Notification.class))).thenReturn(MARKDOWN);
         when(notificationDTOMapper.map(eq(FISCAL_CODE), anyLong(), anyString(), anyString()))
                 .thenReturn(NOTIFICATION_DTO);
 
@@ -1017,8 +1006,6 @@ class NotificationManagerServiceTest {
         when(notificationMapper.toEntity(NOTIFICATION_SUSPENSION_QUEUE_DTO)).thenReturn(NOTIFICATION_SUSPENSION);
         when(initiativeRestConnector.getIOTokens(INITIATIVE_ID)).thenReturn(INITIATIVE_ADDITIONAL_INFO_DTO);
         when(pdvDecryptRestConnector.getPii(TEST_TOKEN)).thenReturn(FISCAL_CODE_RESOURCE);
-        when(notificationMarkdown.getMarkdownSuspension()).thenReturn(MARKDOWN);
-        when(notificationMarkdown.getSubjectSuspension(INITIATIVE_NAME)).thenReturn(SUBJECT);
         when(ioBackEndRestConnector.getProfile(argThat(fc -> FISCAL_CODE.equals(fc.getFiscalCode())), eq(TOKEN)))
                 .thenReturn(PROFILE_RESOURCE);
         when(notificationDTOMapper.map(eq(FISCAL_CODE), anyLong(), anyString(), anyString()))
@@ -1033,8 +1020,6 @@ class NotificationManagerServiceTest {
         when(notificationMapper.toEntity(NOTIFICATION_READMISSION_QUEUE_DTO)).thenReturn(NOTIFICATION_READMISSION);
         when(initiativeRestConnector.getIOTokens(INITIATIVE_ID)).thenReturn(INITIATIVE_ADDITIONAL_INFO_DTO);
         when(pdvDecryptRestConnector.getPii(TEST_TOKEN)).thenReturn(FISCAL_CODE_RESOURCE);
-        when(notificationMarkdown.getMarkdownReadmission()).thenReturn(MARKDOWN);
-        when(notificationMarkdown.getSubjectReadmission(INITIATIVE_NAME)).thenReturn(SUBJECT);
         when(ioBackEndRestConnector.getProfile(argThat(fc -> FISCAL_CODE.equals(fc.getFiscalCode())), eq(TOKEN)))
                 .thenReturn(PROFILE_RESOURCE);
         when(notificationDTOMapper.map(eq(FISCAL_CODE), anyLong(), anyString(), anyString()))
@@ -1155,8 +1140,6 @@ class NotificationManagerServiceTest {
         when(pdvDecryptRestConnector.getPii(TEST_TOKEN)).thenReturn(FISCAL_CODE_RESOURCE);
         when(ioBackEndRestConnector.getProfile(argThat(fc -> FISCAL_CODE.equals(fc.getFiscalCode())), eq(TOKEN)))
                 .thenReturn(PROFILE_RESOURCE);
-        when(notificationMarkdown.getSubjectReminderBel()).thenReturn(SUBJECT);
-        when(notificationMarkdown.getMarkdownReminder(dto.getInitiativeId(), dto.getVoucherEndDate())).thenReturn(MARKDOWN);
         when(notificationDTOMapper.map(eq(FISCAL_CODE), anyLong(), anyString(), anyString()))
                 .thenReturn(NOTIFICATION_DTO);
         when(ioBackEndRestConnector.notify(NOTIFICATION_DTO, TOKEN)).thenReturn(NOTIFICATION_RESOURCE);
