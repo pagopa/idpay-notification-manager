@@ -34,11 +34,12 @@ public class ProfilesNotificationCatalog {
         String profile = StringUtils.hasText(configuredProfile)
                 ? configuredProfile
                 : DEFAULT_PROFILE;
+        String sanitizedProfileForLog = sanitizeForLog(profile);
         if (!containsProfile(profile)) {
-            log.warn("[NOTIFY][UNKNOWN_NOTIFICATION_PROFILE] profile={}", profile);
+            log.warn("[NOTIFY][UNKNOWN_NOTIFICATION_PROFILE] profile={}", sanitizedProfileForLog);
             return Optional.empty();
         }
-        log.info("[NOTIFY][PROFILE_RESOLVED] profile={}", profile);
+        log.info("[NOTIFY][PROFILE_RESOLVED] profile={}", sanitizedProfileForLog);
         return Optional.of(profile);
     }
 
@@ -52,5 +53,12 @@ public class ProfilesNotificationCatalog {
         return resolveProfile(configuredProfile)
                 .map(profile -> properties.getProfiles().get(profile))
                 .map(ProfilesNotificationProperties.ProfileConfig::getVariables);
+    }
+
+    private String sanitizeForLog(String value) {
+        if (value == null) {
+            return null;
+        }
+        return value.replace('\n', '_').replace('\r', '_');
     }
 }
