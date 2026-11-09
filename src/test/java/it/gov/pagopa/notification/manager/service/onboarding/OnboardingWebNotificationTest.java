@@ -1,5 +1,7 @@
 package it.gov.pagopa.notification.manager.service.onboarding;
 
+import feign.FeignException;
+import feign.Request;
 import it.gov.pagopa.notification.manager.config.EmailNotificationProperties;
 import it.gov.pagopa.notification.manager.config.ProfilesNotificationProperties;
 import it.gov.pagopa.notification.manager.connector.EmailNotificationConnector;
@@ -622,8 +624,10 @@ class OnboardingWebNotificationTest {
     void processNotification_whenFeignException_handlesError() {
         EvaluationDTO evaluationDTO = getEvaluationDto();
 
-        when(notificationMapper.evaluationToNotification(evaluationDTO))
-               .thenReturn(NOTIFICATION);
+        when(notificationMapper.createNotificationFromEmailMessageDTO(
+                any(EmailMessageDTO.class),
+                eq(evaluationDTO)
+        )).thenReturn(NOTIFICATION);
 
         when(initiativeRestConnector.getInitiativeDetailInfo(anyString()))
                 .thenThrow(new feign.FeignException.InternalServerError(
@@ -633,7 +637,17 @@ class OnboardingWebNotificationTest {
                         null
                 ));
 
-        assertDoesNotThrow(() -> onboardingWebNotification.processNotification(evaluationDTO));
+        EmailNotificationProperties.Subject subjectMock =
+                mock(EmailNotificationProperties.Subject.class);
+
+        when(emailNotificationPropertiesMock.getSubject())
+                .thenReturn(subjectMock);
+
+        when(subjectMock.getOk()).thenReturn("OK");
+
+        assertDoesNotThrow(
+                () -> onboardingWebNotification.processNotification(evaluationDTO)
+        );
     }
 
     @Test
@@ -782,16 +796,38 @@ class OnboardingWebNotificationTest {
     @Test
     void handleInitiativeFetchError_shouldMapAndSaveNotificationKo() {
         EvaluationDTO evaluationDTO = getEvaluationDto();
-        Notification mockNotification = Notification.builder().id("NOTIF_FETCH_ERROR").build();
-        when(notificationMapper.evaluationToNotification(evaluationDTO)).thenReturn(mockNotification);
+        Notification mockNotification = Notification.builder()
+                .id("NOTIF_FETCH_ERROR")
+                .build();
 
-        ((OnboardingWebNotificationImpl) onboardingWebNotification).handleInitiativeFetchError(evaluationDTO);
+        when(notificationMapper.createNotificationFromEmailMessageDTO(
+                any(EmailMessageDTO.class),
+                eq(evaluationDTO)
+        )).thenReturn(mockNotification);
 
-        verify(notificationMapper, times(1)).evaluationToNotification(evaluationDTO);
-        verify(notificationManagerRepository, times(1)).save(argThat(notif ->
-                NotificationConstants.NOTIFICATION_STATUS_KO.equals(notif.getNotificationStatus()) &&
-                        notif.getStatusKoTimestamp() != null
-        ));
+        EmailNotificationProperties.Subject subjectMock =
+                mock(EmailNotificationProperties.Subject.class);
+
+        when(emailNotificationPropertiesMock.getSubject())
+                .thenReturn(subjectMock);
+
+        when(subjectMock.getOk()).thenReturn("OK");
+
+        ((OnboardingWebNotificationImpl) onboardingWebNotification)
+                .handleInitiativeFetchError(evaluationDTO);
+
+        verify(notificationMapper, times(1))
+                .createNotificationFromEmailMessageDTO(
+                        any(EmailMessageDTO.class),
+                        eq(evaluationDTO)
+                );
+
+        verify(notificationManagerRepository, times(1))
+                .save(argThat(notif ->
+                        NotificationConstants.NOTIFICATION_STATUS_KO
+                                .equals(notif.getNotificationStatus())
+                                && notif.getStatusKoTimestamp() != null
+                ));
     }
 
     @Test
