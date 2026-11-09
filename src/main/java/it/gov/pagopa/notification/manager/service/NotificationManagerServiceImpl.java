@@ -244,7 +244,7 @@ public class NotificationManagerServiceImpl implements NotificationManagerServic
         } catch (NotFoundNotificationEventTemplate _) {
             log.info(
                     "[NOTIFY][IO] Notification event {} not configured for initiative {}. Notification skipped",
-                    evaluationDTO.getStatus(),
+                    sanitizeString(evaluationDTO.getStatus()),
                     sanitizeString(evaluationDTO.getInitiativeId())
             );
         }
