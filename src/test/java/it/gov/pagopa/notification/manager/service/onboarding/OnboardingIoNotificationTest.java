@@ -1,11 +1,15 @@
 package it.gov.pagopa.notification.manager.service.onboarding;
 
+import feign.FeignException;
+import feign.Request;
+import it.gov.pagopa.notification.manager.config.ProfilesNotificationProperties;
 import it.gov.pagopa.notification.manager.connector.IOBackEndRestConnector;
 import it.gov.pagopa.notification.manager.connector.initiative.InitiativeRestConnector;
 import it.gov.pagopa.notification.manager.dto.EvaluationDTO;
 import it.gov.pagopa.notification.manager.dto.NotificationDTO;
 import it.gov.pagopa.notification.manager.dto.NotificationResource;
 import it.gov.pagopa.notification.manager.dto.OnboardingRejectionReason;
+import it.gov.pagopa.notification.manager.dto.VerifyDTO;
 import it.gov.pagopa.notification.manager.dto.initiative.InitiativeNotificationDTO;
 import it.gov.pagopa.notification.manager.dto.mapper.NotificationDTOMapper;
 import it.gov.pagopa.notification.manager.enums.Channel;
@@ -26,6 +30,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
+import static it.gov.pagopa.notification.manager.constants.NotificationConstants.STATUS_ONBOARDING_JOINED;
 import static it.gov.pagopa.notification.manager.constants.NotificationConstants.STATUS_ONBOARDING_KO;
 import static it.gov.pagopa.notification.manager.constants.NotificationConstants.STATUS_ONBOARDING_OK;
 import static it.gov.pagopa.notification.manager.dto.OnboardingRejectionReason.OnboardingRejectionReasonCode.FAMILY_CRITERIA_FAIL;
@@ -190,6 +195,287 @@ class OnboardingIoNotificationTest {
 
 
         verifyNoInteractions(ioBackEndRestConnector);
+    }
+
+    @Test
+    void processNotification_whenStatusJoined_success() {
+        EvaluationDTO evaluation = evaluation(STATUS_ONBOARDING_JOINED);
+        prepareInitiativeAndProfile();
+        when(notificationContentService.resolveProfileAndFindAndRender(
+                eq(PROFILE),
+                eq(NotificationEvent.ONBOARDING_JOINED),
+                any(OnboardingPlaceholderContext.class),
+                any()
+        )).thenReturn(Optional.of(new NotificationContent("Adesione", "Adesione effettuata con successo")));
+        mockSentNotification();
+
+        assertEquals("notification-id", notification.processNotification(evaluation));
+
+        verify(notificationContentService).resolveProfileAndFindAndRender(
+                eq(PROFILE),
+                eq(NotificationEvent.ONBOARDING_JOINED),
+                any(OnboardingPlaceholderContext.class),
+                any()
+        );
+        ArgumentCaptor<NotificationDTO> sent = ArgumentCaptor.forClass(NotificationDTO.class);
+        verify(ioBackEndRestConnector).notify(sent.capture(), eq("io-token"));
+        assertEquals("Adesione", sent.getValue().getContent().getSubject());
+        assertEquals("Adesione effettuata con successo", sent.getValue().getContent().getMarkdown());
+    }
+
+    @Test
+    void processNotification_whenStatusJoined_templateNotFound_throwsException() {
+        EvaluationDTO evaluation = evaluation(STATUS_ONBOARDING_JOINED);
+        prepareInitiativeAndProfile();
+        when(notificationContentService.resolveProfileAndFindAndRender(
+                eq(PROFILE),
+                eq(NotificationEvent.ONBOARDING_JOINED),
+                any(OnboardingPlaceholderContext.class),
+                any()
+        )).thenReturn(Optional.empty());
+
+        NotFoundNotificationEventTemplate ex = assertThrows(
+                NotFoundNotificationEventTemplate.class,
+                () -> notification.processNotification(evaluation)
+        );
+
+        assertTrue(ex.getMessage().contains("ONBOARDING_JOINED"));
+        verifyNoInteractions(ioBackEndRestConnector);
+    }
+
+    @Test
+    void processNotification_whenStatusOkPartial_success() {
+        EvaluationDTO evaluation = evaluation(STATUS_ONBOARDING_OK);
+        VerifyDTO verifyDTO = VerifyDTO.builder()
+                .verify(true)
+                .beneficiaryBudgetCentsMin(25000L)
+                .build();
+        evaluation.setVerifies(List.of(verifyDTO));
+        evaluation.setBeneficiaryBudgetCents(25000L);
+
+        prepareInitiativeAndProfile();
+        when(notificationContentService.resolveProfileAndFindAndRender(
+                eq(PROFILE),
+                eq(NotificationEvent.ONBOARDING_OK_PARTIAL),
+                any(OnboardingPlaceholderContext.class),
+                any()
+        )).thenReturn(Optional.of(new NotificationContent("Esito Parziale", "Importo parziale assegnato")));
+        mockSentNotification();
+
+        assertEquals("notification-id", notification.processNotification(evaluation));
+
+        verify(notificationContentService).resolveProfileAndFindAndRender(
+                eq(PROFILE),
+                eq(NotificationEvent.ONBOARDING_OK_PARTIAL),
+                any(OnboardingPlaceholderContext.class),
+                any()
+        );
+        ArgumentCaptor<NotificationDTO> sent = ArgumentCaptor.forClass(NotificationDTO.class);
+        verify(ioBackEndRestConnector).notify(sent.capture(), eq("io-token"));
+        assertEquals("Esito Parziale", sent.getValue().getContent().getSubject());
+    }
+
+    @Test
+    void processNotification_whenStatusOkPartial_templateNotFound_throwsException() {
+        EvaluationDTO evaluation = evaluation(STATUS_ONBOARDING_OK);
+        VerifyDTO verifyDTO = VerifyDTO.builder()
+                .verify(true)
+                .beneficiaryBudgetCentsMin(25000L)
+                .build();
+        evaluation.setVerifies(List.of(verifyDTO));
+        evaluation.setBeneficiaryBudgetCents(25000L);
+
+        prepareInitiativeAndProfile();
+        when(notificationContentService.resolveProfileAndFindAndRender(
+                eq(PROFILE),
+                eq(NotificationEvent.ONBOARDING_OK_PARTIAL),
+                any(OnboardingPlaceholderContext.class),
+                any()
+        )).thenReturn(Optional.empty());
+
+        NotFoundNotificationEventTemplate ex = assertThrows(
+                NotFoundNotificationEventTemplate.class,
+                () -> notification.processNotification(evaluation)
+        );
+
+        assertTrue(ex.getMessage().contains("ONBOARDING_OK_PARTIAL"));
+        verifyNoInteractions(ioBackEndRestConnector);
+    }
+
+    @Test
+    void processNotification_whenSpecificKoNotFound_fallbackToGenericKo_success() {
+        EvaluationDTO evaluation = evaluation(STATUS_ONBOARDING_KO);
+        evaluation.setOnboardingRejectionReasons(List.of(OnboardingRejectionReason.builder()
+                .type(INVALID_REQUEST)
+                .code(REJECTION_REASON_INITIATIVE_ENDED)
+                .build()));
+        prepareInitiativeAndProfile();
+
+        when(notificationContentService.resolveProfileAndFindAndRender(
+                eq(PROFILE),
+                eq(NotificationEvent.ONBOARDING_KO_INITIATIVE_ENDED),
+                any(OnboardingPlaceholderContext.class),
+                any()
+        )).thenReturn(Optional.empty());
+
+        when(notificationContentService.resolveProfileAndFindAndRender(
+                eq(PROFILE),
+                eq(NotificationEvent.ONBOARDING_KO_GENERIC),
+                any(OnboardingPlaceholderContext.class),
+                any()
+        )).thenReturn(Optional.of(new NotificationContent("Generico", "Markdown generico fallback")));
+        mockSentNotification();
+
+        assertEquals("notification-id", notification.processNotification(evaluation));
+
+        verify(notificationContentService).resolveProfileAndFindAndRender(
+                eq(PROFILE),
+                eq(NotificationEvent.ONBOARDING_KO_INITIATIVE_ENDED),
+                any(OnboardingPlaceholderContext.class),
+                any()
+        );
+        verify(notificationContentService).resolveProfileAndFindAndRender(
+                eq(PROFILE),
+                eq(NotificationEvent.ONBOARDING_KO_GENERIC),
+                any(OnboardingPlaceholderContext.class),
+                any()
+        );
+        ArgumentCaptor<NotificationDTO> sent = ArgumentCaptor.forClass(NotificationDTO.class);
+        verify(ioBackEndRestConnector).notify(sent.capture(), eq("io-token"));
+        assertEquals("Markdown generico fallback", sent.getValue().getContent().getMarkdown());
+    }
+
+    @Test
+    void processNotification_whenSpecificKoNotFoundAndGenericKoNotFound_throwsException() {
+        EvaluationDTO evaluation = evaluation(STATUS_ONBOARDING_KO);
+        evaluation.setOnboardingRejectionReasons(List.of(OnboardingRejectionReason.builder()
+                .type(INVALID_REQUEST)
+                .code(REJECTION_REASON_INITIATIVE_ENDED)
+                .build()));
+        prepareInitiativeAndProfile();
+
+        when(notificationContentService.resolveProfileAndFindAndRender(
+                eq(PROFILE),
+                eq(NotificationEvent.ONBOARDING_KO_INITIATIVE_ENDED),
+                any(OnboardingPlaceholderContext.class),
+                any()
+        )).thenReturn(Optional.empty());
+
+        when(notificationContentService.resolveProfileAndFindAndRender(
+                eq(PROFILE),
+                eq(NotificationEvent.ONBOARDING_KO_GENERIC),
+                any(OnboardingPlaceholderContext.class),
+                any()
+        )).thenReturn(Optional.empty());
+
+        NotFoundNotificationEventTemplate ex = assertThrows(
+                NotFoundNotificationEventTemplate.class,
+                () -> notification.processNotification(evaluation)
+        );
+
+        assertTrue(ex.getMessage().contains("ONBOARDING_KO_INITIATIVE_ENDED"));
+        verifyNoInteractions(ioBackEndRestConnector);
+    }
+
+    @Test
+    void processNotification_whenGenericKoDirectlyNotFound_throwsException() {
+        EvaluationDTO evaluation = evaluation(STATUS_ONBOARDING_KO);
+        evaluation.setOnboardingRejectionReasons(List.of(OnboardingRejectionReason.builder()
+                .type(INVALID_REQUEST)
+                .code(FAMILY_CRITERIA_FAIL)
+                .build()));
+        prepareInitiativeAndProfile();
+
+        when(notificationContentService.resolveProfileAndFindAndRender(
+                eq(PROFILE),
+                eq(NotificationEvent.ONBOARDING_KO_GENERIC),
+                any(OnboardingPlaceholderContext.class),
+                any()
+        )).thenReturn(Optional.empty());
+
+        NotFoundNotificationEventTemplate ex = assertThrows(
+                NotFoundNotificationEventTemplate.class,
+                () -> notification.processNotification(evaluation)
+        );
+
+        assertTrue(ex.getMessage().contains("ONBOARDING_KO_GENERIC"));
+        verifyNoInteractions(ioBackEndRestConnector);
+    }
+
+    @Test
+    void processNotification_whenProfileVariablesPresent_passesAssistedLinkToContext() {
+        EvaluationDTO evaluation = evaluation(STATUS_ONBOARDING_OK);
+        prepareInitiativeAndProfile();
+
+        ProfilesNotificationProperties.ProfileConfigVariables configVars =
+                new ProfilesNotificationProperties.ProfileConfigVariables();
+        configVars.setAssistedLink("https://assistenza.example.it");
+        when(profilesNotificationCatalog.retrieveProfileVariables(PROFILE)).thenReturn(Optional.of(configVars));
+
+        when(notificationContentService.resolveProfileAndFindAndRender(
+                eq(PROFILE),
+                eq(NotificationEvent.ONBOARDING_OK),
+                any(OnboardingPlaceholderContext.class),
+                any()
+        )).thenReturn(Optional.of(new NotificationContent("Subject", "Body")));
+        mockSentNotification();
+
+        notification.processNotification(evaluation);
+
+        ArgumentCaptor<OnboardingPlaceholderContext> contextCaptor =
+                ArgumentCaptor.forClass(OnboardingPlaceholderContext.class);
+        verify(notificationContentService).resolveProfileAndFindAndRender(
+                eq(PROFILE),
+                eq(NotificationEvent.ONBOARDING_OK),
+                contextCaptor.capture(),
+                any()
+        );
+        assertEquals("https://assistenza.example.it", contextCaptor.getValue().assistedLink());
+    }
+
+    @Test
+    void sendNotification_whenIoBackendThrowsFeignException_logsErrorAndReturnsNull() {
+        EvaluationDTO evaluation = evaluation(STATUS_ONBOARDING_OK);
+        prepareInitiativeAndProfile();
+
+        when(notificationContentService.resolveProfileAndFindAndRender(
+                eq(PROFILE),
+                eq(NotificationEvent.ONBOARDING_OK),
+                any(OnboardingPlaceholderContext.class),
+                any()
+        )).thenReturn(Optional.of(new NotificationContent("Subject", "Body")));
+
+        Request request = mock(Request.class);
+        when(ioBackEndRestConnector.notify(any(NotificationDTO.class), anyString()))
+                .thenThrow(new FeignException.InternalServerError("IO Error", request, new byte[0], null));
+
+        String result = notification.processNotification(evaluation);
+
+        assertNull(result);
+    }
+
+    @Test
+    void processNotification_whenUnsupportedStatus_returnsNull() {
+        EvaluationDTO evaluation = evaluation("UNSUPPORTED_STATUS");
+        prepareInitiativeAndProfile();
+
+        String result = notification.processNotification(evaluation);
+
+        assertNull(result);
+        verifyNoInteractions(ioBackEndRestConnector);
+        verifyNoInteractions(notificationContentService);
+    }
+
+    @Test
+    void processNotification_whenInitiativeFetchThrowsFeignException_returnsNull() {
+        EvaluationDTO evaluation = evaluation(STATUS_ONBOARDING_KO);
+        Request request = mock(Request.class);
+        when(initiativeRestConnector.getInitiativeDetailInfo(evaluation.getInitiativeId()))
+                .thenThrow(new FeignException.BadRequest("Bad Request", request, new byte[0], null));
+
+        String result = notification.processNotification(evaluation);
+
+        assertNull(result);
     }
 
     private void prepareInitiativeAndProfile() {
