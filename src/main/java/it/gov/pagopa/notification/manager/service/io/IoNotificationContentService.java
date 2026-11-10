@@ -21,7 +21,7 @@ public class IoNotificationContentService {
     private final ProfilesNotificationCatalog catalog;
     private final NotificationContentRenderer renderer;
 
-    public Optional<NotificationContent> find(String profile, NotificationEvent event) {
+    private Optional<NotificationContent> find(String profile, NotificationEvent event) {
         Optional<NotificationContent> content = catalog.find(profile, event);
         if (content.isEmpty()) {
             log.warn("[NOTIFY][IO][NOTIFICATION_CONTENT_NOT_CONFIGURED] profile={}, event={}",

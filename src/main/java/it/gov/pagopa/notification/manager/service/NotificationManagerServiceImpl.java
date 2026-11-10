@@ -331,6 +331,7 @@ public class NotificationManagerServiceImpl implements NotificationManagerServic
         // retrieve initiative configured profile
         InitiativeNotificationDTO initiativeDetailInfo = getInitiativeDetailInfo(notification.getInitiativeId());
         if (initiativeDetailInfo == null) {
+            notificationKO(notification, startTime);
             return false;
         }
         String configuredProfile = initiativeDetailInfo.getEmailFlux();
@@ -429,7 +430,7 @@ public class NotificationManagerServiceImpl implements NotificationManagerServic
             // and the notification content is not configured for the given profile and event
             if (STATUS_ONBOARDING_KO.equals(notification.getOnboardingOutcome())) {
                 Optional<NotificationContent> optContent =
-                        ioNotificationContentService.find(configuredProfile, optEvent.get());
+                        ioNotificationContentService.resolveProfileAndFind(configuredProfile, optEvent.get());
 
                 if (optContent.isEmpty()) {
                     notificationEventToRender = NotificationEvent.ONBOARDING_KO_GENERIC;

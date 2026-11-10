@@ -622,8 +622,10 @@ class OnboardingWebNotificationTest {
     void processNotification_whenFeignException_handlesError() {
         EvaluationDTO evaluationDTO = getEvaluationDto();
 
-        when(notificationMapper.evaluationToNotification(evaluationDTO))
-               .thenReturn(NOTIFICATION);
+        when(notificationMapper.createNotificationFromEmailMessageDTO(
+                any(EmailMessageDTO.class),
+                eq(evaluationDTO)
+        )).thenReturn(NOTIFICATION);
 
         when(initiativeRestConnector.getInitiativeDetailInfo(anyString()))
                 .thenThrow(new feign.FeignException.InternalServerError(
@@ -633,7 +635,17 @@ class OnboardingWebNotificationTest {
                         null
                 ));
 
-        assertDoesNotThrow(() -> onboardingWebNotification.processNotification(evaluationDTO));
+        EmailNotificationProperties.Subject subjectMock =
+                mock(EmailNotificationProperties.Subject.class);
+
+        when(emailNotificationPropertiesMock.getSubject())
+                .thenReturn(subjectMock);
+
+        when(subjectMock.getOk()).thenReturn("OK");
+
+        assertDoesNotThrow(
+                () -> onboardingWebNotification.processNotification(evaluationDTO)
+        );
     }
 
     @Test
@@ -782,16 +794,38 @@ class OnboardingWebNotificationTest {
     @Test
     void handleInitiativeFetchError_shouldMapAndSaveNotificationKo() {
         EvaluationDTO evaluationDTO = getEvaluationDto();
-        Notification mockNotification = Notification.builder().id("NOTIF_FETCH_ERROR").build();
-        when(notificationMapper.evaluationToNotification(evaluationDTO)).thenReturn(mockNotification);
+        Notification mockNotification = Notification.builder()
+                .id("NOTIF_FETCH_ERROR")
+                .build();
 
-        ((OnboardingWebNotificationImpl) onboardingWebNotification).handleInitiativeFetchError(evaluationDTO);
+        when(notificationMapper.createNotificationFromEmailMessageDTO(
+                any(EmailMessageDTO.class),
+                eq(evaluationDTO)
+        )).thenReturn(mockNotification);
 
-        verify(notificationMapper, times(1)).evaluationToNotification(evaluationDTO);
-        verify(notificationManagerRepository, times(1)).save(argThat(notif ->
-                NotificationConstants.NOTIFICATION_STATUS_KO.equals(notif.getNotificationStatus()) &&
-                        notif.getStatusKoTimestamp() != null
-        ));
+        EmailNotificationProperties.Subject subjectMock =
+                mock(EmailNotificationProperties.Subject.class);
+
+        when(emailNotificationPropertiesMock.getSubject())
+                .thenReturn(subjectMock);
+
+        when(subjectMock.getOk()).thenReturn("OK");
+
+        ((OnboardingWebNotificationImpl) onboardingWebNotification)
+                .handleInitiativeFetchError(evaluationDTO);
+
+        verify(notificationMapper, times(1))
+                .createNotificationFromEmailMessageDTO(
+                        any(EmailMessageDTO.class),
+                        eq(evaluationDTO)
+                );
+
+        verify(notificationManagerRepository, times(1))
+                .save(argThat(notif ->
+                        NotificationConstants.NOTIFICATION_STATUS_KO
+                                .equals(notif.getNotificationStatus())
+                                && notif.getStatusKoTimestamp() != null
+                ));
     }
 
     @Test
@@ -835,6 +869,117 @@ class OnboardingWebNotificationTest {
 
         assertNull(result);
         verify(emailNotificationConnectorMock, never()).sendEmail(any());
+    }
+
+    @Test
+    void notify_whenBadTemplateName_shouldReplaceTemplateName() {
+        Notification notification = Notification.builder()
+                .id("NOTIFICATION_ID")
+                .userId("USER_ID")
+                .initiativeId(INITIATIVE_ID)
+                .templateName("Email_null/EsitoOk")
+                .build();
+
+        InitiativeNotificationDTO initiative = new InitiativeNotificationDTO();
+        initiative.setEmailFlux("DEC26");
+
+        when(initiativeRestConnector.getInitiativeDetailInfo(INITIATIVE_ID))
+                .thenReturn(initiative);
+
+        when(notificationMapper.notificationToEmailMessageDTO(notification))
+                .thenReturn(EMAIL_MESSAGE_DTO);
+
+        when(emailNotificationConnectorMock.sendEmail(EMAIL_MESSAGE_DTO))
+                .thenReturn(new ResponseEntity<>(HttpStatus.OK));
+
+        boolean result = onboardingWebNotification.notify(notification);
+
+        assertTrue(result);
+        assertEquals("Email_DEC26/EsitoOk", notification.getTemplateName());
+
+        verify(initiativeRestConnector, times(1))
+                .getInitiativeDetailInfo(INITIATIVE_ID);
+
+        verify(notificationMapper, times(1))
+                .notificationToEmailMessageDTO(notification);
+
+        verify(emailNotificationConnectorMock, times(1))
+                .sendEmail(EMAIL_MESSAGE_DTO);
+    }
+
+    @Test
+    void notify_whenTemplateNameIsValid_shouldNotReplaceTemplateName() {
+        Notification notification = Notification.builder()
+                .id("NOTIFICATION_ID")
+                .userId("USER_ID")
+                .initiativeId(INITIATIVE_ID)
+                .templateName("Email_DEC26/EsitoOk")
+                .build();
+
+        when(notificationMapper.notificationToEmailMessageDTO(notification))
+                .thenReturn(EMAIL_MESSAGE_DTO);
+
+        when(emailNotificationConnectorMock.sendEmail(EMAIL_MESSAGE_DTO))
+                .thenReturn(new ResponseEntity<>(HttpStatus.OK));
+
+        boolean result = onboardingWebNotification.notify(notification);
+
+        assertTrue(result);
+        assertEquals("Email_DEC26/EsitoOk", notification.getTemplateName());
+
+        verify(initiativeRestConnector, never())
+                .getInitiativeDetailInfo(anyString());
+
+        verify(notificationMapper, times(1))
+                .notificationToEmailMessageDTO(notification);
+    }
+
+    @Test
+    void notify_whenTemplateNameIsNull_shouldNotReplaceTemplateName() {
+        Notification notification = Notification.builder()
+                .id("NOTIFICATION_ID")
+                .userId("USER_ID")
+                .initiativeId(INITIATIVE_ID)
+                .templateName(null)
+                .build();
+
+        when(notificationMapper.notificationToEmailMessageDTO(notification))
+                .thenReturn(EMAIL_MESSAGE_DTO);
+
+        when(emailNotificationConnectorMock.sendEmail(EMAIL_MESSAGE_DTO))
+                .thenReturn(new ResponseEntity<>(HttpStatus.OK));
+
+        boolean result = onboardingWebNotification.notify(notification);
+
+        assertTrue(result);
+        assertNull(notification.getTemplateName());
+
+        verify(initiativeRestConnector, never())
+                .getInitiativeDetailInfo(anyString());
+    }
+
+    @Test
+    void notify_whenTemplateNameIsBlank_shouldNotReplaceTemplateName() {
+        Notification notification = Notification.builder()
+                .id("NOTIFICATION_ID")
+                .userId("USER_ID")
+                .initiativeId(INITIATIVE_ID)
+                .templateName(" ")
+                .build();
+
+        when(notificationMapper.notificationToEmailMessageDTO(notification))
+                .thenReturn(EMAIL_MESSAGE_DTO);
+
+        when(emailNotificationConnectorMock.sendEmail(EMAIL_MESSAGE_DTO))
+                .thenReturn(new ResponseEntity<>(HttpStatus.OK));
+
+        boolean result = onboardingWebNotification.notify(notification);
+
+        assertTrue(result);
+        assertEquals(" ", notification.getTemplateName());
+
+        verify(initiativeRestConnector, never())
+                .getInitiativeDetailInfo(anyString());
     }
 
 }
