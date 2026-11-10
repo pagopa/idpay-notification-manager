@@ -1,6 +1,7 @@
 package it.gov.pagopa.notification.manager.model;
 
 import it.gov.pagopa.notification.manager.dto.OnboardingRejectionReason;
+import it.gov.pagopa.notification.manager.dto.VerifyDTO;
 import it.gov.pagopa.notification.manager.enums.Channel;
 import lombok.Builder;
 import lombok.Data;
@@ -45,6 +46,10 @@ public class Notification {
   private String onboardingOutcome;
 
   private List<OnboardingRejectionReason> rejectReasons;
+
+  private List<VerifyDTO> verifies;
+
+  private Long beneficiaryBudgetCents;
 
   private LocalDateTime retryDate;
 

@@ -1,6 +1,7 @@
 package it.gov.pagopa.notification.manager.service;
 
 import feign.FeignException;
+import it.gov.pagopa.notification.manager.config.ProfilesNotificationProperties;
 import it.gov.pagopa.notification.manager.connector.IOBackEndRestConnector;
 import it.gov.pagopa.notification.manager.connector.PdvDecryptRestConnector;
 import it.gov.pagopa.notification.manager.connector.initiative.InitiativeRestConnector;
@@ -8,15 +9,21 @@ import it.gov.pagopa.notification.manager.constants.NotificationConstants;
 import it.gov.pagopa.notification.manager.dto.*;
 import it.gov.pagopa.notification.manager.dto.event.*;
 import it.gov.pagopa.notification.manager.dto.initiative.InitiativeAdditionalInfoDTO;
+import it.gov.pagopa.notification.manager.dto.initiative.InitiativeNotificationDTO;
 import it.gov.pagopa.notification.manager.dto.mapper.NotificationDTOMapper;
 import it.gov.pagopa.notification.manager.dto.mapper.NotificationMapper;
+import it.gov.pagopa.notification.manager.enums.NotificationEvent;
 import it.gov.pagopa.notification.manager.event.producer.OutcomeProducer;
+import it.gov.pagopa.notification.manager.exception.NotFoundNotificationEventTemplate;
 import it.gov.pagopa.notification.manager.model.Notification;
-import it.gov.pagopa.notification.manager.model.NotificationMarkdown;
+import it.gov.pagopa.notification.manager.model.NotificationContent;
 import it.gov.pagopa.notification.manager.repository.NotificationManagerRepository;
 import it.gov.pagopa.notification.manager.repository.NotificationManagerRepositoryExtended;
+import it.gov.pagopa.notification.manager.service.io.IoNotificationContentService;
+import it.gov.pagopa.notification.manager.service.io.NotificationEventResolver;
+import it.gov.pagopa.notification.manager.service.io.ProfilesNotificationCatalog;
+import it.gov.pagopa.notification.manager.service.io.placeholder.*;
 import it.gov.pagopa.notification.manager.service.onboarding.OnboardingIoNotification;
-import it.gov.pagopa.notification.manager.service.onboarding.OnboardingIoNotificationImpl;
 import it.gov.pagopa.notification.manager.service.onboarding.OnboardingWebNotification;
 import it.gov.pagopa.notification.manager.utils.AuditUtilities;
 import jakarta.annotation.PostConstruct;
@@ -27,13 +34,16 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.scheduling.concurrent.CustomizableThreadFactory;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 
+import java.time.LocalDateTime;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -41,6 +51,7 @@ import java.util.concurrent.Future;
 import java.util.stream.IntStream;
 
 import static it.gov.pagopa.notification.manager.constants.NotificationConstants.AnyNotificationConsumer.SubTypes.*;
+import static it.gov.pagopa.notification.manager.constants.NotificationConstants.STATUS_ONBOARDING_KO;
 
 
 @Service
@@ -57,10 +68,11 @@ public class NotificationManagerServiceImpl implements NotificationManagerServic
     private final NotificationDTOMapper notificationDTOMapper;
     private final PdvDecryptRestConnector pdvDecryptRestConnector;
     private final NotificationMapper notificationMapper;
-    private final NotificationMarkdown notificationMarkdown;
     private final AuditUtilities auditUtilities;
     private final OnboardingIoNotification onboardingIoNotification;
     private final OnboardingWebNotification onboardingWebNotification;
+    private final IoNotificationContentService ioNotificationContentService;
+    private final ProfilesNotificationCatalog profilesNotificationCatalog;
     @Value("${rest-client.notification.backend-io.ttl}")
     private Long timeToLive;
     @Value("${notification.manager.recover.parallelism}")
@@ -68,12 +80,36 @@ public class NotificationManagerServiceImpl implements NotificationManagerServic
     @Value("${notification.manager.markdown.double.new.line}")
     private String markdownDoubleNewLine;
 
+    private static final List<Class<? extends AnyOfNotificationQueueDTO>> SUPPORTED_TYPES =
+            List.of(
+                    NotificationCitizenOnQueueDTO.class,
+                    NotificationIbanQueueDTO.class,
+                    NotificationRefundQueueDTO.class,
+                    NotificationSuspensionQueueDTO.class,
+                    NotificationReadmissionQueueDTO.class,
+                    NotificationReminderQueueDTO.class,
+                    NotificationOnboardingQueueDTO.class
+            );
+
     private static final String LOG_NOTIFICATION_KO = "[NOTIFY] [SENT_NOTIFICATION_KO] -  Failed to send notification for user {} and initiative {}";
     private static final String ZONE_ID_ROME = "Europe/Rome";
     private ExecutorService executorService;
 
     public NotificationManagerServiceImpl(@Value("${app.delete.paginationSize:100}") int pageSize,
-                                          @Value("${app.delete.delayTime:1000}") long delay, OutcomeProducer outcomeProducer, InitiativeRestConnector initiativeRestConnector, IOBackEndRestConnector ioBackEndRestConnector, NotificationManagerRepository notificationManagerRepository, NotificationManagerRepositoryExtended notificationManagerRepositoryExtended, NotificationDTOMapper notificationDTOMapper, PdvDecryptRestConnector pdvDecryptRestConnector, NotificationMapper notificationMapper, NotificationMarkdown notificationMarkdown, AuditUtilities auditUtilities, OnboardingIoNotification onboardingIoNotification, OnboardingWebNotification onboardingWebNotification) {
+                                          @Value("${app.delete.delayTime:1000}") long delay,
+                                          OutcomeProducer outcomeProducer,
+                                          InitiativeRestConnector initiativeRestConnector,
+                                          IOBackEndRestConnector ioBackEndRestConnector,
+                                          NotificationManagerRepository notificationManagerRepository,
+                                          NotificationManagerRepositoryExtended notificationManagerRepositoryExtended,
+                                          NotificationDTOMapper notificationDTOMapper,
+                                          PdvDecryptRestConnector pdvDecryptRestConnector,
+                                          NotificationMapper notificationMapper,
+                                          AuditUtilities auditUtilities,
+                                          OnboardingIoNotification onboardingIoNotification,
+                                          OnboardingWebNotification onboardingWebNotification,
+                                          IoNotificationContentService ioNotificationContentService,
+                                          ProfilesNotificationCatalog profilesNotificationCatalog) {
         this.pageSize = pageSize;
         this.delay = delay;
         this.outcomeProducer = outcomeProducer;
@@ -84,10 +120,11 @@ public class NotificationManagerServiceImpl implements NotificationManagerServic
         this.notificationDTOMapper = notificationDTOMapper;
         this.pdvDecryptRestConnector = pdvDecryptRestConnector;
         this.notificationMapper = notificationMapper;
-        this.notificationMarkdown = notificationMarkdown;
         this.auditUtilities = auditUtilities;
         this.onboardingIoNotification = onboardingIoNotification;
         this.onboardingWebNotification = onboardingWebNotification;
+        this.ioNotificationContentService = ioNotificationContentService;
+        this.profilesNotificationCatalog = profilesNotificationCatalog;
     }
 
     @PostConstruct
@@ -143,7 +180,7 @@ public class NotificationManagerServiceImpl implements NotificationManagerServic
         }
 
         String markdown = (manualNotificationDTO.getBodyValues() != null
-                ? OnboardingIoNotificationImpl.replaceMessageItems(
+                ? replaceMessageItems(
                     manualNotificationDTO.getContent().getMarkdown(), manualNotificationDTO.getBodyValues())
                 : manualNotificationDTO.getContent().getMarkdown()).concat(markdownDoubleNewLine);
 
@@ -160,6 +197,19 @@ public class NotificationManagerServiceImpl implements NotificationManagerServic
         performanceLog(startTime);
     }
 
+    private String replaceMessageItems(String message, Map<String, String> values) {
+        for (Map.Entry<String, String> entry : values.entrySet()) {
+            message = replaceMessageItem(message, entry.getKey(), entry.getValue());
+        }
+        return message;
+    }
+
+    private String replaceMessageItem(String message, String key, String value) {
+        return message.replace(
+                NotificationConstants.MARKDOWN_TAG + key + NotificationConstants.MARKDOWN_TAG,
+                StringUtils.hasLength(value) ? value : NotificationConstants.MARKDOWN_NA);
+    }
+
     private boolean shouldSkipNotification(EvaluationDTO evaluationDTO) {
         boolean hasFamilyCriteriaKo = evaluationDTO.getOnboardingRejectionReasons() != null &&
                 evaluationDTO.getOnboardingRejectionReasons().stream()
@@ -169,7 +219,6 @@ public class NotificationManagerServiceImpl implements NotificationManagerServic
 
         return hasFamilyCriteriaKo || isDemandedType2;
     }
-
 
     private void processAppIoNotification(EvaluationDTO evaluationDTO, long startTime) {
 
@@ -181,15 +230,26 @@ public class NotificationManagerServiceImpl implements NotificationManagerServic
 
         evaluationDTO.setIoToken(notificationPreChecks.getKey());
         evaluationDTO.setFiscalCode(notificationPreChecks.getValue());
-        String notificationId = onboardingIoNotification.processNotification(evaluationDTO);
 
-        if (notificationId == null) {
-            log.error("[NOTIFY][ONBOARDING_STATUS] Failed to send onboarding status notification.");
-            notificationKO(notification, startTime);
-            return;
+        try {
+            String notificationId = onboardingIoNotification.processNotification(evaluationDTO);
+
+            if (notificationId == null) {
+                log.error("[NOTIFY][ONBOARDING_STATUS] Failed to send onboarding status notification.");
+                notificationKO(notification, startTime);
+                return;
+            }
+
+            logNotificationId(notificationId);
+        } catch (NotFoundNotificationEventTemplate _) {
+            log.info(
+                    "[NOTIFY][IO] Notification event {} not configured for initiative {}. Notification skipped",
+                    sanitizeString(evaluationDTO.getStatus()),
+                    sanitizeString(evaluationDTO.getInitiativeId())
+            );
         }
 
-        logNotificationId(notificationId);
+
     }
 
     private Pair<String, String> processAppIoGeneralNotification(Notification notification, long startTime, boolean manual) {
@@ -267,37 +327,66 @@ public class NotificationManagerServiceImpl implements NotificationManagerServic
             return false;
         }
 
-        String subject;
-        String markdown;
 
+        // retrieve initiative configured profile
+        InitiativeNotificationDTO initiativeDetailInfo = getInitiativeDetailInfo(notification.getInitiativeId());
+        if (initiativeDetailInfo == null) {
+            notificationKO(notification, startTime);
+            return false;
+        }
+        String configuredProfile = initiativeDetailInfo.getEmailFlux();
+
+        // resolve notification content based on the notification type and initiative configured profile
+        Optional<NotificationContent> content;
         switch (notification.getOperationType()) {
-            case ONBOARDING -> {
-                subject = notificationMarkdown.getSubject(notification);
-                markdown = notificationMarkdown.getMarkdown(notification);
-            }
-            case CHECKIBAN_KO -> {
-                subject = notificationMarkdown.getSubjectCheckIbanKo();
-                markdown = notificationMarkdown.getMarkdownCheckIbanKo();
-            }
+            case ONBOARDING ->
+                content = handleOnboardingNotificationRecovery(notification, configuredProfile);
+            case CHECKIBAN_KO ->
+                content = ioNotificationContentService.resolveProfileAndFind(
+                        configuredProfile,
+                        NotificationEvent.CHECK_IBAN_KO);
             case REFUND -> {
-                subject = notificationMarkdown.getSubjectRefund(notification.getRefundStatus());
-                markdown = notificationMarkdown.getMarkdownRefund(notification.getRefundStatus(), notification.getRefundReward());
+                BigDecimal refund = notification.getRefundReward() == null
+                        ? null
+                        : notification.getRefundReward()
+                        .divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_DOWN);
+
+                content = ioNotificationContentService.resolveProfileAndFindAndRender(
+                        configuredProfile,
+                        NotificationEventResolver.resolveRefundEvent(notification.getRefundStatus()),
+                        RefundPlaceholderContext.from(refund),
+                        List.of(RefundPlaceholder.values()));
             }
-            case SUSPENSION -> {
-                subject = notificationMarkdown.getSubjectSuspension(notification.getInitiativeName());
-                markdown = notificationMarkdown.getMarkdownSuspension();
-            }
-            case READMISSION -> {
-                subject = notificationMarkdown.getSubjectReadmission(notification.getInitiativeName());
-                markdown = notificationMarkdown.getMarkdownReadmission();
-            }
+            case SUSPENSION ->
+                content = ioNotificationContentService.resolveProfileAndFindAndRender(
+                        configuredProfile,
+                        NotificationEvent.SUSPENSION,
+                        InitiativePlaceholderContext.from(notification),
+                        List.of(InitiativePlaceholder.values()));
+            case READMISSION ->
+                content = ioNotificationContentService.resolveProfileAndFindAndRender(
+                        configuredProfile,
+                        NotificationEvent.READMISSION,
+                        InitiativePlaceholderContext.from(notification),
+                        List.of(InitiativePlaceholder.values()));
             default -> {
                 return false;
             }
         }
 
-        NotificationDTO notificationDTO =
-                notificationDTOMapper.map(fiscalCode, timeToLive, subject, markdown);
+        // if content is empty, it means that the notification is not configured for the given profile and event
+        if (content.isEmpty()) {
+            notificationKO(notification, startTime);
+            return false;
+        }
+
+        // build notification and then send it
+        NotificationContent rendered = content.get();
+        NotificationDTO notificationDTO = notificationDTOMapper.map(
+                fiscalCode,
+                timeToLive,
+                rendered.subject(),
+                rendered.markdown());
 
         String notificationId = sendNotification(notificationDTO, tokenDecrypt);
 
@@ -312,6 +401,56 @@ public class NotificationManagerServiceImpl implements NotificationManagerServic
         performanceLog(startTime);
 
         return true;
+    }
+
+    private String recoverAssistedLink(String configuredProfile) {
+        String assistedLink = null;
+        Optional<ProfilesNotificationProperties.ProfileConfigVariables> profileConfigVariables =
+                profilesNotificationCatalog.retrieveProfileVariables(configuredProfile);
+        if (profileConfigVariables.isPresent()) {
+            assistedLink = profileConfigVariables.get().getAssistedLink();
+        }
+        return assistedLink;
+    }
+
+    private Optional<NotificationContent> handleOnboardingNotificationRecovery(Notification notification, String configuredProfile) {
+        String sanitizedUserId = sanitizeString(notification.getUserId());
+        String sanitizedInitiativeId = sanitizeString(notification.getInitiativeId());
+
+        // optional content to return
+        Optional<NotificationContent> content;
+
+        Optional<NotificationEvent> optEvent =
+                NotificationEventResolver.resolveOnboardingEvent(notification);
+
+        if (optEvent.isPresent()) {
+            NotificationEvent notificationEventToRender = optEvent.get();
+
+            // handle the case where the notification event is ONBOARDING_KO
+            // and the notification content is not configured for the given profile and event
+            if (STATUS_ONBOARDING_KO.equals(notification.getOnboardingOutcome())) {
+                Optional<NotificationContent> optContent =
+                        ioNotificationContentService.resolveProfileAndFind(configuredProfile, optEvent.get());
+
+                if (optContent.isEmpty()) {
+                    notificationEventToRender = NotificationEvent.ONBOARDING_KO_GENERIC;
+                }
+            }
+
+            // resolve profile, find event and render notification content with placeholders
+            String assistedLink = recoverAssistedLink(configuredProfile);
+            content = ioNotificationContentService.resolveProfileAndFindAndRender(
+                    configuredProfile,
+                    notificationEventToRender,
+                    OnboardingPlaceholderContext.from(notification, assistedLink),
+                    List.of(OnboardingPlaceholder.values()));
+        } else {
+            log.error("[NOTIFY][ONBOARDING] Cannot resolve notification event for user {} and initiative {}",
+                    sanitizedUserId, sanitizedInitiativeId);
+            content = Optional.empty();
+        }
+
+        return content;
     }
 
     @Override
@@ -411,109 +550,109 @@ public class NotificationManagerServiceImpl implements NotificationManagerServic
     public void sendNotificationFromOperationType(AnyOfNotificationQueueDTO anyOfNotificationQueueDTO) {
         long startTime = System.currentTimeMillis();
 
-        String fiscalCode;
-        Notification notification;
-        String subject;
-        String markdown;
-        InitiativeAdditionalInfoDTO ioTokens;
-
-        if (anyOfNotificationQueueDTO instanceof NotificationCitizenOnQueueDTO notificationCitizenOnQueueDTO) {
-
-            notification = notificationMapper.toEntity(notificationCitizenOnQueueDTO);
-
-            ioTokens = getIoTokens(notificationCitizenOnQueueDTO.getInitiativeId());
-
-            fiscalCode = decryptUserToken(notificationCitizenOnQueueDTO.getUserId());
-
-            subject = notificationMarkdown.getSubjectInitiativePublishing();
-            markdown = notificationMarkdown.getMarkdownInitiativePublishing();
-
-        } else if (anyOfNotificationQueueDTO instanceof NotificationIbanQueueDTO notificationIbanQueueDTO) {
-
-            notification = notificationMapper.toEntity(notificationIbanQueueDTO);
-
-            ioTokens = getIoTokens(notificationIbanQueueDTO.getInitiativeId());
-
-            fiscalCode = decryptUserToken(notificationIbanQueueDTO.getUserId());
-
-            subject = notificationMarkdown.getSubjectCheckIbanKo();
-            markdown = notificationMarkdown.getMarkdownCheckIbanKo();
-
-        } else if (anyOfNotificationQueueDTO instanceof NotificationRefundQueueDTO notificationRefundOnQueueDTO) {
-
-            BigDecimal refund = BigDecimal.valueOf(notificationRefundOnQueueDTO.getRefundReward()).divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_DOWN);
-
-            notification = notificationMapper.toEntity(notificationRefundOnQueueDTO);
-
-            ioTokens = getIoTokens(notificationRefundOnQueueDTO.getInitiativeId());
-
-            fiscalCode = decryptUserToken(notificationRefundOnQueueDTO.getUserId());
-
-            subject = notificationMarkdown.getSubjectRefund(notificationRefundOnQueueDTO.getStatus());
-            markdown = notificationMarkdown.getMarkdownRefund(notificationRefundOnQueueDTO.getStatus(), refund);
-
-        } else if (anyOfNotificationQueueDTO instanceof NotificationSuspensionQueueDTO notificationSuspensionQueueDTO) {
-
-            notification = notificationMapper.toEntity(notificationSuspensionQueueDTO);
-
-            ioTokens = getIoTokens(notificationSuspensionQueueDTO.getInitiativeId());
-
-            fiscalCode = decryptUserToken(notificationSuspensionQueueDTO.getUserId());
-
-            subject = notificationMarkdown.getSubjectSuspension(notificationSuspensionQueueDTO.getInitiativeName());
-            markdown = notificationMarkdown.getMarkdownSuspension();
-
-        } else if (anyOfNotificationQueueDTO instanceof NotificationReadmissionQueueDTO notificationReadmissionQueueDTO) {
-
-            notification = notificationMapper.toEntity(notificationReadmissionQueueDTO);
-
-            ioTokens = getIoTokens(notificationReadmissionQueueDTO.getInitiativeId());
-
-            fiscalCode = decryptUserToken(notificationReadmissionQueueDTO.getUserId());
-
-            subject = notificationMarkdown.getSubjectReadmission(notificationReadmissionQueueDTO.getInitiativeName());
-            markdown = notificationMarkdown.getMarkdownReadmission();
-
-        } else if (anyOfNotificationQueueDTO instanceof NotificationReminderQueueDTO notificationReminderQueueDTO) {
-
-            notification = notificationMapper.toEntity(notificationReminderQueueDTO);
-
-            ioTokens = getIoTokens(notificationReminderQueueDTO.getInitiativeId());
-
-            fiscalCode = decryptUserToken(notificationReminderQueueDTO.getUserId());
-
-            subject = notificationMarkdown.getSubjectReminderBel();
-            markdown = notificationMarkdown.getMarkdownReminder(notificationReminderQueueDTO.getInitiativeId(), notificationReminderQueueDTO.getVoucherEndDate());
-
-        } else if (anyOfNotificationQueueDTO instanceof NotificationOnboardingQueueDTO notificationOnboardingQueueDTO) {
-
-            notification = notificationMapper.toEntity(notificationOnboardingQueueDTO);
-
-            ioTokens = getIoTokens(notificationOnboardingQueueDTO.getInitiativeId());
-
-            fiscalCode = decryptUserToken(notificationOnboardingQueueDTO.getUserId());
-
-            subject = notificationMarkdown.getSubjectOnWaitingList(notificationOnboardingQueueDTO);
-            markdown = notificationMarkdown.getMarkdownOnWaitingList(notificationOnboardingQueueDTO);
-
-        } else {
+        // check if notification is supported
+        if (!(anyOfNotificationQueueDTO instanceof NotificationQueueDTO queueDTO)
+                || SUPPORTED_TYPES.stream().noneMatch(type -> type.isInstance(queueDTO))) {
             return;
         }
 
-        if (ioTokens == null || fiscalCode == null) {
+        // execute common operations first
+        // setup notification entity to save in case of any KOs
+        Notification notification = notificationMapper.toEntity(queueDTO);
+
+        // retrieve ioTokens from initiativeId
+        InitiativeAdditionalInfoDTO ioTokens = getIoTokens(queueDTO.getInitiativeId());
+        if (ioTokens == null) {
             notificationKO(notification, startTime);
             return;
         }
 
-        String tokenDecrypt = ioTokens.getPrimaryKey();
+        // retrieve fiscalCode from userId
+        String fiscalCode = decryptUserToken(queueDTO.getUserId());
+        if (fiscalCode == null) {
+            notificationKO(notification, startTime);
+            return;
+        }
 
+        // check if user is not enabled to receive notifications
+        String tokenDecrypt = ioTokens.getPrimaryKey();
         if (isNotSenderAllowed(fiscalCode, tokenDecrypt)) {
             notificationKO(notification, startTime);
             return;
         }
 
-        NotificationDTO notificationDTO =
-                notificationDTOMapper.map(fiscalCode, timeToLive, subject, markdown);
+        // retrieve initiative configured profile
+        InitiativeNotificationDTO initiativeDetailInfo = getInitiativeDetailInfo(queueDTO.getInitiativeId());
+        if (initiativeDetailInfo == null) {
+            notificationKO(notification, startTime);
+            return;
+        }
+        String configuredProfile = initiativeDetailInfo.getEmailFlux();
+
+        // resolve notification content based on the notification type and initiative configured profile
+        Optional<NotificationContent> content;
+        switch (anyOfNotificationQueueDTO) {
+            case NotificationCitizenOnQueueDTO _ ->
+                content = ioNotificationContentService.resolveProfileAndFindAndRender(
+                        configuredProfile,
+                        NotificationEvent.INITIATIVE_PUBLISHING,
+                        InitiativePlaceholderContext.from(notification),
+                        List.of(InitiativePlaceholder.values()));
+            case NotificationIbanQueueDTO _ ->
+                content = ioNotificationContentService.resolveProfileAndFind(
+                        configuredProfile,
+                        NotificationEvent.CHECK_IBAN_KO);
+            case NotificationRefundQueueDTO notificationRefundOnQueueDTO -> {
+                BigDecimal refund = BigDecimal.valueOf(notificationRefundOnQueueDTO.getRefundReward())
+                        .divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_DOWN);
+                content = ioNotificationContentService.resolveProfileAndFindAndRender(
+                        configuredProfile,
+                        NotificationEventResolver.resolveRefundEvent(notificationRefundOnQueueDTO.getStatus()),
+                        RefundPlaceholderContext.from(refund),
+                        List.of(RefundPlaceholder.values()));
+            }
+            case NotificationSuspensionQueueDTO _ ->
+                content = ioNotificationContentService.resolveProfileAndFindAndRender(
+                        configuredProfile,
+                        NotificationEvent.SUSPENSION,
+                        InitiativePlaceholderContext.from(notification),
+                        List.of(InitiativePlaceholder.values()));
+            case NotificationReadmissionQueueDTO _ ->
+                content = ioNotificationContentService.resolveProfileAndFindAndRender(
+                        configuredProfile,
+                        NotificationEvent.READMISSION,
+                        InitiativePlaceholderContext.from(notification),
+                        List.of(InitiativePlaceholder.values()));
+            case NotificationReminderQueueDTO notificationReminderQueueDTO ->
+                content = ioNotificationContentService.resolveProfileAndFindAndRender(
+                        configuredProfile,
+                        NotificationEvent.VOUCHER_EXPIRING,
+                        ReminderPlaceholderContext.from(notificationReminderQueueDTO),
+                        List.of(ReminderPlaceholder.values()));
+            case NotificationOnboardingQueueDTO _ ->
+                content = ioNotificationContentService.resolveProfileAndFindAndRender(
+                        configuredProfile,
+                        NotificationEvent.ONBOARDING_WAITING_LIST,
+                        InitiativePlaceholderContext.from(notification),
+                        List.of(InitiativePlaceholder.values()));
+            default -> {
+                return;
+            }
+        }
+
+        // if content is empty, it means that the notification is not configured for the given profile and event
+        if (content.isEmpty()) {
+            return;
+        }
+
+        // build notification and then send it
+        NotificationContent rendered = content.get();
+        NotificationDTO notificationDTO = notificationDTOMapper.map(
+                fiscalCode,
+                timeToLive,
+                rendered.subject(),
+                rendered.markdown()
+        );
 
         String notificationId = sendNotification(notificationDTO, tokenDecrypt);
 
@@ -554,7 +693,7 @@ public class NotificationManagerServiceImpl implements NotificationManagerServic
             ProfileResource profileResource = ioBackEndRestConnector.getProfile(fiscalCodeDTO, primaryKey);
             return !profileResource.isSenderAllowed();
         } catch (FeignException e) {
-            log.error("[NOTIFY] The user is not enabled to receive notifications: {}", e);
+            log.error("[NOTIFY] The user is not enabled to receive notifications", e);
             return true;
         }
     }
@@ -564,17 +703,34 @@ public class NotificationManagerServiceImpl implements NotificationManagerServic
         try {
             return initiativeRestConnector.getIOTokens(initiativeId);
         } catch (FeignException e) {
-            log.error(NotificationConstants.FEIGN_KO.formatted(e.status(), e.contentUTF8()));
+            log.error("{}", NotificationConstants.FEIGN_KO.formatted(e.status(), e.contentUTF8()));
             return null;
         }
     }
 
+    private InitiativeNotificationDTO getInitiativeDetailInfo(String initiativeId) {
+        log.debug("Getting initiativeDetail");
+        InitiativeNotificationDTO initiativeNotificationDTO;
+        try {
+            initiativeNotificationDTO = initiativeRestConnector.getInitiativeDetailInfo(initiativeId);
+        } catch (FeignException e) {
+            log.error("{}", NotificationConstants.FEIGN_KO.formatted(e.status(), e.contentUTF8()));
+            return null;
+        }
+        if (initiativeNotificationDTO == null) {
+            log.error("[NOTIFY] The initiative detail info couldn't be retrieved | initiativeId={}", initiativeId);
+            return null;
+        }
+        log.info("[NOTIFY] Initiative configured profile retrieved | initiativeId={}, profile={}", initiativeId, initiativeNotificationDTO.getEmailFlux());
+        return initiativeNotificationDTO;
+    }
+
     private void notificationKO(Notification notification, long startTime) {
-        String sanitizedUserId = sanitizeString(notification.getUserId());
-        String sanitizedInitiativeId = sanitizeString(notification.getInitiativeId());
         if (notification == null) {
             return;
         }
+        String sanitizedUserId = sanitizeString(notification.getUserId());
+        String sanitizedInitiativeId = sanitizeString(notification.getInitiativeId());
         notification.setNotificationStatus(NotificationConstants.NOTIFICATION_STATUS_KO);
         notification.setStatusKoTimestamp(LocalDateTime.now(ZoneId.of(ZONE_ID_ROME)));
         notification.setUpdateDate(LocalDateTime.now(ZoneId.of(ZONE_ID_ROME)));
