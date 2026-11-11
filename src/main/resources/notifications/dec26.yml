@@ -103,3 +103,11 @@ notification:
               **Come funziona il bonus?**
         
               Per saperne di più su come funziona il Bonus Decoder e i criteri di assegnazione, [leggi i dettagli](https://assistenza.ioapp.it/hc/it/#categories).}
+          ONBOARDING_KO_ALREADY_USED:
+            subject: "${SUBJECT_ONBOARDING_KO_ALREADY_USED_DEC:Il bonus è stato già usato in passato}"
+            markdown: |-
+              ${MARKDOWN_ONBOARDING_KO_ALREADY_USED_DEC:Dalle verifiche effettuate risulta che il Bonus Decoder è già stato usato in passato da una persona che fa parte della tua famiglia anagrafica.
+              
+              Dato che è possibile ottenere **un solo bonus per ogni famiglia anagrafica,** non è stato possibile assegnarti il bonus.
+              
+              Per avere più informazioni sui requisiti del bonus, [leggi i dettagli](https://assistenza.ioapp.it/hc/it/articles/38962008319761-Cos-%C3%A8-e-come-richiedere-il-Bonus-Elettrodomestici).}

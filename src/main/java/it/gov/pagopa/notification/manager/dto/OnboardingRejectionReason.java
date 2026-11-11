@@ -33,7 +33,8 @@ public class OnboardingRejectionReason {
     BIRTHDATE_KO,
     RESIDENCE_KO,
     OUT_OF_RANKING,
-    FAMILY_CRITERIA_KO
+    FAMILY_CRITERIA_KO,
+    FAMILY_BONUS_ALREADY_USED
   }
 
   public enum OnboardingRejectionReasonCode {
@@ -45,6 +46,7 @@ public class OnboardingRejectionReason {
     ISEE_TYPE_FAIL("Tipo ISEE", ONBOARDING_KO_PDND),
     FAMILY_CRITERIA_FAIL("Criteri di famiglia", ONBOARDING_KO_GENERIC),
     REJECTION_REASON_INITIATIVE_ENDED( "L'iniziativa è terminata", ONBOARDING_KO_INITIATIVE_ENDED),
+    FAMILY_BONUS_ALREADY_USED("Il bonus è stato già usato in passato da una persona che fa parte della tua famiglia anagrafica", ONBOARDING_KO_ALREADY_USED),
 
     //region possible onboarding rejection reason added for robust code
     CONSENSUS_CHECK_TC_FAIL("Mancato consenso dei termini e condizioni", ONBOARDING_KO_REJECTED_NO_RETRY),
