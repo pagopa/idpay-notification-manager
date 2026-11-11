@@ -1,6 +1,5 @@
 package it.gov.pagopa.notification.manager.service.onboarding;
 
-import feign.FeignException;
 import io.micrometer.common.util.StringUtils;
 import it.gov.pagopa.notification.manager.config.EmailNotificationProperties;
 import it.gov.pagopa.notification.manager.config.ProfilesNotificationProperties;
@@ -21,11 +20,11 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
 import static it.gov.pagopa.notification.manager.constants.NotificationConstants.EmailTemplates.*;
-import static it.gov.pagopa.notification.manager.dto.OnboardingRejectionReason.OnboardingRejectionReasonCode.REJECTION_REASON_INITIATIVE_ENDED;
 import static it.gov.pagopa.notification.manager.utils.Utilities.sanitizeString;
 
 @Slf4j
@@ -42,6 +41,13 @@ public class OnboardingWebNotificationImpl extends BaseOnboardingNotification<Em
 
     private static final String MANAGED_ENTITY = "managedEntity";
     private static final String REASON = "reason";
+
+    private record RejectionEmailDetails(
+            OnboardingRejectionReason firstReason,
+            String template,
+            String subject,
+            boolean shouldMapManagedEntity
+    ) {}
 
     public OnboardingWebNotificationImpl(EmailNotificationConnector emailNotificationConnector,
                                          EmailNotificationProperties emailNotificationProperties,
@@ -67,24 +73,17 @@ public class OnboardingWebNotificationImpl extends BaseOnboardingNotification<Em
 
     @Override
     EmailMessageDTO processOnboardingKo(EvaluationDTO evaluationDTO) {
-        var reasons = evaluationDTO.getOnboardingRejectionReasons();
-        var firstReason = (reasons != null && !reasons.isEmpty()) ? reasons.getFirst() : null;
-
-        final boolean initiativeEnded = firstReason != null
-                && REJECTION_REASON_INITIATIVE_ENDED.equals(firstReason.getCode());
-
-        final String template = String.format(
-                initiativeEnded ? EMAIL_OUTCOME_THANKS : EMAIL_OUTCOME_GENERIC_ERROR,
-                evaluationDTO.getEmailFlux()
-        );
-        final String subject = initiativeEnded
-                ? emailNotificationProperties.getSubject().getKoThanks()
-                : emailNotificationProperties.getSubject().getKoGenericError();
+        // compute rejection email details based on the first reason
+        RejectionEmailDetails computeRejectionEmailDetails = computeRejectionEmailDetails(evaluationDTO);
+        final OnboardingRejectionReason firstReason = computeRejectionEmailDetails.firstReason();
+        final String template = computeRejectionEmailDetails.template();
+        final String subject = computeRejectionEmailDetails.subject();
+        final boolean shouldMapManagedEntity = computeRejectionEmailDetails.shouldMapManagedEntity();
 
         Map<String, String> templateValues = new HashMap<>();
         templateValues.put("name", evaluationDTO.getName());
 
-        if (!initiativeEnded && firstReason != null) {
+        if (shouldMapManagedEntity && firstReason != null) {
             templateValues.put(MANAGED_ENTITY, firstReason.getAuthority() != null
                     ? firstReason.getAuthority()
                     : "Assistenza");
@@ -102,6 +101,42 @@ public class OnboardingWebNotificationImpl extends BaseOnboardingNotification<Em
         }
 
         return createNotification(evaluationDTO, subject, template, templateValues);
+    }
+
+    private RejectionEmailDetails computeRejectionEmailDetails(EvaluationDTO evaluationDTO) {
+        List<OnboardingRejectionReason> reasons = evaluationDTO.getOnboardingRejectionReasons();
+        OnboardingRejectionReason firstReason = (reasons != null && !reasons.isEmpty()) ? reasons.getFirst() : null;
+
+        if (firstReason == null) {
+            return new RejectionEmailDetails(
+                    null,
+                    String.format(EMAIL_OUTCOME_GENERIC_ERROR, evaluationDTO.getEmailFlux()),
+                    emailNotificationProperties.getSubject().getKoGenericError(),
+                    false
+            );
+        }
+
+        return switch (firstReason.getCode()) {
+            case REJECTION_REASON_INITIATIVE_ENDED -> new RejectionEmailDetails(
+                    firstReason,
+                    String.format(EMAIL_OUTCOME_THANKS, evaluationDTO.getEmailFlux()),
+                    emailNotificationProperties.getSubject().getKoThanks(),
+                    false
+            );
+            case FAMILY_BONUS_ALREADY_USED -> new RejectionEmailDetails(
+                    firstReason,
+                    String.format(EMAIL_OUTCOME_ALREADY_USED_KO, evaluationDTO.getEmailFlux()),
+                    emailNotificationProperties.getSubject().getKoAlreadyUsed(),
+                    true
+            );
+            default -> new RejectionEmailDetails(
+                    firstReason,
+                    String.format(EMAIL_OUTCOME_GENERIC_ERROR, evaluationDTO.getEmailFlux()),
+                    emailNotificationProperties.getSubject().getKoGenericError(),
+                    true
+            );
+        };
+
     }
 
     private void setReasonDetail(OnboardingRejectionReason firstReason, Map<String, String> templateValues) {
