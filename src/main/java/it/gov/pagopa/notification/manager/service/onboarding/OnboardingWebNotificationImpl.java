@@ -107,7 +107,7 @@ public class OnboardingWebNotificationImpl extends BaseOnboardingNotification<Em
         List<OnboardingRejectionReason> reasons = evaluationDTO.getOnboardingRejectionReasons();
         OnboardingRejectionReason firstReason = (reasons != null && !reasons.isEmpty()) ? reasons.getFirst() : null;
 
-        if (firstReason == null) {
+        if (firstReason == null || firstReason.getCode() == null) {
             return new RejectionEmailDetails(
                     null,
                     String.format(EMAIL_OUTCOME_GENERIC_ERROR, evaluationDTO.getEmailFlux()),

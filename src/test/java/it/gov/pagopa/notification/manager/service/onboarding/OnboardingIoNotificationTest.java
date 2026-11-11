@@ -34,6 +34,7 @@ import static it.gov.pagopa.notification.manager.constants.NotificationConstants
 import static it.gov.pagopa.notification.manager.constants.NotificationConstants.STATUS_ONBOARDING_KO;
 import static it.gov.pagopa.notification.manager.constants.NotificationConstants.STATUS_ONBOARDING_OK;
 import static it.gov.pagopa.notification.manager.dto.OnboardingRejectionReason.OnboardingRejectionReasonCode.FAMILY_CRITERIA_FAIL;
+import static it.gov.pagopa.notification.manager.dto.OnboardingRejectionReason.OnboardingRejectionReasonCode.FAMILY_BONUS_ALREADY_USED;
 import static it.gov.pagopa.notification.manager.dto.OnboardingRejectionReason.OnboardingRejectionReasonCode.REJECTION_REASON_INITIATIVE_ENDED;
 import static it.gov.pagopa.notification.manager.dto.OnboardingRejectionReason.OnboardingRejectionReasonType.INVALID_REQUEST;
 import static org.junit.jupiter.api.Assertions.*;
@@ -127,6 +128,41 @@ class OnboardingIoNotificationTest {
                 any(OnboardingPlaceholderContext.class),
                 any()
         );
+    }
+
+    @Test
+    void processNotification_usesAlreadyUsedEvent() {
+        EvaluationDTO evaluation = evaluation(STATUS_ONBOARDING_KO);
+        evaluation.setOnboardingRejectionReasons(List.of(OnboardingRejectionReason.builder()
+                .type(INVALID_REQUEST)
+                .code(FAMILY_BONUS_ALREADY_USED)
+                .build()));
+        when(initiativeRestConnector.getInitiativeDetailInfo(anyString())).thenReturn(initiative("DEC26"));
+        when(profilesNotificationCatalog.retrieveProfileVariables("DEC26")).thenReturn(Optional.empty());
+        when(notificationContentService.resolveProfileAndFindAndRender(
+                eq("DEC26"),
+                eq(NotificationEvent.ONBOARDING_KO_ALREADY_USED),
+                any(OnboardingPlaceholderContext.class),
+                any()
+        )).thenReturn(Optional.of(new NotificationContent(
+                "Bonus già utilizzato",
+                "Il bonus è già stato utilizzato da un familiare"
+        )));
+        mockSentNotification();
+
+        assertEquals("notification-id", notification.processNotification(evaluation));
+
+        verify(notificationContentService).resolveProfileAndFindAndRender(
+                eq("DEC26"),
+                eq(NotificationEvent.ONBOARDING_KO_ALREADY_USED),
+                any(OnboardingPlaceholderContext.class),
+                any()
+        );
+        ArgumentCaptor<NotificationDTO> sent = ArgumentCaptor.forClass(NotificationDTO.class);
+        verify(ioBackEndRestConnector).notify(sent.capture(), eq("io-token"));
+        assertEquals("Bonus già utilizzato", sent.getValue().getContent().getSubject());
+        assertEquals("Il bonus è già stato utilizzato da un familiare",
+                sent.getValue().getContent().getMarkdown());
     }
 
     @Test

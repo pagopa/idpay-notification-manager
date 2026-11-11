@@ -35,6 +35,7 @@ import java.util.stream.Stream;
 
 import static it.gov.pagopa.notification.manager.dto.OnboardingRejectionReason.OnboardingRejectionReasonCode.ISEE_TYPE_FAIL;
 import static it.gov.pagopa.notification.manager.dto.OnboardingRejectionReason.OnboardingRejectionReasonCode.AUTOMATED_CRITERIA_ISEE_FAIL;
+import static it.gov.pagopa.notification.manager.dto.OnboardingRejectionReason.OnboardingRejectionReasonCode.FAMILY_BONUS_ALREADY_USED;
 import static it.gov.pagopa.notification.manager.dto.OnboardingRejectionReason.OnboardingRejectionReasonCode.REJECTION_REASON_INITIATIVE_ENDED;
 import static it.gov.pagopa.notification.manager.enums.Channel.WEB;
 import static org.junit.jupiter.api.Assertions.*;
@@ -498,6 +499,32 @@ class OnboardingWebNotificationTest {
         assertEquals(evaluationDTO.getName(), dto.getTemplateValues().get("name"));
         assertFalse(dto.getTemplateValues().containsKey("reason"));
         assertFalse(dto.getTemplateValues().containsKey("managedEntity"));
+    }
+
+    @Test
+    void processOnboardingKo_shouldBuildAlreadyUsedDto_whenFamilyBonusAlreadyUsed() {
+        EvaluationDTO evaluationDTO = getEvaluationDto();
+        OnboardingRejectionReason rr = OnboardingRejectionReason.builder()
+                .code(FAMILY_BONUS_ALREADY_USED)
+                .authority("Comune di Test")
+                .detail("Bonus già utilizzato nel nucleo familiare")
+                .build();
+        evaluationDTO.setOnboardingRejectionReasons(List.of(rr));
+        evaluationDTO.setEmailFlux("DEC26");
+
+        EmailNotificationProperties.Subject subjectMock = mock(EmailNotificationProperties.Subject.class);
+        when(emailNotificationPropertiesMock.getSubject()).thenReturn(subjectMock);
+        when(subjectMock.getKoAlreadyUsed()).thenReturn("SUBJ_KO_ALREADY_USED");
+
+        EmailMessageDTO dto =
+                ((OnboardingWebNotificationImpl) onboardingWebNotification).processOnboardingKo(evaluationDTO);
+
+        assertNotNull(dto);
+        assertEquals("SUBJ_KO_ALREADY_USED", dto.getSubject());
+        assertEquals("Email_DEC26/AlreadyUsedKo", dto.getTemplateName());
+        assertEquals(evaluationDTO.getName(), dto.getTemplateValues().get("name"));
+        assertEquals("Comune di Test", dto.getTemplateValues().get("managedEntity"));
+        assertEquals("Bonus già utilizzato nel nucleo familiare", dto.getTemplateValues().get("reason"));
     }
 
     @Test
