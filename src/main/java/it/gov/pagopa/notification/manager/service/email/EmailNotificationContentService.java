@@ -36,11 +36,11 @@ public class EmailNotificationContentService {
                 .flatMap(profile -> find(profile, event));
     }
 
-    /*
+    /**
      * Returns:
      *  - a: the content if found for the profile and event;
      *  - b: a fallback content if no content is found for the DEFAULT profile, which could be computed from a null
-     *    configuredProfile because of an error as well;
+     *    configured profile because of an error as well;
      *  - c: an empty optional if no content is found for a non-DEFAULT profile;
      * This way the caller can handle the cases differently and retry the b case.
      */
