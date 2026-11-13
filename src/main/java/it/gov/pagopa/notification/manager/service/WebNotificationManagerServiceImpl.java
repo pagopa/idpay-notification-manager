@@ -7,7 +7,7 @@ import it.gov.pagopa.notification.manager.dto.EmailMessageDTO;
 import it.gov.pagopa.notification.manager.dto.event.NotificationReminderQueueDTO;
 import it.gov.pagopa.notification.manager.dto.initiative.InitiativeNotificationDTO;
 import it.gov.pagopa.notification.manager.model.EmailNotificationContent;
-import it.gov.pagopa.notification.manager.service.io.EmailNotificationContentService;
+import it.gov.pagopa.notification.manager.service.email.EmailNotificationContentService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 

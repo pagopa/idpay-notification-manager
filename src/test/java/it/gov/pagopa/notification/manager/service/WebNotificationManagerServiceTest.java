@@ -8,7 +8,7 @@ import it.gov.pagopa.notification.manager.dto.EmailMessageDTO;
 import it.gov.pagopa.notification.manager.dto.event.NotificationReminderQueueDTO;
 import it.gov.pagopa.notification.manager.dto.initiative.InitiativeNotificationDTO;
 import it.gov.pagopa.notification.manager.model.EmailNotificationContent;
-import it.gov.pagopa.notification.manager.service.io.EmailNotificationContentService;
+import it.gov.pagopa.notification.manager.service.email.EmailNotificationContentService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

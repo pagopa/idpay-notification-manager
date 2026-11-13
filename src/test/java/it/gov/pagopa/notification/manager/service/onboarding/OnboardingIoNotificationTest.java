@@ -17,7 +17,7 @@ import it.gov.pagopa.notification.manager.enums.NotificationEvent;
 import it.gov.pagopa.notification.manager.exception.NotFoundNotificationEventTemplate;
 import it.gov.pagopa.notification.manager.model.NotificationContent;
 import it.gov.pagopa.notification.manager.service.io.IoNotificationContentService;
-import it.gov.pagopa.notification.manager.service.io.ProfilesNotificationCatalog;
+import it.gov.pagopa.notification.manager.service.ProfilesNotificationCatalog;
 import it.gov.pagopa.notification.manager.service.io.placeholder.OnboardingPlaceholderContext;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

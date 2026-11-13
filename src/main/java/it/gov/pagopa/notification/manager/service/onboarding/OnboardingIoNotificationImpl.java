@@ -13,7 +13,7 @@ import it.gov.pagopa.notification.manager.exception.NotFoundNotificationEventTem
 import it.gov.pagopa.notification.manager.model.NotificationContent;
 import it.gov.pagopa.notification.manager.service.io.IoNotificationContentService;
 import it.gov.pagopa.notification.manager.service.io.NotificationEventResolver;
-import it.gov.pagopa.notification.manager.service.io.ProfilesNotificationCatalog;
+import it.gov.pagopa.notification.manager.service.ProfilesNotificationCatalog;
 import it.gov.pagopa.notification.manager.service.io.placeholder.OnboardingPlaceholder;
 import it.gov.pagopa.notification.manager.service.io.placeholder.OnboardingPlaceholderContext;
 import lombok.extern.slf4j.Slf4j;

@@ -1,4 +1,4 @@
-package it.gov.pagopa.notification.manager.service.io;
+package it.gov.pagopa.notification.manager.service;
 
 import it.gov.pagopa.notification.manager.config.ProfilesNotificationProperties;
 import it.gov.pagopa.notification.manager.enums.NotificationEvent;

@@ -15,8 +15,8 @@ import it.gov.pagopa.notification.manager.exception.NotFoundNotificationEventTem
 import it.gov.pagopa.notification.manager.model.EmailNotificationContent;
 import it.gov.pagopa.notification.manager.model.Notification;
 import it.gov.pagopa.notification.manager.repository.NotificationManagerRepository;
-import it.gov.pagopa.notification.manager.service.io.EmailNotificationContentService;
-import it.gov.pagopa.notification.manager.service.io.ProfilesNotificationCatalog;
+import it.gov.pagopa.notification.manager.service.email.EmailNotificationContentService;
+import it.gov.pagopa.notification.manager.service.ProfilesNotificationCatalog;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;

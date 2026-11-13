@@ -2,6 +2,7 @@ package it.gov.pagopa.notification.manager.service.io;
 
 import it.gov.pagopa.notification.manager.enums.NotificationEvent;
 import it.gov.pagopa.notification.manager.model.NotificationContent;
+import it.gov.pagopa.notification.manager.service.ProfilesNotificationCatalog;
 import it.gov.pagopa.notification.manager.service.io.placeholder.NotificationContentRenderer;
 import it.gov.pagopa.notification.manager.service.io.placeholder.NotificationPlaceholder;
 import org.junit.jupiter.api.BeforeEach;
