@@ -37,7 +37,7 @@ class IoNotificationContentServiceTest {
 
     @Test
     void findAndRender_loadsContentAndSubstitutesPlaceholderValues() {
-        when(catalog.find("BEL25", NotificationEvent.ONBOARDING_OK))
+        when(catalog.findIoNotificationContent("BEL25", NotificationEvent.ONBOARDING_OK))
                 .thenReturn(Optional.of(new NotificationContent("Hello %name%", "Welcome %name%")));
 
         Optional<NotificationContent> result = contentService.findAndRender(
@@ -53,7 +53,7 @@ class IoNotificationContentServiceTest {
     @Test
     void resolveProfileAndFindAndRender_resolvesProfileBeforeLoadingContent() {
         when(catalog.resolveProfile("BEL25")).thenReturn(Optional.of("BEL25"));
-        when(catalog.find("BEL25", NotificationEvent.ONBOARDING_OK))
+        when(catalog.findIoNotificationContent("BEL25", NotificationEvent.ONBOARDING_OK))
                 .thenReturn(Optional.of(new NotificationContent("Hello %name%", "Welcome %name%")));
 
         Optional<NotificationContent> result = contentService.resolveProfileAndFindAndRender(
@@ -78,13 +78,13 @@ class IoNotificationContentServiceTest {
         );
 
         assertEquals(Optional.empty(), result);
-        verify(catalog, never()).find(anyString(), any());
+        verify(catalog, never()).findIoNotificationContent(anyString(), any());
     }
 
     @Test
     void resolveProfileAndFind_returnsContentWithoutRendering() {
         when(catalog.resolveProfile("BEL25")).thenReturn(Optional.of("BEL25"));
-        when(catalog.find("BEL25", NotificationEvent.ONBOARDING_OK))
+        when(catalog.findIoNotificationContent("BEL25", NotificationEvent.ONBOARDING_OK))
                 .thenReturn(Optional.of(new NotificationContent("Hello %name%", "Welcome %name%")));
 
         assertEquals(
@@ -101,13 +101,13 @@ class IoNotificationContentServiceTest {
                 Optional.empty(),
                 contentService.resolveProfileAndFind("UNKNOWN", NotificationEvent.ONBOARDING_OK)
         );
-        verify(catalog, never()).find(anyString(), any());
+        verify(catalog, never()).findIoNotificationContent(anyString(), any());
     }
 
     @Test
     void resolveProfileAndFindAndRender_usesProfileReturnedByCatalog() {
         when(catalog.resolveProfile(null)).thenReturn(Optional.of("DEFAULT"));
-        when(catalog.find("DEFAULT", NotificationEvent.ONBOARDING_OK))
+        when(catalog.findIoNotificationContent("DEFAULT", NotificationEvent.ONBOARDING_OK))
                 .thenReturn(Optional.of(new NotificationContent("Hello %name%", "Welcome %name%")));
 
         assertEquals(
@@ -120,14 +120,14 @@ class IoNotificationContentServiceTest {
     @Test
     void resolveProfileAndFindAndRender_skipsMissingEvent() {
         when(catalog.resolveProfile("BEL25")).thenReturn(Optional.of("BEL25"));
-        when(catalog.find("BEL25", NotificationEvent.ONBOARDING_OK)).thenReturn(Optional.empty());
+        when(catalog.findIoNotificationContent("BEL25", NotificationEvent.ONBOARDING_OK)).thenReturn(Optional.empty());
 
         assertEquals(
                 Optional.empty(),
                 contentService.resolveProfileAndFindAndRender(
                         "BEL25", NotificationEvent.ONBOARDING_OK, "Ada", List.of(namePlaceholder()))
         );
-        verify(catalog, never()).find("DEFAULT", NotificationEvent.ONBOARDING_OK);
+        verify(catalog, never()).findIoNotificationContent("DEFAULT", NotificationEvent.ONBOARDING_OK);
     }
 
     private NotificationPlaceholder<String> namePlaceholder() {

@@ -119,7 +119,7 @@ public class OnboardingIoNotificationImpl extends BaseOnboardingNotification<Not
     }
 
     @Override
-    String sendNotification(NotificationDTO notificationToSend, EvaluationDTO evaluationDTO, boolean initiativeFetchFailed) {
+    String sendNotification(NotificationDTO notificationToSend, EvaluationDTO evaluationDTO) {
         String sanitizedUserId = sanitizeString(evaluationDTO.getUserId());
         String sanitizedInitiativeId = sanitizeString(evaluationDTO.getInitiativeId());
         try {

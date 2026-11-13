@@ -20,5 +20,6 @@ public enum NotificationEvent {
     SUSPENSION,
     READMISSION,
     INITIATIVE_PUBLISHING,
-    VOUCHER_EXPIRING
+    VOUCHER_EXPIRING,
+    ANPR_KO
 }

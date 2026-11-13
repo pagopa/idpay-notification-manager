@@ -1,11 +1,12 @@
 package it.gov.pagopa.notification.manager.service;
 
-import it.gov.pagopa.notification.manager.config.EmailNotificationProperties;
 import it.gov.pagopa.notification.manager.connector.EmailNotificationConnector;
 import it.gov.pagopa.notification.manager.connector.initiative.InitiativeRestConnector;
 import it.gov.pagopa.notification.manager.dto.EmailMessageDTO;
 import it.gov.pagopa.notification.manager.dto.event.NotificationReminderQueueDTO;
 import it.gov.pagopa.notification.manager.dto.initiative.InitiativeNotificationDTO;
+import it.gov.pagopa.notification.manager.model.EmailNotificationContent;
+import it.gov.pagopa.notification.manager.service.io.EmailNotificationContentService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -14,8 +15,9 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.LocalDate;
+import java.util.Optional;
 
-import static it.gov.pagopa.notification.manager.constants.NotificationConstants.EmailTemplates.EMAIL_OUTCOME_THREE_DAY_REMINDER;
+import static it.gov.pagopa.notification.manager.enums.NotificationEvent.VOUCHER_EXPIRING;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
@@ -25,21 +27,17 @@ class WebNotificationManagerServiceImplTest {
     @Mock
     private EmailNotificationConnector emailNotificationConnector;
 
-    private EmailNotificationProperties emailNotificationProperties = new EmailNotificationProperties();
+    @Mock
+    private EmailNotificationContentService emailNotificationContentService;
     @Mock
     private InitiativeRestConnector initiativeRestConnector;
 
-    @Mock
     private WebNotificationManagerServiceImpl service;
-
-    private static EmailNotificationProperties.Subject subjectProps = new EmailNotificationProperties.Subject();
 
 
     @BeforeEach
     void setUp() {
-        subjectProps.setOkThreeDayReminder("Il tuo bonus sta per scadere!");
-        emailNotificationProperties.setSubject(subjectProps);
-        service = new WebNotificationManagerServiceImpl(emailNotificationConnector, emailNotificationProperties, initiativeRestConnector);
+        service = new WebNotificationManagerServiceImpl(emailNotificationConnector, initiativeRestConnector, emailNotificationContentService);
     }
 
     @Test
@@ -53,6 +51,9 @@ class WebNotificationManagerServiceImplTest {
         InitiativeNotificationDTO mockInitiative = new InitiativeNotificationDTO();
         mockInitiative.setEmailFlux("DEC26");
         when(initiativeRestConnector.getInitiativeDetailInfo(anyString())).thenReturn(mockInitiative);
+        when(emailNotificationContentService.resolveProfileAndFind("DEC26", VOUCHER_EXPIRING))
+                .thenReturn(Optional.of(new EmailNotificationContent(
+                        "Il tuo bonus sta per scadere!", "Email_DEC26/ThreeDayReminder")));
 
         service.sendReminderMail(dto);
 
@@ -80,6 +81,9 @@ class WebNotificationManagerServiceImplTest {
         InitiativeNotificationDTO mockInitiative = new InitiativeNotificationDTO();
         mockInitiative.setEmailFlux("DEC26");
         when(initiativeRestConnector.getInitiativeDetailInfo(anyString())).thenReturn(mockInitiative);
+        when(emailNotificationContentService.resolveProfileAndFind("DEC26", VOUCHER_EXPIRING))
+                .thenReturn(Optional.of(new EmailNotificationContent(
+                        "Il tuo bonus sta per scadere!", "Email_DEC26/ThreeDayReminder")));
 
         doThrow(new RuntimeException("SMTP down"))
                 .when(emailNotificationConnector)
@@ -98,7 +102,7 @@ class WebNotificationManagerServiceImplTest {
         when(dto.getUserId()).thenReturn("USER789");
 
         EmailMessageDTO toSend = EmailMessageDTO.builder()
-                .templateName(EMAIL_OUTCOME_THREE_DAY_REMINDER)
+                .templateName("test-templateName")
                 .recipientEmail("test@example.com")
                 .subject("Subject")
                 .build();
@@ -112,21 +116,23 @@ class WebNotificationManagerServiceImplTest {
     }
 
     @Test
-    void sendReminderMail_whenInitiativeIsNull_usesDefaultFlux() {
+    void sendReminderMail_whenEmailFluxIsNull_usesDefaultContent() {
         NotificationReminderQueueDTO dto = mock(NotificationReminderQueueDTO.class);
         when(dto.getVoucherEndDate()).thenReturn(LocalDate.now());
         when(dto.getInitiativeId()).thenReturn("initiative123");
         when(dto.getName()).thenReturn("Mario");
         when(dto.getUserMail()).thenReturn("mario@example.com");
 
-        when(initiativeRestConnector.getInitiativeDetailInfo(anyString())).thenReturn(null);
+        when(initiativeRestConnector.getInitiativeDetailInfo(anyString())).thenReturn(new InitiativeNotificationDTO());
+        when(emailNotificationContentService.resolveProfileAndFind(null, VOUCHER_EXPIRING))
+                .thenReturn(Optional.of(new EmailNotificationContent(
+                        "Il tuo bonus sta per scadere!", "Email_DEFAULT/ThreeDayReminder")));
 
         service.sendReminderMail(dto);
 
         ArgumentCaptor<EmailMessageDTO> captor = ArgumentCaptor.forClass(EmailMessageDTO.class);
         verify(emailNotificationConnector).sendEmail(captor.capture());
 
-        assertEquals("Email_/ThreeDayReminder", captor.getValue().getTemplateName());
+        assertEquals("Email_DEFAULT/ThreeDayReminder", captor.getValue().getTemplateName());
     }
 }
-

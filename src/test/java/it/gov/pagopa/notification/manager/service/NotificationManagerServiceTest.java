@@ -209,13 +209,13 @@ class NotificationManagerServiceTest {
             new EvaluationDTO(
                     TEST_TOKEN, INITIATIVE_ID, INITIATIVE_ID, TEST_DATE_ONLY_DATE, INITIATIVE_ID, ORGANIZATION_NAME,
                     NotificationConstants.STATUS_ONBOARDING_OK, TEST_DATE, TEST_DATE, List.of(),
-                    50000L, 1L, null, null, IO, null, null, null, null, null
+                    50000L, 1L, null, null, IO, null, null, null, null, null, null
             );
 
     private static final EvaluationDTO EVALUATION_DTO_WEB = new EvaluationDTO(
             TEST_TOKEN, INITIATIVE_ID, INITIATIVE_ID, TEST_DATE_ONLY_DATE, INITIATIVE_ID, ORGANIZATION_NAME,
             NotificationConstants.STATUS_ONBOARDING_OK, TEST_DATE, TEST_DATE, List.of(),
-            50000L, 1L, null, "user@email.com", WEB, null, null, null, null, null
+            50000L, 1L, null, "user@email.com", WEB, null, null, null, null, null, null
     );
 
     private static final NotificationResource NOTIFICATION_RESOURCE = new NotificationResource();
@@ -460,7 +460,7 @@ class NotificationManagerServiceTest {
                                 OnboardingRejectionReason.OnboardingRejectionReasonCode.ISEE_TYPE_FAIL,
                                 null, null, null)
                 ),
-                50000L, 1L, null, "user@mail.com", IO, null, null, null, null, null
+                50000L, 1L, null, "user@mail.com", IO, null, null, null, null, null, null
         );
 
         notificationManagerService.notify(evaluationDTO);
@@ -489,7 +489,7 @@ class NotificationManagerServiceTest {
         EvaluationDTO evaluationDTO = new EvaluationDTO(
                 TEST_TOKEN, INITIATIVE_ID, INITIATIVE_ID, TEST_DATE_ONLY_DATE, INITIATIVE_ID, ORGANIZATION_NAME,
                 NotificationConstants.STATUS_ONBOARDING_OK, TEST_DATE, TEST_DATE, List.of(), 50000L, 1L,
-                null, null, IO, null, null, null, null, null
+                null, null, IO, null, null, null, null, null, null
         );
 
         Notification notification = Notification.builder()
@@ -526,7 +526,7 @@ class NotificationManagerServiceTest {
         EvaluationDTO evaluationDTO = new EvaluationDTO(
                 TEST_TOKEN, INITIATIVE_ID, INITIATIVE_ID, TEST_DATE_ONLY_DATE, INITIATIVE_ID, ORGANIZATION_NAME,
                 NotificationConstants.STATUS_ONBOARDING_OK, TEST_DATE, TEST_DATE, List.of(),
-                50000L, 1L, null, null, WEB, null, null, null, null, null
+                50000L, 1L, null, null, WEB, null, null, null, null, null, null
         );
 
         when(onboardingWebNotification.processNotification(evaluationDTO)).thenReturn(null);
@@ -540,7 +540,7 @@ class NotificationManagerServiceTest {
         EvaluationDTO evaluationDTO = new EvaluationDTO(
                 TEST_TOKEN, INITIATIVE_ID, INITIATIVE_ID, TEST_DATE_ONLY_DATE, INITIATIVE_ID, ORGANIZATION_NAME,
                 NotificationConstants.STATUS_ONBOARDING_DEMANDED, TEST_DATE, TEST_DATE, List.of(),
-                50000L, 1L, null, null, WEB, null, null, null, null, null
+                50000L, 1L, null, null, WEB, null, null, null, null, null, null
         );
 
         notificationManagerService.notify(evaluationDTO);
@@ -553,7 +553,7 @@ class NotificationManagerServiceTest {
                 new EvaluationDTO(
                         TEST_TOKEN, INITIATIVE_ID, INITIATIVE_ID, TEST_DATE_ONLY_DATE, INITIATIVE_ID, ORGANIZATION_NAME,
                         NotificationConstants.STATUS_ONBOARDING_OK, TEST_DATE, TEST_DATE, null,
-                        50000L, 1L, null, null, IO, null, null, null, null, null
+                        50000L, 1L, null, null, IO, null, null, null, null, null, null
                 );
 
         when(pdvDecryptRestConnector.getPii(TEST_TOKEN)).thenReturn(FISCAL_CODE_RESOURCE);
@@ -597,7 +597,7 @@ class NotificationManagerServiceTest {
                                         OnboardingRejectionReason.OnboardingRejectionReasonType.ISEE_TYPE_KO,
                                         OnboardingRejectionReason.OnboardingRejectionReasonCode.ISEE_TYPE_FAIL, null, null, null)
                         ),
-                        50000L, 1L, null, null, IO, null, null, null, null, null
+                        50000L, 1L, null, null, IO, null, null, null, null, null, null
                 );
 
         Request request = Request.create(Request.HttpMethod.GET, "url", new HashMap<>(), null, new RequestTemplate());
@@ -1079,7 +1079,7 @@ class NotificationManagerServiceTest {
         EvaluationDTO evaluationDTO = new EvaluationDTO(
                 TEST_TOKEN, INITIATIVE_ID, INITIATIVE_ID, TEST_DATE_ONLY_DATE, INITIATIVE_ID, ORGANIZATION_NAME,
                 NotificationConstants.STATUS_ONBOARDING_OK, TEST_DATE, TEST_DATE, List.of(),
-                50000L, 1L, null, null, IO, null, null, null, null, null
+                50000L, 1L, null, null, IO, null, null, null, null, null, null
         );
 
         Notification notification = Notification.builder()

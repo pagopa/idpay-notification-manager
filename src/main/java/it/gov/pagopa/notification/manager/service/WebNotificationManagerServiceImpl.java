@@ -1,12 +1,13 @@
 package it.gov.pagopa.notification.manager.service;
 
 import feign.FeignException;
-import it.gov.pagopa.notification.manager.config.EmailNotificationProperties;
 import it.gov.pagopa.notification.manager.connector.EmailNotificationConnector;
 import it.gov.pagopa.notification.manager.connector.initiative.InitiativeRestConnector;
 import it.gov.pagopa.notification.manager.dto.EmailMessageDTO;
 import it.gov.pagopa.notification.manager.dto.event.NotificationReminderQueueDTO;
 import it.gov.pagopa.notification.manager.dto.initiative.InitiativeNotificationDTO;
+import it.gov.pagopa.notification.manager.model.EmailNotificationContent;
+import it.gov.pagopa.notification.manager.service.io.EmailNotificationContentService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
@@ -14,24 +15,25 @@ import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Optional;
 
-import static it.gov.pagopa.notification.manager.constants.NotificationConstants.EmailTemplates.EMAIL_OUTCOME_THREE_DAY_REMINDER;
+import static it.gov.pagopa.notification.manager.enums.NotificationEvent.VOUCHER_EXPIRING;
 
 @Service
 @Slf4j
 public class WebNotificationManagerServiceImpl implements  WebNotificationManagerService{
 
     private final EmailNotificationConnector emailNotificationConnector;
-    private final EmailNotificationProperties emailNotificationProperties;
     private final InitiativeRestConnector initiativeRestConnector;
+    private final EmailNotificationContentService emailNotificationContentService;
 
     public WebNotificationManagerServiceImpl(EmailNotificationConnector emailNotificationConnector,
-                                             EmailNotificationProperties emailNotificationProperties,
-                                             InitiativeRestConnector initiativeRestConnector
+                                             InitiativeRestConnector initiativeRestConnector,
+                                             EmailNotificationContentService emailNotificationContentService
     ) {
         this.emailNotificationConnector = emailNotificationConnector;
-        this.emailNotificationProperties = emailNotificationProperties;
         this.initiativeRestConnector = initiativeRestConnector;
+        this.emailNotificationContentService = emailNotificationContentService;
     }
 
     @Override
@@ -42,26 +44,37 @@ public class WebNotificationManagerServiceImpl implements  WebNotificationManage
 
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd MMMM yyyy").withLocale(Locale.ITALIAN);
 
-        InitiativeNotificationDTO initiativeNotificationDTO = null;
+        // fetch initiative data to retrieve the profile for the email notification content
+        InitiativeNotificationDTO initiativeNotificationDTO;
         try {
             initiativeNotificationDTO = initiativeRestConnector.getInitiativeDetailInfo(notificationQueueDTO.getInitiativeId());
         } catch (FeignException e) {
             log.error("[NOTIFY] Failed to send email notification for user {} and initiative {}", sanitizedUserId, sanitizedInitiativeId, e);
             performanceLog(startTime);
-
+            return;
         }
 
+        // retrieve profiled content for the reminder email notification
+        Optional<EmailNotificationContent> content = emailNotificationContentService.
+                resolveProfileAndFind(initiativeNotificationDTO.getEmailFlux(), VOUCHER_EXPIRING);
+        if (content.isEmpty()) {
+            log.error("[NOTIFY] Failed to send email notification for user {} and initiative {}: no content found for profile {} and event {}",
+                    sanitizedUserId, sanitizedInitiativeId, initiativeNotificationDTO.getEmailFlux(), VOUCHER_EXPIRING);
+            performanceLog(startTime);
+            return;
+        }
+
+        // map template values
         Map<String, String> templateValues = new HashMap<>();
         templateValues.put("name", notificationQueueDTO.getName());
         templateValues.put("voucherEndDate", notificationQueueDTO.getVoucherEndDate().format(formatter));
 
         EmailMessageDTO emailMessageDTO = EmailMessageDTO.builder()
-                .templateName(String.format(EMAIL_OUTCOME_THREE_DAY_REMINDER,
-                        initiativeNotificationDTO != null ? initiativeNotificationDTO.getEmailFlux() : ""))
+                .templateName(content.get().templateName())
                 .recipientEmail(notificationQueueDTO.getUserMail())
                 .senderEmail(null)
                 .templateValues(templateValues)
-                .subject(emailNotificationProperties.getSubject().getOkThreeDayReminder())
+                .subject(content.get().subject())
                 .content(null)
                 .build();
         sendNotification(emailMessageDTO, notificationQueueDTO);
@@ -70,7 +83,7 @@ public class WebNotificationManagerServiceImpl implements  WebNotificationManage
     void sendNotification(EmailMessageDTO notificationToSend, NotificationReminderQueueDTO notificationQueueDTO) {
         long startTime = System.currentTimeMillis();
         String sanitizedUserId = sanitizeString(notificationQueueDTO.getUserId());
-        String sanitizedInitiativeId = sanitizeString(notificationQueueDTO.getUserId());
+        String sanitizedInitiativeId = sanitizeString(notificationQueueDTO.getInitiativeId());
         try {
             emailNotificationConnector.sendEmail(notificationToSend);
             performanceLog(startTime);

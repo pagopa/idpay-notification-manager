@@ -2,6 +2,7 @@ package it.gov.pagopa.notification.manager.service.io;
 
 import it.gov.pagopa.notification.manager.config.ProfilesNotificationProperties;
 import it.gov.pagopa.notification.manager.enums.NotificationEvent;
+import it.gov.pagopa.notification.manager.model.EmailNotificationContent;
 import it.gov.pagopa.notification.manager.model.NotificationContent;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -43,10 +44,16 @@ public class ProfilesNotificationCatalog {
         return Optional.of(profile);
     }
 
-    public Optional<NotificationContent> find(String profile, NotificationEvent event) {
+    public Optional<NotificationContent> findIoNotificationContent(String profile, NotificationEvent event) {
         return Optional.ofNullable(properties.getProfiles().get(profile))
                 .map(ProfilesNotificationProperties.ProfileConfig::getEvents)
                 .map(events -> events.get(event));
+    }
+
+    public Optional<EmailNotificationContent> findEmailNotificationContent(String profile, NotificationEvent event) {
+        return Optional.ofNullable(properties.getProfiles().get(profile))
+                .map(ProfilesNotificationProperties.ProfileConfig::getEmailEvents)
+                .map(emailEvents -> emailEvents.get(event));
     }
 
     public Optional<ProfilesNotificationProperties.ProfileConfigVariables> retrieveProfileVariables(String configuredProfile) {

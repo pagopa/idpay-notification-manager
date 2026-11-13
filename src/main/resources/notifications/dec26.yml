@@ -111,3 +111,22 @@ notification:
               Dato che è possibile ottenere **un solo bonus per ogni famiglia anagrafica,** non è stato possibile assegnarti il bonus.
               
               Per avere più informazioni sui requisiti del bonus, [leggi i dettagli](https://assistenza.ioapp.it/hc/it/articles/38962008319761-Cos-%C3%A8-e-come-richiedere-il-Bonus-Elettrodomestici).}
+        email-events:
+          ONBOARDING_OK:
+            subject: "${EMAIL_SUBJECT_OK_DEC:Hai ottenuto il bonus!}"
+            template-name: "${EMAIL_TEMPLATE_NAME_OK_DEC:Email_DEC26/EsitoOk}"
+          ONBOARDING_JOINED:
+            subject: "${EMAIL_SUBJECT_JOINED_DEC:Il bonus è stato già richiesto}"
+            template-name: "${EMAIL_TEMPLATE_NAME_JOINED_DEC:Email_DEC26/FamilyUnit}"
+          ONBOARDING_KO_GENERIC:
+            subject: "${EMAIL_SUBJECT_KO_GENERIC_DEC:Non è stato possibile assegnarti il bonus}"
+            template-name: "${EMAIL_TEMPLATE_NAME_KO_GENERIC_DEC:Email_DEC26/GenericError}"
+          ONBOARDING_KO_INITIATIVE_ENDED:
+            subject: "${EMAIL_SUBJECT_KO_THANKS_DEC:Bonus Decoder: tutti i fondi sono stati assegnati}"
+            template-name: "${EMAIL_TEMPLATE_NAME_KO_THANKS_DEC:Email_DEC26/Thanks}"
+          VOUCHER_EXPIRING:
+            subject: "${EMAIL_SUBJECT_OK_REMINDER_DEC:Il tuo bonus sta per scadere!}"
+            template-name: "${EMAIL_TEMPLATE_NAME_OK_REMINDER_DEC:Email_DEC26/ThreeDayReminder}"
+          ONBOARDING_KO_ALREADY_USED:
+            subject: "${EMAIL_SUBJECT_KO_ALREADY_USED_DEC:Il bonus è stato già usato in passato}"
+            template-name: "${EMAIL_TEMPLATE_NAME_KO_ALREADY_USED_DEC:Email_DEC26/AlreadyUsedKo}"

@@ -102,7 +102,7 @@ class ProfilesNotificationCatalogTest {
 
     @Test
     void find_returnsContentWhenProfileAndEventExist() {
-        Optional<NotificationContent> content = catalog.find("DEFAULT", NotificationEvent.ONBOARDING_OK);
+        Optional<NotificationContent> content = catalog.findIoNotificationContent("DEFAULT", NotificationEvent.ONBOARDING_OK);
 
         assertTrue(content.isPresent());
         assertEquals("Default OK", content.get().subject());
@@ -111,21 +111,21 @@ class ProfilesNotificationCatalogTest {
 
     @Test
     void find_returnsEmptyWhenEventNotInProfile() {
-        Optional<NotificationContent> content = catalog.find("DEFAULT", NotificationEvent.SUSPENSION);
+        Optional<NotificationContent> content = catalog.findIoNotificationContent("DEFAULT", NotificationEvent.SUSPENSION);
 
         assertFalse(content.isPresent());
     }
 
     @Test
     void find_returnsEmptyWhenProfileDoesNotExist() {
-        Optional<NotificationContent> content = catalog.find("UNKNOWN", NotificationEvent.ONBOARDING_OK);
+        Optional<NotificationContent> content = catalog.findIoNotificationContent("UNKNOWN", NotificationEvent.ONBOARDING_OK);
 
         assertFalse(content.isPresent());
     }
 
     @Test
     void find_returnsEmptyWhenProfileIsNull() {
-        Optional<NotificationContent> content = catalog.find(null, NotificationEvent.ONBOARDING_OK);
+        Optional<NotificationContent> content = catalog.findIoNotificationContent(null, NotificationEvent.ONBOARDING_OK);
 
         assertFalse(content.isPresent());
     }
@@ -138,7 +138,7 @@ class ProfilesNotificationCatalogTest {
 
         properties.getProfiles().put("NULL_EVENTS", profileWithNullEvents);
 
-        Optional<NotificationContent> content = catalog.find("NULL_EVENTS", NotificationEvent.ONBOARDING_OK);
+        Optional<NotificationContent> content = catalog.findIoNotificationContent("NULL_EVENTS", NotificationEvent.ONBOARDING_OK);
 
         assertFalse(content.isPresent());
     }

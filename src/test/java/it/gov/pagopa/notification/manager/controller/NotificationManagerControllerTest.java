@@ -60,6 +60,7 @@ class NotificationManagerControllerTest {
                   null,
                   null,
                   null,
+                  null,
                   null
           );
 
