@@ -18,6 +18,7 @@ import it.gov.pagopa.notification.manager.repository.NotificationManagerReposito
 import it.gov.pagopa.notification.manager.service.io.EmailNotificationContentService;
 import it.gov.pagopa.notification.manager.service.io.ProfilesNotificationCatalog;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -44,9 +45,11 @@ public class OnboardingWebNotificationImpl extends BaseOnboardingNotification<Em
 
     private final EmailNotificationContentService emailNotificationContentService;
     private final ProfilesNotificationCatalog profilesNotificationCatalog;
+    private final boolean refreshEmailContentOnRetry;
 
     private static final String MANAGED_ENTITY = "managedEntity";
     private static final String REASON = "reason";
+    private static final String ASSISTED_LINK = "assistedLink";
 
     private record RejectionEmailDetails(
             OnboardingRejectionReason firstReason,
@@ -59,13 +62,15 @@ public class OnboardingWebNotificationImpl extends BaseOnboardingNotification<Em
                                          NotificationMapper notificationMapper,
                                          InitiativeRestConnector initiativeRestConnector,
                                          EmailNotificationContentService emailNotificationContentService,
-                                         ProfilesNotificationCatalog profilesNotificationCatalog){
+                                         ProfilesNotificationCatalog profilesNotificationCatalog,
+                                         @Value("${notification.manager.recover.refresh-email-content:false}") boolean refreshEmailContentOnRetry){
         super(initiativeRestConnector);
         this.emailNotificationConnector = emailNotificationConnector;
         this.notificationManagerRepository = notificationManagerRepository;
         this.notificationMapper = notificationMapper;
         this.emailNotificationContentService = emailNotificationContentService;
         this.profilesNotificationCatalog = profilesNotificationCatalog;
+        this.refreshEmailContentOnRetry = refreshEmailContentOnRetry;
     }
 
     @Override
@@ -97,7 +102,7 @@ public class OnboardingWebNotificationImpl extends BaseOnboardingNotification<Em
                 if (profileConfigVariables.isPresent()) {
                     assistedLink = profileConfigVariables.get().getAssistedLink();
                 }
-                templateValues.put("assistedLink", assistedLink);
+                templateValues.put(ASSISTED_LINK, assistedLink);
             }
             setReasonDetail(firstReason, templateValues);
 
@@ -195,10 +200,7 @@ public class OnboardingWebNotificationImpl extends BaseOnboardingNotification<Em
         }
 
         emailMessageDTO.setSubject("Initiative fetch error subject");
-        if (StringUtils.isBlank(emailMessageDTO.getTemplateName())) {
-            // set the templateName to the bad start if it's null or blank, so that it can trigger the recovery later
-            emailMessageDTO.setTemplateName(BAD_START_EMAIL_TEMPLATE + "/" + evaluationDTO.getEvent().name());
-        }
+        emailMessageDTO.setTemplateName(BAD_START_EMAIL_TEMPLATE + "/" + evaluationDTO.getEvent().name());
 
         saveNotification(emailMessageDTO, evaluationDTO, NotificationConstants.NOTIFICATION_STATUS_KO, LocalDateTime.now(ZoneId.of(ZONE_ID_ROME)), System.currentTimeMillis());
     }
@@ -232,7 +234,7 @@ public class OnboardingWebNotificationImpl extends BaseOnboardingNotification<Em
         String sanitizedUserId = sanitizeString(notification.getUserId());
         String sanitizedInitiativeId = sanitizeString(notification.getInitiativeId());
         try {
-            replaceBadNotificationData(notification);
+            refreshNotificationDataIfNeeded(notification);
             EmailMessageDTO emailMessageDTO = notificationMapper.notificationToEmailMessageDTO(notification);
             emailNotificationConnector.sendEmail(emailMessageDTO);
             if(notification.getId() != null){
@@ -249,9 +251,10 @@ public class OnboardingWebNotificationImpl extends BaseOnboardingNotification<Em
         }
     }
 
-    private void replaceBadNotificationData(Notification notification) {
-        if (!StringUtils.isBlank(notification.getTemplateName()) && notification.getTemplateName().startsWith(BAD_START_EMAIL_TEMPLATE)) {
-            log.info("[NOTIFY] Replacing bad notification data for notification with id {} and initiativeId {}",
+    private void refreshNotificationDataIfNeeded(Notification notification) {
+        if (refreshEmailContentOnRetry || (!StringUtils.isBlank(notification.getTemplateName())
+                && notification.getTemplateName().startsWith(BAD_START_EMAIL_TEMPLATE))) {
+            log.info("[NOTIFY] Refreshing notification data for notification with id {} and initiativeId {}",
                     sanitizeString(notification.getId()),
                     sanitizeString(notification.getInitiativeId()));
 
@@ -260,12 +263,27 @@ public class OnboardingWebNotificationImpl extends BaseOnboardingNotification<Em
 
             // fetch content for profile and event
             EmailNotificationContent content = emailNotificationContentService.
-                    resolveProfileAndFindWithDefaultFallback(initiativeNotificationDTO.getEmailFlux(), notification.getEvent())
+                    resolveProfileAndFind(initiativeNotificationDTO.getEmailFlux(), notification.getEvent())
                     .orElseThrow(() -> new NotFoundNotificationEventTemplate(NOT_FOUND_NOTIFICATION_EVENT_TEMPLATE_ERROR_MESSAGE.formatted(sanitizeString(notification.getId()), notification.getEvent(), initiativeNotificationDTO.getEmailFlux())));
 
             // replace subject and templateName with the correct ones
             notification.setSubject(content.subject());
             notification.setTemplateName(content.templateName());
+
+            // refresh assisted link if present in template values
+            Map<String, String> templateValues = notification.getTemplateValues();
+            if (templateValues != null && templateValues.containsKey(ASSISTED_LINK)) {
+                String assistedLink = profilesNotificationCatalog.retrieveProfileVariables(initiativeNotificationDTO.getEmailFlux())
+                        .map(ProfilesNotificationProperties.ProfileConfigVariables::getAssistedLink)
+                        .orElse(null);
+                if (assistedLink == null) {
+                    log.warn("[NOTIFY] Assisted link not configured for profile {}",
+                            sanitizeString(initiativeNotificationDTO.getEmailFlux()));
+                }
+                Map<String, String> refreshedValues = new HashMap<>(templateValues);
+                refreshedValues.put(ASSISTED_LINK, assistedLink);
+                notification.setTemplateValues(refreshedValues);
+            }
         }
     }
 

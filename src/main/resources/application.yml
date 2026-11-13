@@ -199,6 +199,8 @@ notification:
       parallelism: ${RECOVER_PARALLELISM_THREADS:7}
       minutes-before: ${STUCK_RECOVERS_MINUTES_BEFORE:1440}
       max-retries: ${RECOVER_MAX_RETRIES:3}
+      # Refresh onboarding email subject, template and templateValues on every retry.
+      refresh-email-content: ${RECOVER_REFRESH_EMAIL_CONTENT:false}
     threads:
       schedule-max-number: ${THREADS_SCHEDULE_MAX_NUMBER:1}
 

@@ -1,5 +1,7 @@
 package it.gov.pagopa.notification.manager.service;
 
+import feign.FeignException;
+import feign.Request;
 import it.gov.pagopa.notification.manager.connector.EmailNotificationConnector;
 import it.gov.pagopa.notification.manager.connector.initiative.InitiativeRestConnector;
 import it.gov.pagopa.notification.manager.dto.EmailMessageDTO;
@@ -134,5 +136,33 @@ class WebNotificationManagerServiceImplTest {
         verify(emailNotificationConnector).sendEmail(captor.capture());
 
         assertEquals("Email_DEFAULT/ThreeDayReminder", captor.getValue().getTemplateName());
+    }
+
+    @Test
+    void sendReminderMail_whenContentMissing_doesNotSend() {
+        NotificationReminderQueueDTO dto = mock(NotificationReminderQueueDTO.class);
+        when(dto.getInitiativeId()).thenReturn("initiative123");
+        InitiativeNotificationDTO initiative = new InitiativeNotificationDTO();
+        initiative.setEmailFlux("DEC26");
+        when(initiativeRestConnector.getInitiativeDetailInfo("initiative123")).thenReturn(initiative);
+        when(emailNotificationContentService.resolveProfileAndFind("DEC26", VOUCHER_EXPIRING))
+                .thenReturn(Optional.empty());
+
+        service.sendReminderMail(dto);
+
+        verify(emailNotificationConnector, never()).sendEmail(any());
+    }
+
+    @Test
+    void sendReminderMail_whenInitiativeFetchFails_doesNotResolveOrSend() {
+        NotificationReminderQueueDTO dto = mock(NotificationReminderQueueDTO.class);
+        when(dto.getInitiativeId()).thenReturn("initiative123");
+        when(initiativeRestConnector.getInitiativeDetailInfo("initiative123"))
+                .thenThrow(new FeignException.InternalServerError(
+                        "Internal Server Error", mock(Request.class), new byte[0], null));
+
+        service.sendReminderMail(dto);
+
+        verifyNoInteractions(emailNotificationContentService, emailNotificationConnector);
     }
 }

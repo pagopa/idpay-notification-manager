@@ -2,6 +2,7 @@ package it.gov.pagopa.notification.manager.service.io;
 
 import it.gov.pagopa.notification.manager.config.ProfilesNotificationProperties;
 import it.gov.pagopa.notification.manager.enums.NotificationEvent;
+import it.gov.pagopa.notification.manager.model.EmailNotificationContent;
 import it.gov.pagopa.notification.manager.model.NotificationContent;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -144,6 +145,19 @@ class ProfilesNotificationCatalogTest {
     }
 
     @Test
+    void findEmailNotificationContent_returnsConfiguredContentAndEmptyForMissingData() {
+        EmailNotificationContent expected = new EmailNotificationContent("Email subject", "Email_DEFAULT/EsitoOk");
+        properties.getProfiles().get("DEFAULT").getEmailEvents().put(NotificationEvent.ONBOARDING_OK, expected);
+
+        assertEquals(Optional.of(expected), catalog.findEmailNotificationContent("DEFAULT", NotificationEvent.ONBOARDING_OK));
+        assertEquals(Optional.empty(), catalog.findEmailNotificationContent("DEFAULT", NotificationEvent.SUSPENSION));
+        assertEquals(Optional.empty(), catalog.findEmailNotificationContent("UNKNOWN", NotificationEvent.ONBOARDING_OK));
+
+        properties.getProfiles().get("DEFAULT").setEmailEvents(null);
+        assertEquals(Optional.empty(), catalog.findEmailNotificationContent("DEFAULT", NotificationEvent.ONBOARDING_OK));
+    }
+
+    @Test
     void retrieveProfileVariables_returnsVariablesForConfiguredProfile() {
         Optional<ProfilesNotificationProperties.ProfileConfigVariables> variables =
                 catalog.retrieveProfileVariables("CUSTOM");
@@ -183,4 +197,3 @@ class ProfilesNotificationCatalogTest {
         assertFalse(variables.isPresent());
     }
 }
-
