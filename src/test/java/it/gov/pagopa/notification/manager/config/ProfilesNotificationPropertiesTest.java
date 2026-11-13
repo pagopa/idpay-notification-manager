@@ -1,6 +1,7 @@
 package it.gov.pagopa.notification.manager.config;
 
 import it.gov.pagopa.notification.manager.enums.NotificationEvent;
+import it.gov.pagopa.notification.manager.model.EmailNotificationContent;
 import it.gov.pagopa.notification.manager.model.NotificationContent;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -20,7 +21,9 @@ import java.util.Map;
         "notification.manager.profiles.default.events.ONBOARDING_OK.subject=Richiesta di adesione accettata",
         "notification.manager.profiles.default.events.ONBOARDING_OK.markdown=La tua richiesta è stata approvata",
         "notification.manager.profiles.default.events.ONBOARDING_KO_GENERIC.subject=Richiesta non accolta",
-        "notification.manager.profiles.default.events.ONBOARDING_KO_GENERIC.markdown=La tua richiesta non è stata accolta"
+        "notification.manager.profiles.default.events.ONBOARDING_KO_GENERIC.markdown=La tua richiesta non è stata accolta",
+        "notification.manager.profiles.default.email-events.ONBOARDING_OK.subject=Email subject",
+        "notification.manager.profiles.default.email-events.ONBOARDING_OK.template-name=Email_DEFAULT/EsitoOk"
 })
 @EnableConfigurationProperties(value = ProfilesNotificationProperties.class)
 class ProfilesNotificationPropertiesTest {
@@ -55,6 +58,10 @@ class ProfilesNotificationPropertiesTest {
         Assertions.assertNotNull(koContent);
         Assertions.assertEquals("Richiesta non accolta", koContent.subject());
         Assertions.assertEquals("La tua richiesta non è stata accolta", koContent.markdown());
+
+        Assertions.assertEquals(
+                new EmailNotificationContent("Email subject", "Email_DEFAULT/EsitoOk"),
+                profileConfig.getEmailEvents().get(NotificationEvent.ONBOARDING_OK));
     }
 
     @Test
@@ -104,4 +111,3 @@ class ProfilesNotificationPropertiesTest {
         Assertions.assertTrue(configToString.contains("events="));
     }
 }
-

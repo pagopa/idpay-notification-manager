@@ -6,7 +6,6 @@ import it.gov.pagopa.notification.manager.dto.EvaluationDTO;
 import it.gov.pagopa.notification.manager.dto.event.AnyOfNotificationQueueDTO;
 import it.gov.pagopa.notification.manager.dto.event.NotificationOnboardingQueueDTO;
 import it.gov.pagopa.notification.manager.dto.event.NotificationRefundQueueDTO;
-import it.gov.pagopa.notification.manager.dto.event.NotificationReminderQueueDTO;
 import it.gov.pagopa.notification.manager.model.Notification;
 
 import java.math.BigDecimal;
@@ -29,6 +28,7 @@ public class NotificationMapper {
               .beneficiaryBudgetCents(evaluationDTO.getBeneficiaryBudgetCents())
               .organizationName(evaluationDTO.getOrganizationName())
               .channel(evaluationDTO.getChannel())
+              .event(evaluationDTO.getEvent())
               .build();
     }
 

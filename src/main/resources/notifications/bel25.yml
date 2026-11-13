@@ -145,3 +145,40 @@ notification:
               **Come funziona il bonus?**
               
               Per saperne di più su come funziona il %initiativeName% e i criteri di assegnazione, [leggi i dettagli](https://assistenza.ioapp.it/hc/it/#categories).}
+          ANPR_KO:
+            subject: "${SUBJECT_ANPR_KO_BEL:Bonus Elettrodomestici: aggiornamento importante}"
+            markdown: |-
+              ${MARKDOWN_ANPR_KO_BEL:Ciao %nome%,
+              
+              abbiamo un **aggiornamento importante sulla tua richiesta di Bonus Elettrodomestici.**
+              
+              Dalle verifiche che abbiamo effettuato **non risulta una tua iscrizione all'ANPR (Anagrafe nazionale della popolazione residente),** ma è un requisito necessario per l'erogazione del bonus.
+              
+              **Cosa puoi fare ora?**
+              
+              Verifica la tua posizione presso l'ufficio anagrafe del tuo Comune e, se necessario regolarizza la tua iscrizione entro il %dataTermine%.
+              
+              **Entro quando**
+              
+              Il %dataVerifica% effettueremo una nuova verifica. Se la tua posizione risulterà regolarizzata, potrai ricevere il bonus. In caso contrario, la richiesta verrà definitivamente respinta.
+              
+              Grazie, a presto!}
+        email-events:
+          ONBOARDING_OK:
+            subject: "${EMAIL_SUBJECT_OK_BEL:Hai ottenuto il bonus!}"
+            template-name: "${EMAIL_TEMPLATE_NAME_OK_BEL:Email_BEL25/EsitoOk}"
+          ONBOARDING_OK_PARTIAL:
+            subject: "${EMAIL_SUBJECT_OK_PARTIAL_BEL:Hai ottenuto il bonus!}"
+            template-name: "${EMAIL_TEMPLATE_NAME_OK_PARTIAL_BEL:Email_BEL25/EsitoParziale}"
+          ONBOARDING_JOINED:
+            subject: "${EMAIL_SUBJECT_JOINED_BEL:Il bonus è stato già richiesto}"
+            template-name: "${EMAIL_TEMPLATE_NAME_JOINED_BEL:Email_BEL25/FamilyUnit}"
+          ONBOARDING_KO_GENERIC:
+            subject: "${EMAIL_SUBJECT_KO_GENERIC_BEL:Non è stato possibile assegnarti il bonus}"
+            template-name: "${EMAIL_TEMPLATE_NAME_KO_GENERIC_BEL:Email_BEL25/GenericError}"
+          ONBOARDING_KO_INITIATIVE_ENDED:
+            subject: "${EMAIL_SUBJECT_KO_THANKS_BEL:Bonus Elettrodomestici: tutti i fondi sono stati assegnati}"
+            template-name: "${EMAIL_TEMPLATE_NAME_KO_THANKS_BEL:Email_BEL25/Thanks}"
+          VOUCHER_EXPIRING:
+            subject: "${EMAIL_SUBJECT_OK_REMINDER_BEL:Il tuo bonus sta per scadere!}"
+            template-name: "${EMAIL_TEMPLATE_NAME_OK_REMINDER_BEL:Email_BEL25/ThreeDayReminder}"

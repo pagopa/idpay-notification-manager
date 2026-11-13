@@ -4,6 +4,7 @@ import it.gov.pagopa.notification.manager.dto.EvaluationDTO;
 import it.gov.pagopa.notification.manager.dto.event.NotificationQueueDTO;
 import it.gov.pagopa.notification.manager.dto.event.NotificationRefundQueueDTO;
 import it.gov.pagopa.notification.manager.enums.Channel;
+import it.gov.pagopa.notification.manager.enums.NotificationEvent;
 import it.gov.pagopa.notification.manager.model.Notification;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -50,7 +51,8 @@ class NotificationMapperTest {
                   null,
                   null,
                   null,
-                  null
+                  null,
+                  NotificationEvent.ONBOARDING_OK
           );
 
 
@@ -64,6 +66,7 @@ class NotificationMapperTest {
           .rejectReasons(List.of())
           .organizationName(ORGANIZATION_NAME)
           .channel(Channel.IO)
+          .event(NotificationEvent.ONBOARDING_OK)
           .build();
 
   private static final Notification NOTIFICATION_QUEUE =
@@ -114,7 +117,8 @@ class NotificationMapperTest {
             .operationType(REFUND)
             .notificationDate(actual.getNotificationDate())
             .refundReward(BigDecimal.TEN)
-            .refundStatus("ACCEPTED").build();
+            .refundStatus("ACCEPTED")
+            .build();
 
     assertEquals(expected, actual);
   }

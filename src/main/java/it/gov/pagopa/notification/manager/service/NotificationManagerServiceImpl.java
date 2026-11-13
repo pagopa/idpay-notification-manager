@@ -21,7 +21,6 @@ import it.gov.pagopa.notification.manager.repository.NotificationManagerReposito
 import it.gov.pagopa.notification.manager.repository.NotificationManagerRepositoryExtended;
 import it.gov.pagopa.notification.manager.service.io.IoNotificationContentService;
 import it.gov.pagopa.notification.manager.service.io.NotificationEventResolver;
-import it.gov.pagopa.notification.manager.service.io.ProfilesNotificationCatalog;
 import it.gov.pagopa.notification.manager.service.io.placeholder.*;
 import it.gov.pagopa.notification.manager.service.onboarding.OnboardingIoNotification;
 import it.gov.pagopa.notification.manager.service.onboarding.OnboardingWebNotification;

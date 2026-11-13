@@ -2,7 +2,9 @@ package it.gov.pagopa.notification.manager.service.io;
 
 import it.gov.pagopa.notification.manager.config.ProfilesNotificationProperties;
 import it.gov.pagopa.notification.manager.enums.NotificationEvent;
+import it.gov.pagopa.notification.manager.model.EmailNotificationContent;
 import it.gov.pagopa.notification.manager.model.NotificationContent;
+import it.gov.pagopa.notification.manager.service.ProfilesNotificationCatalog;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -102,7 +104,7 @@ class ProfilesNotificationCatalogTest {
 
     @Test
     void find_returnsContentWhenProfileAndEventExist() {
-        Optional<NotificationContent> content = catalog.find("DEFAULT", NotificationEvent.ONBOARDING_OK);
+        Optional<NotificationContent> content = catalog.findIoNotificationContent("DEFAULT", NotificationEvent.ONBOARDING_OK);
 
         assertTrue(content.isPresent());
         assertEquals("Default OK", content.get().subject());
@@ -111,21 +113,21 @@ class ProfilesNotificationCatalogTest {
 
     @Test
     void find_returnsEmptyWhenEventNotInProfile() {
-        Optional<NotificationContent> content = catalog.find("DEFAULT", NotificationEvent.SUSPENSION);
+        Optional<NotificationContent> content = catalog.findIoNotificationContent("DEFAULT", NotificationEvent.SUSPENSION);
 
         assertFalse(content.isPresent());
     }
 
     @Test
     void find_returnsEmptyWhenProfileDoesNotExist() {
-        Optional<NotificationContent> content = catalog.find("UNKNOWN", NotificationEvent.ONBOARDING_OK);
+        Optional<NotificationContent> content = catalog.findIoNotificationContent("UNKNOWN", NotificationEvent.ONBOARDING_OK);
 
         assertFalse(content.isPresent());
     }
 
     @Test
     void find_returnsEmptyWhenProfileIsNull() {
-        Optional<NotificationContent> content = catalog.find(null, NotificationEvent.ONBOARDING_OK);
+        Optional<NotificationContent> content = catalog.findIoNotificationContent(null, NotificationEvent.ONBOARDING_OK);
 
         assertFalse(content.isPresent());
     }
@@ -138,9 +140,22 @@ class ProfilesNotificationCatalogTest {
 
         properties.getProfiles().put("NULL_EVENTS", profileWithNullEvents);
 
-        Optional<NotificationContent> content = catalog.find("NULL_EVENTS", NotificationEvent.ONBOARDING_OK);
+        Optional<NotificationContent> content = catalog.findIoNotificationContent("NULL_EVENTS", NotificationEvent.ONBOARDING_OK);
 
         assertFalse(content.isPresent());
+    }
+
+    @Test
+    void findEmailNotificationContent_returnsConfiguredContentAndEmptyForMissingData() {
+        EmailNotificationContent expected = new EmailNotificationContent("Email subject", "Email_DEFAULT/EsitoOk");
+        properties.getProfiles().get("DEFAULT").getEmailEvents().put(NotificationEvent.ONBOARDING_OK, expected);
+
+        assertEquals(Optional.of(expected), catalog.findEmailNotificationContent("DEFAULT", NotificationEvent.ONBOARDING_OK));
+        assertEquals(Optional.empty(), catalog.findEmailNotificationContent("DEFAULT", NotificationEvent.SUSPENSION));
+        assertEquals(Optional.empty(), catalog.findEmailNotificationContent("UNKNOWN", NotificationEvent.ONBOARDING_OK));
+
+        properties.getProfiles().get("DEFAULT").setEmailEvents(null);
+        assertEquals(Optional.empty(), catalog.findEmailNotificationContent("DEFAULT", NotificationEvent.ONBOARDING_OK));
     }
 
     @Test
@@ -183,4 +198,3 @@ class ProfilesNotificationCatalogTest {
         assertFalse(variables.isPresent());
     }
 }
-

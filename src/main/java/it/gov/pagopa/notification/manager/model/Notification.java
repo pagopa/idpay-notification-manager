@@ -3,6 +3,7 @@ package it.gov.pagopa.notification.manager.model;
 import it.gov.pagopa.notification.manager.dto.OnboardingRejectionReason;
 import it.gov.pagopa.notification.manager.dto.VerifyDTO;
 import it.gov.pagopa.notification.manager.enums.Channel;
+import it.gov.pagopa.notification.manager.enums.NotificationEvent;
 import lombok.Builder;
 import lombok.Data;
 import lombok.experimental.FieldNameConstants;
@@ -69,5 +70,6 @@ public class Notification {
   private String recipientEmail;
 
   private LocalDateTime updateDate;
+  private NotificationEvent event;
 
 }

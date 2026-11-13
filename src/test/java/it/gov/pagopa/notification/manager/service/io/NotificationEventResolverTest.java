@@ -61,6 +61,7 @@ class NotificationEventResolverTest {
                     NotificationEvent.ONBOARDING_KO_REJECTED_NO_RETRY;
             case FAMILY_CRITERIA_FAIL, RULE_ENGINE_NOT_READY, GENERIC_ERROR ->
                     NotificationEvent.ONBOARDING_KO_GENERIC;
+            case FAMILY_BONUS_ALREADY_USED -> NotificationEvent.ONBOARDING_KO_ALREADY_USED;
         };
         Notification notification = Notification.builder()
                 .onboardingOutcome(STATUS_ONBOARDING_KO)
