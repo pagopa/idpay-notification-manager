@@ -1,6 +1,7 @@
 package it.gov.pagopa.notification.manager.config;
 
 import it.gov.pagopa.notification.manager.enums.NotificationEvent;
+import it.gov.pagopa.notification.manager.model.EmailNotificationContent;
 import it.gov.pagopa.notification.manager.model.NotificationContent;
 import lombok.Getter;
 import lombok.Setter;
@@ -25,7 +26,10 @@ public class ProfilesNotificationProperties {
     @ToString
     public static class ProfileConfig {
         private ProfileConfigVariables variables = new ProfileConfigVariables();
-        private Map<NotificationEvent, NotificationContent> events = new EnumMap<>(NotificationEvent.class);
+        private Map<NotificationEvent, NotificationContent> events =
+                new EnumMap<>(NotificationEvent.class);
+        private Map<NotificationEvent, EmailNotificationContent> emailEvents =
+                new EnumMap<>(NotificationEvent.class);
     }
 
     @Getter

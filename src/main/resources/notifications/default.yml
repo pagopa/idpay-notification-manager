@@ -188,3 +188,25 @@ notification:
               **Hai domande?**
               
               Per avere più dettagli su come e dove usare il bonus, [leggi la guida](#).}
+        email-events:
+          ONBOARDING_OK:
+            subject: "${EMAIL_SUBJECT_OK:Hai ottenuto il bonus!}"
+            template-name: "${EMAIL_TEMPLATE_NAME_OK:Email_DEFAULT/EsitoOk}"
+          ONBOARDING_OK_PARTIAL:
+            subject: "${EMAIL_SUBJECT_OK_PARTIAL:Hai ottenuto il bonus!}"
+            template-name: "${EMAIL_TEMPLATE_NAME_OK_PARTIAL:Email_DEFAULT/EsitoParziale}"
+          ONBOARDING_JOINED:
+            subject: "${EMAIL_SUBJECT_JOINED:Il bonus è stato già richiesto}"
+            template-name: "${EMAIL_TEMPLATE_NAME_JOINED:Email_DEFAULT/FamilyUnit}"
+          ONBOARDING_KO_GENERIC:
+            subject: "${EMAIL_SUBJECT_KO_GENERIC:Non è stato possibile assegnarti il bonus}"
+            template-name: "${EMAIL_TEMPLATE_NAME_KO_GENERIC:Email_DEFAULT/GenericError}"
+          ONBOARDING_KO_INITIATIVE_ENDED:
+            subject: "${EMAIL_SUBJECT_KO_THANKS:Bonus Decoder: tutti i fondi sono stati assegnati}"
+            template-name: "${EMAIL_TEMPLATE_NAME_KO_THANKS:Email_DEFAULT/Thanks}"
+          VOUCHER_EXPIRING:
+            subject: "${EMAIL_SUBJECT_OK_REMINDER:Il tuo bonus sta per scadere!}"
+            template-name: "${EMAIL_TEMPLATE_NAME_OK_REMINDER:Email_DEFAULT/ThreeDayReminder}"
+          ONBOARDING_KO_ALREADY_USED:
+            subject: "${EMAIL_SUBJECT_KO_ALREADY_USED:Il bonus è stato già usato in passato}"
+            template-name: "${EMAIL_TEMPLATE_NAME_KO_ALREADY_USED:Email_DEFAULT/AlreadyUsedKo}"

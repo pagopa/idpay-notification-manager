@@ -27,22 +27,6 @@ rest-client:
       service:
         name: notificationClient
         base-url: ${NOTIFICATION_MS_BASE_URL:https://api-io.dev.cstar.pagopa.it/idpay-itn/mock/api/privacynotice/v2}
-      template:
-        ok: Email_BEL_EsitoOk
-        rejected: Email_BEL_EsitoOkParziale
-      subject:
-        ok: ${SUBJECT_BEL_OK:Hai ottenuto il bonus!}
-        partial:  ${SUBJECT_BEL_OK_PARTIAL:Hai ottenuto il bonus!}
-        ok-threeDayReminder: ${SUBJECT_OK_THREE_DAY_REMINDER:Il tuo bonus sta per scadere!}
-        ko-familyUnit: ${SUBJECT_KO_FAMILY_UNIT:Il bonus è stato già richiesto}
-        ko-thanks: '${SUBJECT_OK_THANKS:Bonus Elettrodomestici: tutti i fondi sono stati assegnati}'
-        ko-genericError: ${SUBJECT_KO_GENERIC_ERROR:Non è stato possibile assegnarti il bonus}
-      place-holder:
-        ok: productFileName
-        partial: productFileName
-        rejected: excludedList, motivation
-        supervisioned: suspendedList, motivation
-        approved: ripristinedList
   initiative:
     service:
       name: ms-initiative
@@ -215,31 +199,11 @@ notification:
       parallelism: ${RECOVER_PARALLELISM_THREADS:7}
       minutes-before: ${STUCK_RECOVERS_MINUTES_BEFORE:1440}
       max-retries: ${RECOVER_MAX_RETRIES:3}
-    email:
-      assisted-link: ${ASSISTED_LINK:https://bonuselettrodomestici.it/utente/assistenza}
+      # Refresh onboarding email subject, template and templateValues on every retry.
+      refresh-email-content: ${RECOVER_REFRESH_EMAIL_CONTENT:false}
     threads:
       schedule-max-number: ${THREADS_SCHEDULE_MAX_NUMBER:1}
-    content:
-      anpr-ko:
-        subject: |-
-          Bonus Elettrodomestici: aggiornamento importante
-        markdown: |-
-          Ciao %nome%,
-          
-          abbiamo un **aggiornamento importante sulla tua richiesta di Bonus Elettrodomestici.**
-          
-          Dalle verifiche che abbiamo effettuato **non risulta una tua iscrizione all'ANPR (Anagrafe nazionale della popolazione residente),** ma è un requisito necessario per l'erogazione del bonus.
-          
-          **Cosa puoi fare ora?**
-          
-          Verifica la tua posizione presso l'ufficio anagrafe del tuo Comune e, se necessario regolarizza la tua iscrizione entro il %dataTermine%.
-          
-          **Entro quando**
-          
-          Il %dataVerifica% effettueremo una nuova verifica. Se la tua posizione risulterà regolarizzata, potrai ricevere il bonus. In caso contrario, la richiesta verrà definitivamente respinta.
-          
-          Grazie, a presto!
-          
+
 
 logging:
   level:
