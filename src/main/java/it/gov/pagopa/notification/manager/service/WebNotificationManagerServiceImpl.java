@@ -54,6 +54,12 @@ public class WebNotificationManagerServiceImpl implements  WebNotificationManage
             return;
         }
 
+        if (initiativeNotificationDTO == null) {
+            log.error("[NOTIFY] Failed to send email notification for user {} and initiative {}: initiativeNotificationDTO is null", sanitizedUserId, sanitizedInitiativeId);
+            performanceLog(startTime);
+            return;
+        }
+
         // retrieve profiled content for the reminder email notification
         Optional<EmailNotificationContent> content = emailNotificationContentService.
                 resolveProfileAndFind(initiativeNotificationDTO.getEmailFlux(), VOUCHER_EXPIRING);
