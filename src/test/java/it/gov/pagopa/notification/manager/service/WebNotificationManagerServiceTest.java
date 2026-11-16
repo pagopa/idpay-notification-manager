@@ -139,6 +139,17 @@ class WebNotificationManagerServiceImplTest {
     }
 
     @Test
+    void sendReminderMail_whenInitiativeDetailsAreNull_doesNotResolveContentOrSend() {
+        NotificationReminderQueueDTO dto = mock(NotificationReminderQueueDTO.class);
+        when(dto.getInitiativeId()).thenReturn("initiative123");
+        when(initiativeRestConnector.getInitiativeDetailInfo("initiative123")).thenReturn(null);
+
+        service.sendReminderMail(dto);
+
+        verifyNoInteractions(emailNotificationContentService, emailNotificationConnector);
+    }
+
+    @Test
     void sendReminderMail_whenContentMissing_doesNotSend() {
         NotificationReminderQueueDTO dto = mock(NotificationReminderQueueDTO.class);
         when(dto.getInitiativeId()).thenReturn("initiative123");
