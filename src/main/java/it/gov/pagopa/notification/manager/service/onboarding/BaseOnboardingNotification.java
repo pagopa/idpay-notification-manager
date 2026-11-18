@@ -25,7 +25,6 @@ public abstract class BaseOnboardingNotification<R> {
     public String processNotification(EvaluationDTO evaluationDTO){
         String sanitizedUserId = Utilities.sanitizeString(evaluationDTO.getUserId());
 
-        boolean initiativeFetchFailed = false;
         try {
             InitiativeNotificationDTO initiativeNotificationDTO = initiativeRestConnector.getInitiativeDetailInfo(evaluationDTO.getInitiativeId());
             evaluationDTO.setEmailFlux(initiativeNotificationDTO.getEmailFlux());
@@ -38,7 +37,7 @@ public abstract class BaseOnboardingNotification<R> {
         R notificationToSend = getNotificationFromEvalStatus(evaluationDTO);
 
         if(notificationToSend != null){
-            return sendNotification(notificationToSend, evaluationDTO, initiativeFetchFailed);
+            return sendNotification(notificationToSend, evaluationDTO);
         }
 
         return null;
@@ -71,7 +70,7 @@ public abstract class BaseOnboardingNotification<R> {
 
     protected abstract R generateOnboardingOkNotification(boolean isPartial, EvaluationDTO evaluationDTO);
 
-    abstract String sendNotification(R notificationToSend, EvaluationDTO evaluationDTO, boolean initiativeFetchFailed);
+    abstract String sendNotification(R notificationToSend, EvaluationDTO evaluationDTO);
 
 
 }

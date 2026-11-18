@@ -62,6 +62,7 @@ class OnboardingNotificationControllerTest {
                   null,
                   FISCAL_CODE,
                   null,
+                  null,
                   null
           );
 

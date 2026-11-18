@@ -1,6 +1,5 @@
 package it.gov.pagopa.notification.manager.service.onboarding;
 
-import it.gov.pagopa.notification.manager.config.EmailNotificationProperties;
 import it.gov.pagopa.notification.manager.config.ProfilesNotificationProperties;
 import it.gov.pagopa.notification.manager.connector.EmailNotificationConnector;
 import it.gov.pagopa.notification.manager.connector.initiative.InitiativeRestConnector;
@@ -11,9 +10,12 @@ import it.gov.pagopa.notification.manager.dto.OnboardingRejectionReason;
 import it.gov.pagopa.notification.manager.dto.VerifyDTO;
 import it.gov.pagopa.notification.manager.dto.initiative.InitiativeNotificationDTO;
 import it.gov.pagopa.notification.manager.dto.mapper.NotificationMapper;
+import it.gov.pagopa.notification.manager.enums.NotificationEvent;
 import it.gov.pagopa.notification.manager.model.Notification;
+import it.gov.pagopa.notification.manager.model.EmailNotificationContent;
 import it.gov.pagopa.notification.manager.repository.NotificationManagerRepository;
-import it.gov.pagopa.notification.manager.service.io.ProfilesNotificationCatalog;
+import it.gov.pagopa.notification.manager.service.email.EmailNotificationContentService;
+import it.gov.pagopa.notification.manager.service.ProfilesNotificationCatalog;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -31,12 +33,15 @@ import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Stream;
 
 import static it.gov.pagopa.notification.manager.dto.OnboardingRejectionReason.OnboardingRejectionReasonCode.ISEE_TYPE_FAIL;
 import static it.gov.pagopa.notification.manager.dto.OnboardingRejectionReason.OnboardingRejectionReasonCode.AUTOMATED_CRITERIA_ISEE_FAIL;
+import static it.gov.pagopa.notification.manager.dto.OnboardingRejectionReason.OnboardingRejectionReasonCode.FAMILY_BONUS_ALREADY_USED;
 import static it.gov.pagopa.notification.manager.dto.OnboardingRejectionReason.OnboardingRejectionReasonCode.REJECTION_REASON_INITIATIVE_ENDED;
 import static it.gov.pagopa.notification.manager.enums.Channel.WEB;
+import static it.gov.pagopa.notification.manager.enums.NotificationEvent.*;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
@@ -72,7 +77,7 @@ class OnboardingWebNotificationTest {
     private EmailNotificationConnector emailNotificationConnectorMock;
 
     @Mock
-    private EmailNotificationProperties emailNotificationPropertiesMock;
+    private EmailNotificationContentService emailNotificationContentService;
 
     private OnboardingWebNotification onboardingWebNotification;
 
@@ -91,11 +96,18 @@ class OnboardingWebNotificationTest {
     @BeforeEach
     void setUp() {
         onboardingWebNotification = new OnboardingWebNotificationImpl(emailNotificationConnectorMock,
-                emailNotificationPropertiesMock,
                 notificationManagerRepository,
                 notificationMapper,
                 initiativeRestConnector,
-                profilesNotificationCatalog);
+                emailNotificationContentService,
+                profilesNotificationCatalog,
+                false);
+    }
+
+    private void mockContent(String profile, NotificationEvent event,
+                             String subject, String templateName) {
+        when(emailNotificationContentService.resolveProfileAndFindWithDefaultFallback(profile, event))
+                .thenReturn(Optional.of(new EmailNotificationContent(subject, templateName)));
     }
 
     private EvaluationDTO getEvaluationDto(){
@@ -119,6 +131,7 @@ class OnboardingWebNotificationTest {
                 null,
                 null,
                 null,
+                null,
                 null
         );
     }
@@ -132,10 +145,7 @@ class OnboardingWebNotificationTest {
     void processNotification_whenTemplateEsitoOk200() {
         EvaluationDTO evaluationDTO = getEvaluationDto();
 
-        EmailNotificationProperties.Subject subjectMock = mock(EmailNotificationProperties.Subject.class);
-        when(emailNotificationPropertiesMock.getSubject()).thenReturn(subjectMock);
-
-        when(subjectMock.getOk()).thenReturn("TEST_OK");
+        mockContent("DEC26", ONBOARDING_OK, "TEST_OK", "Email_DEC26/EsitoOk");
 
         Mockito.doAnswer(invocation -> null)
                 .when(emailNotificationConnectorMock)
@@ -160,10 +170,7 @@ class OnboardingWebNotificationTest {
         EvaluationDTO evaluationDTO = getEvaluationDto();
         evaluationDTO.setBeneficiaryBudgetCents(10000L);
 
-        EmailNotificationProperties.Subject subjectMock = mock(EmailNotificationProperties.Subject.class);
-        when(emailNotificationPropertiesMock.getSubject()).thenReturn(subjectMock);
-
-        when(subjectMock.getOk()).thenReturn("TEST_OK");
+        mockContent("DEC26", ONBOARDING_OK, "TEST_OK", "Email_DEC26/EsitoOk");
 
         Mockito.doAnswer(invocation -> null)
                 .when(emailNotificationConnectorMock)
@@ -186,10 +193,7 @@ class OnboardingWebNotificationTest {
         EvaluationDTO evaluationDTO = getEvaluationDto();
         evaluationDTO.setBeneficiaryBudgetCents(null);
 
-        EmailNotificationProperties.Subject subjectMock = mock(EmailNotificationProperties.Subject.class);
-        when(emailNotificationPropertiesMock.getSubject()).thenReturn(subjectMock);
-
-        when(subjectMock.getOk()).thenReturn("TEST_OK");
+        mockContent("DEC26", ONBOARDING_OK, "TEST_OK", "Email_DEC26/EsitoOk");
 
         Mockito.doAnswer(invocation -> null)
                 .when(emailNotificationConnectorMock)
@@ -219,10 +223,7 @@ class OnboardingWebNotificationTest {
         evaluationDTO.setVerifies(verifies);
         evaluationDTO.setBeneficiaryBudgetCents(10000L);
 
-        EmailNotificationProperties.Subject subjectMock = mock(EmailNotificationProperties.Subject.class);
-        when(emailNotificationPropertiesMock.getSubject()).thenReturn(subjectMock);
-
-        when(subjectMock.getPartial()).thenReturn("TEST_PARTIAL_OK");
+        mockContent("DEC26", ONBOARDING_OK_PARTIAL, "TEST_PARTIAL_OK", "Email_DEC26/EsitoParziale");
 
         Mockito.doAnswer(invocation -> null)
                 .when(emailNotificationConnectorMock)
@@ -252,9 +253,7 @@ class OnboardingWebNotificationTest {
         evaluationDTO.setVerifies(List.of(verifyDTO));
         evaluationDTO.setBeneficiaryBudgetCents(10000L);
 
-        EmailNotificationProperties.Subject subjectMock = mock(EmailNotificationProperties.Subject.class);
-        when(emailNotificationPropertiesMock.getSubject()).thenReturn(subjectMock);
-        when(subjectMock.getOk()).thenReturn("TEST_OK");
+        mockContent("DEC26", ONBOARDING_OK, "TEST_OK", "Email_DEC26/EsitoOk");
 
         Mockito.doAnswer(invocation -> null)
                 .when(emailNotificationConnectorMock)
@@ -285,9 +284,7 @@ class OnboardingWebNotificationTest {
         evaluationDTO.setVerifies(List.of(verifyDTO));
         evaluationDTO.setBeneficiaryBudgetCents(20000L);
 
-        EmailNotificationProperties.Subject subjectMock = mock(EmailNotificationProperties.Subject.class);
-        when(emailNotificationPropertiesMock.getSubject()).thenReturn(subjectMock);
-        when(subjectMock.getOk()).thenReturn("TEST_OK");
+        mockContent("DEC26", ONBOARDING_OK, "TEST_OK", "Email_DEC26/EsitoOk");
 
         Mockito.doAnswer(invocation -> null)
                 .when(emailNotificationConnectorMock)
@@ -316,9 +313,7 @@ class OnboardingWebNotificationTest {
         evaluationDTO.setVerifies(List.of(verifyDTO));
         evaluationDTO.setBeneficiaryBudgetCents(null);
 
-        EmailNotificationProperties.Subject subjectMock = mock(EmailNotificationProperties.Subject.class);
-        when(emailNotificationPropertiesMock.getSubject()).thenReturn(subjectMock);
-        when(subjectMock.getOk()).thenReturn("TEST_OK");
+        mockContent("DEC26", ONBOARDING_OK, "TEST_OK", "Email_DEC26/EsitoOk");
 
         Mockito.doAnswer(invocation -> null)
                 .when(emailNotificationConnectorMock)
@@ -344,9 +339,7 @@ class OnboardingWebNotificationTest {
         evaluationDTO.setVerifies(List.of());
         evaluationDTO.setBeneficiaryBudgetCents(10000L);
 
-        EmailNotificationProperties.Subject subjectMock = mock(EmailNotificationProperties.Subject.class);
-        when(emailNotificationPropertiesMock.getSubject()).thenReturn(subjectMock);
-        when(subjectMock.getOk()).thenReturn("TEST_OK");
+        mockContent("DEC26", ONBOARDING_OK, "TEST_OK", "Email_DEC26/EsitoOk");
 
         Mockito.doAnswer(invocation -> null)
                 .when(emailNotificationConnectorMock)
@@ -371,9 +364,7 @@ class OnboardingWebNotificationTest {
         evaluationDTO.setStatus(NotificationConstants.STATUS_ONBOARDING_KO);
         evaluationDTO.setOnboardingRejectionReasons(List.of());
 
-        EmailNotificationProperties.Subject subjectMock = mock(EmailNotificationProperties.Subject.class);
-        when(emailNotificationPropertiesMock.getSubject()).thenReturn(subjectMock);
-        when(subjectMock.getKoGenericError()).thenReturn("SUBJ_KO_GENERIC");
+        mockContent("DEC26", ONBOARDING_KO_GENERIC, "SUBJ_KO_GENERIC", "Email_DEC26/GenericError");
 
         Mockito.doAnswer(invocation -> null)
                 .when(emailNotificationConnectorMock)
@@ -407,9 +398,7 @@ class OnboardingWebNotificationTest {
         evaluationDTO.setVerifies(List.of(nonMatching, matching));
         evaluationDTO.setBeneficiaryBudgetCents(10000L);
 
-        EmailNotificationProperties.Subject subjectMock = mock(EmailNotificationProperties.Subject.class);
-        when(emailNotificationPropertiesMock.getSubject()).thenReturn(subjectMock);
-        when(subjectMock.getPartial()).thenReturn("TEST_PARTIAL_OK");
+        mockContent("DEC26", ONBOARDING_OK_PARTIAL, "TEST_PARTIAL_OK", "Email_DEC26/EsitoParziale");
 
         Mockito.doAnswer(invocation -> null)
                 .when(emailNotificationConnectorMock)
@@ -431,10 +420,7 @@ class OnboardingWebNotificationTest {
     void processNotification_callNotificationEmail_Error() {
         EvaluationDTO evaluationDTO = getEvaluationDto();
 
-        EmailNotificationProperties.Subject subjectMock = mock(EmailNotificationProperties.Subject.class);
-        when(emailNotificationPropertiesMock.getSubject()).thenReturn(subjectMock);
-
-        when(subjectMock.getOk()).thenReturn("TEST_OK");
+        mockContent("DEC26", ONBOARDING_OK, "TEST_OK", "Email_DEC26/EsitoOk");
 
         doThrow(new RuntimeException("Boom"))
                 .when(emailNotificationConnectorMock)
@@ -458,9 +444,7 @@ class OnboardingWebNotificationTest {
     void processOnboardingJoined_shouldBuildFamilyUnitEmailDto() {
         EvaluationDTO evaluationDTO = getEvaluationDto();
 
-        EmailNotificationProperties.Subject subjectMock = mock(EmailNotificationProperties.Subject.class);
-        when(emailNotificationPropertiesMock.getSubject()).thenReturn(subjectMock);
-        when(subjectMock.getKoFamilyUnit()).thenReturn("SUBJ_FAMILY_UNIT");
+        mockContent("DEC26", ONBOARDING_JOINED, "SUBJ_FAMILY_UNIT", "Email_DEC26/FamilyUnit");
         evaluationDTO.setEmailFlux("DEC26");
 
         EmailMessageDTO dto =
@@ -484,9 +468,7 @@ class OnboardingWebNotificationTest {
         evaluationDTO.setOnboardingRejectionReasons(List.of(rr));
         evaluationDTO.setEmailFlux("DEC26");
 
-        EmailNotificationProperties.Subject subjectMock = mock(EmailNotificationProperties.Subject.class);
-        when(emailNotificationPropertiesMock.getSubject()).thenReturn(subjectMock);
-        when(subjectMock.getKoThanks()).thenReturn("SUBJ_KO_THANKS");
+        mockContent("DEC26", ONBOARDING_KO_INITIATIVE_ENDED, "SUBJ_KO_THANKS", "Email_DEC26/Thanks");
 
         EmailMessageDTO dto =
                 ((OnboardingWebNotificationImpl) onboardingWebNotification).processOnboardingKo(evaluationDTO);
@@ -501,6 +483,30 @@ class OnboardingWebNotificationTest {
     }
 
     @Test
+    void processOnboardingKo_shouldBuildAlreadyUsedDto_whenFamilyBonusAlreadyUsed() {
+        EvaluationDTO evaluationDTO = getEvaluationDto();
+        OnboardingRejectionReason rr = OnboardingRejectionReason.builder()
+                .code(FAMILY_BONUS_ALREADY_USED)
+                .authority("Comune di Test")
+                .detail("Bonus già utilizzato nel nucleo familiare")
+                .build();
+        evaluationDTO.setOnboardingRejectionReasons(List.of(rr));
+        evaluationDTO.setEmailFlux("DEC26");
+
+        mockContent("DEC26", ONBOARDING_KO_ALREADY_USED, "SUBJ_KO_ALREADY_USED", "Email_DEC26/AlreadyUsedKo");
+
+        EmailMessageDTO dto =
+                ((OnboardingWebNotificationImpl) onboardingWebNotification).processOnboardingKo(evaluationDTO);
+
+        assertNotNull(dto);
+        assertEquals("SUBJ_KO_ALREADY_USED", dto.getSubject());
+        assertEquals("Email_DEC26/AlreadyUsedKo", dto.getTemplateName());
+        assertEquals(evaluationDTO.getName(), dto.getTemplateValues().get("name"));
+        assertEquals("Comune di Test", dto.getTemplateValues().get("managedEntity"));
+        assertEquals("Bonus già utilizzato nel nucleo familiare", dto.getTemplateValues().get("reason"));
+    }
+
+    @Test
     void processOnboardingKo_shouldBuildGenericErrorDto_whenIseeTypeFail() {
         EvaluationDTO evaluationDTO = getEvaluationDto();
         OnboardingRejectionReason rr = OnboardingRejectionReason.builder()
@@ -510,9 +516,7 @@ class OnboardingWebNotificationTest {
         evaluationDTO.setOnboardingRejectionReasons(List.of(rr));
         evaluationDTO.setEmailFlux("DEC26");
 
-        EmailNotificationProperties.Subject subjectMock = mock(EmailNotificationProperties.Subject.class);
-        when(emailNotificationPropertiesMock.getSubject()).thenReturn(subjectMock);
-        when(subjectMock.getKoGenericError()).thenReturn("SUBJ_KO_GENERIC");
+        mockContent("DEC26", ONBOARDING_KO_GENERIC, "SUBJ_KO_GENERIC", "Email_DEC26/GenericError");
 
         EmailMessageDTO dto =
                 ((OnboardingWebNotificationImpl) onboardingWebNotification).processOnboardingKo(evaluationDTO);
@@ -535,9 +539,7 @@ class OnboardingWebNotificationTest {
                 .build();
         evaluationDTO.setOnboardingRejectionReasons(List.of(rr));
 
-        EmailNotificationProperties.Subject subjectMock = mock(EmailNotificationProperties.Subject.class);
-        when(emailNotificationPropertiesMock.getSubject()).thenReturn(subjectMock);
-        when(subjectMock.getKoGenericError()).thenReturn("SUBJ_KO_GENERIC");
+        mockContent("DEC26", ONBOARDING_KO_GENERIC, "SUBJ_KO_GENERIC", "Email_DEC26/GenericError");
 
         evaluationDTO.setEmailFlux("DEC26");
         EmailMessageDTO dto =
@@ -556,9 +558,7 @@ class OnboardingWebNotificationTest {
         evaluationDTO.setOnboardingRejectionReasons(List.of());
         evaluationDTO.setEmailFlux("DEC26");
 
-        EmailNotificationProperties.Subject subjectMock = mock(EmailNotificationProperties.Subject.class);
-        when(emailNotificationPropertiesMock.getSubject()).thenReturn(subjectMock);
-        when(subjectMock.getKoGenericError()).thenReturn("SUBJ_KO_GENERIC");
+        mockContent("DEC26", ONBOARDING_KO_GENERIC, "SUBJ_KO_GENERIC", "Email_DEC26/GenericError");
 
         EmailMessageDTO dto =
                 ((OnboardingWebNotificationImpl) onboardingWebNotification).processOnboardingKo(evaluationDTO);
@@ -635,13 +635,7 @@ class OnboardingWebNotificationTest {
                         null
                 ));
 
-        EmailNotificationProperties.Subject subjectMock =
-                mock(EmailNotificationProperties.Subject.class);
-
-        when(emailNotificationPropertiesMock.getSubject())
-                .thenReturn(subjectMock);
-
-        when(subjectMock.getOk()).thenReturn("OK");
+        mockContent(null, ONBOARDING_OK, "Fallback subject", "Email_null/ONBOARDING_OK");
 
         assertDoesNotThrow(
                 () -> onboardingWebNotification.processNotification(evaluationDTO)
@@ -649,13 +643,35 @@ class OnboardingWebNotificationTest {
     }
 
     @Test
+    void processNotification_whenInitiativeFetchFailsWithDefaultContent_savesPlaceholderForRetry() {
+        EvaluationDTO evaluationDTO = getEvaluationDto();
+        Notification notification = Notification.builder().build();
+        when(initiativeRestConnector.getInitiativeDetailInfo(INITIATIVE_ID))
+                .thenThrow(new feign.FeignException.InternalServerError(
+                        "Internal Server Error", mock(feign.Request.class), new byte[0], null));
+        mockContent(null, ONBOARDING_OK, "Default subject", "Email_DEFAULT/EsitoOk");
+        when(notificationMapper.createNotificationFromEmailMessageDTO(any(EmailMessageDTO.class), eq(evaluationDTO)))
+                .thenReturn(notification);
+
+        onboardingWebNotification.processNotification(evaluationDTO);
+
+        assertEquals(ONBOARDING_OK, evaluationDTO.getEvent());
+        verify(notificationMapper).createNotificationFromEmailMessageDTO(argThat(email ->
+                "Email_null/ONBOARDING_OK".equals(email.getTemplateName())
+                        && "Initiative fetch error subject".equals(email.getSubject())), eq(evaluationDTO));
+        verify(notificationManagerRepository).save(argThat(saved ->
+                saved == notification
+                        && NotificationConstants.NOTIFICATION_STATUS_KO.equals(saved.getNotificationStatus())
+                        && saved.getStatusKoTimestamp() != null));
+        verify(emailNotificationConnectorMock, never()).sendEmail(any());
+    }
+
+    @Test
     void processNotification_whenStatusJoined() {
         EvaluationDTO evaluationDTO = getEvaluationDto();
         evaluationDTO.setStatus(NotificationConstants.STATUS_ONBOARDING_JOINED);
 
-        EmailNotificationProperties.Subject subjectMock = mock(EmailNotificationProperties.Subject.class);
-        when(emailNotificationPropertiesMock.getSubject()).thenReturn(subjectMock);
-        when(subjectMock.getKoFamilyUnit()).thenReturn("SUBJ_FAMILY_UNIT");
+        mockContent("DEC26", ONBOARDING_JOINED, "SUBJ_FAMILY_UNIT", "Email_DEC26/FamilyUnit");
 
         InitiativeNotificationDTO mockInitiative = new InitiativeNotificationDTO();
         mockInitiative.setEmailFlux("DEC26");
@@ -677,9 +693,7 @@ class OnboardingWebNotificationTest {
         evaluationDTO.setOnboardingRejectionReasons(List.of(rr));
         evaluationDTO.setEmailFlux("DEC26");
 
-        EmailNotificationProperties.Subject subjectMock = mock(EmailNotificationProperties.Subject.class);
-        when(emailNotificationPropertiesMock.getSubject()).thenReturn(subjectMock);
-        when(subjectMock.getKoGenericError()).thenReturn("SUBJ_KO_GENERIC");
+        mockContent("DEC26", ONBOARDING_KO_GENERIC, "SUBJ_KO_GENERIC", "Email_DEC26/GenericError");
 
         EmailMessageDTO dto =
                 ((OnboardingWebNotificationImpl) onboardingWebNotification).processOnboardingKo(evaluationDTO);
@@ -722,9 +736,7 @@ class OnboardingWebNotificationTest {
         evaluationDTO.setOnboardingRejectionReasons(null);
         evaluationDTO.setEmailFlux("DEC26");
 
-        EmailNotificationProperties.Subject subjectMock = mock(EmailNotificationProperties.Subject.class);
-        when(emailNotificationPropertiesMock.getSubject()).thenReturn(subjectMock);
-        when(subjectMock.getKoGenericError()).thenReturn("SUBJ_KO_GENERIC");
+        mockContent("DEC26", ONBOARDING_KO_GENERIC, "SUBJ_KO_GENERIC", "Email_DEC26/GenericError");
 
         EmailMessageDTO dto =
                 ((OnboardingWebNotificationImpl) onboardingWebNotification).processOnboardingKo(evaluationDTO);
@@ -747,9 +759,7 @@ class OnboardingWebNotificationTest {
         evaluationDTO.setOnboardingRejectionReasons(List.of(rr));
         evaluationDTO.setEmailFlux("DEC26");
 
-        EmailNotificationProperties.Subject subjectMock = mock(EmailNotificationProperties.Subject.class);
-        when(emailNotificationPropertiesMock.getSubject()).thenReturn(subjectMock);
-        when(subjectMock.getKoGenericError()).thenReturn("SUBJ_KO_GENERIC");
+        mockContent("DEC26", ONBOARDING_KO_GENERIC, "SUBJ_KO_GENERIC", "Email_DEC26/GenericError");
 
         ProfilesNotificationProperties.ProfileConfigVariables configVars =
                 new ProfilesNotificationProperties.ProfileConfigVariables();
@@ -774,9 +784,7 @@ class OnboardingWebNotificationTest {
         evaluationDTO.setOnboardingRejectionReasons(List.of(rr));
         evaluationDTO.setEmailFlux("DEC26");
 
-        EmailNotificationProperties.Subject subjectMock = mock(EmailNotificationProperties.Subject.class);
-        when(emailNotificationPropertiesMock.getSubject()).thenReturn(subjectMock);
-        when(subjectMock.getKoGenericError()).thenReturn("SUBJ_KO_GENERIC");
+        mockContent("DEC26", ONBOARDING_KO_GENERIC, "SUBJ_KO_GENERIC", "Email_DEC26/GenericError");
 
         ProfilesNotificationProperties.ProfileConfigVariables configVars =
                 new ProfilesNotificationProperties.ProfileConfigVariables();
@@ -803,13 +811,7 @@ class OnboardingWebNotificationTest {
                 eq(evaluationDTO)
         )).thenReturn(mockNotification);
 
-        EmailNotificationProperties.Subject subjectMock =
-                mock(EmailNotificationProperties.Subject.class);
-
-        when(emailNotificationPropertiesMock.getSubject())
-                .thenReturn(subjectMock);
-
-        when(subjectMock.getOk()).thenReturn("OK");
+        mockContent(null, ONBOARDING_OK, "Fallback subject", "Email_null/ONBOARDING_OK");
 
         ((OnboardingWebNotificationImpl) onboardingWebNotification)
                 .handleInitiativeFetchError(evaluationDTO);
@@ -829,13 +831,15 @@ class OnboardingWebNotificationTest {
     }
 
     @Test
-    void sendNotification_whenEmailSendingFailsAndEmailMessageNull_shouldNotSave() {
+    void processNotification_whenContentMissing_shouldNotSendOrSave() {
         EvaluationDTO evaluationDTO = getEvaluationDto();
-        doThrow(new RuntimeException("Connection error")).when(emailNotificationConnectorMock).sendEmail(null);
+        InitiativeNotificationDTO initiative = new InitiativeNotificationDTO();
+        initiative.setEmailFlux("DEC26");
+        when(initiativeRestConnector.getInitiativeDetailInfo(INITIATIVE_ID)).thenReturn(initiative);
 
-        ((OnboardingWebNotificationImpl) onboardingWebNotification).sendNotification(null, evaluationDTO, false);
+        onboardingWebNotification.processNotification(evaluationDTO);
 
-        verify(emailNotificationConnectorMock, times(1)).sendEmail(null);
+        verify(emailNotificationConnectorMock, never()).sendEmail(any());
         verify(notificationMapper, never()).createNotificationFromEmailMessageDTO(any(), any());
         verify(notificationManagerRepository, never()).save(any());
     }
@@ -878,6 +882,7 @@ class OnboardingWebNotificationTest {
                 .userId("USER_ID")
                 .initiativeId(INITIATIVE_ID)
                 .templateName("Email_null/EsitoOk")
+                .event(ONBOARDING_OK)
                 .build();
 
         InitiativeNotificationDTO initiative = new InitiativeNotificationDTO();
@@ -885,6 +890,8 @@ class OnboardingWebNotificationTest {
 
         when(initiativeRestConnector.getInitiativeDetailInfo(INITIATIVE_ID))
                 .thenReturn(initiative);
+        when(emailNotificationContentService.resolveProfileAndFind("DEC26", ONBOARDING_OK))
+                .thenReturn(Optional.of(new EmailNotificationContent("TEST_OK", "Email_DEC26/EsitoOk")));
 
         when(notificationMapper.notificationToEmailMessageDTO(notification))
                 .thenReturn(EMAIL_MESSAGE_DTO);
@@ -896,15 +903,170 @@ class OnboardingWebNotificationTest {
 
         assertTrue(result);
         assertEquals("Email_DEC26/EsitoOk", notification.getTemplateName());
+        assertEquals("TEST_OK", notification.getSubject());
 
         verify(initiativeRestConnector, times(1))
                 .getInitiativeDetailInfo(INITIATIVE_ID);
+
+        verify(emailNotificationContentService, never())
+                .resolveProfileAndFindWithDefaultFallback(any(), any());
+        verify(profilesNotificationCatalog, never()).retrieveProfileVariables(any());
 
         verify(notificationMapper, times(1))
                 .notificationToEmailMessageDTO(notification);
 
         verify(emailNotificationConnectorMock, times(1))
                 .sendEmail(EMAIL_MESSAGE_DTO);
+    }
+
+    @ParameterizedTest
+    @MethodSource("retryProfiles")
+    void notify_whenAssistedLinkIsPresent_refreshesItForTheRecoveredProfile(String profile) {
+        Notification notification = Notification.builder()
+                .id("NOTIFICATION_ID")
+                .initiativeId(INITIATIVE_ID)
+                .templateName("Email_null/ONBOARDING_KO_GENERIC")
+                .event(ONBOARDING_KO_GENERIC)
+                .templateValues(Map.of("assistedLink", "https://default.example", "name", "Mario"))
+                .build();
+        InitiativeNotificationDTO initiative = new InitiativeNotificationDTO();
+        initiative.setEmailFlux(profile);
+        ProfilesNotificationProperties.ProfileConfigVariables variables =
+                new ProfilesNotificationProperties.ProfileConfigVariables();
+        variables.setAssistedLink("https://recovered.example");
+        when(initiativeRestConnector.getInitiativeDetailInfo(INITIATIVE_ID)).thenReturn(initiative);
+        when(emailNotificationContentService.resolveProfileAndFind(profile, ONBOARDING_KO_GENERIC))
+                .thenReturn(Optional.of(new EmailNotificationContent("Subject", "Email_CUSTOM/GenericError")));
+        when(profilesNotificationCatalog.retrieveProfileVariables(profile)).thenReturn(Optional.of(variables));
+        when(notificationMapper.notificationToEmailMessageDTO(notification))
+                .thenAnswer(invocation -> new NotificationMapper().notificationToEmailMessageDTO(invocation.getArgument(0)));
+
+        assertTrue(onboardingWebNotification.notify(notification));
+
+        verify(emailNotificationConnectorMock).sendEmail(argThat(email ->
+                "https://recovered.example".equals(email.getTemplateValues().get("assistedLink"))
+                        && "Mario".equals(email.getTemplateValues().get("name"))
+                        && "Email_CUSTOM/GenericError".equals(email.getTemplateName())));
+    }
+
+    @Test
+    void notify_whenRecoveredProfileHasNoAssistedLink_clearsStaleValue() {
+        Notification notification = Notification.builder()
+                .id("NOTIFICATION_ID")
+                .initiativeId(INITIATIVE_ID)
+                .templateName("Email_null/ONBOARDING_KO_GENERIC")
+                .event(ONBOARDING_KO_GENERIC)
+                .templateValues(Map.of("assistedLink", "https://default.example"))
+                .build();
+        InitiativeNotificationDTO initiative = new InitiativeNotificationDTO();
+        initiative.setEmailFlux("DEC26");
+        when(initiativeRestConnector.getInitiativeDetailInfo(INITIATIVE_ID)).thenReturn(initiative);
+        when(emailNotificationContentService.resolveProfileAndFind("DEC26", ONBOARDING_KO_GENERIC))
+                .thenReturn(Optional.of(new EmailNotificationContent("Subject", "Email_DEC26/GenericError")));
+        when(profilesNotificationCatalog.retrieveProfileVariables("DEC26")).thenReturn(Optional.empty());
+        when(notificationMapper.notificationToEmailMessageDTO(notification))
+                .thenAnswer(invocation -> new NotificationMapper().notificationToEmailMessageDTO(invocation.getArgument(0)));
+
+        assertTrue(onboardingWebNotification.notify(notification));
+
+        verify(emailNotificationConnectorMock).sendEmail(argThat(email ->
+                email.getTemplateValues().containsKey("assistedLink")
+                        && email.getTemplateValues().get("assistedLink") == null));
+    }
+
+    @Test
+    void processNotification_whenDefaultContentIsFallback_savesWithoutSending() {
+        EvaluationDTO evaluationDTO = getEvaluationDto();
+        Notification saved = Notification.builder().build();
+        when(initiativeRestConnector.getInitiativeDetailInfo(INITIATIVE_ID))
+                .thenReturn(new InitiativeNotificationDTO());
+        mockContent(null, ONBOARDING_OK, "Fallback subject", "Email_null/ONBOARDING_OK");
+        when(notificationMapper.createNotificationFromEmailMessageDTO(any(EmailMessageDTO.class), eq(evaluationDTO)))
+                .thenReturn(saved);
+
+        onboardingWebNotification.processNotification(evaluationDTO);
+
+        assertEquals(ONBOARDING_OK, evaluationDTO.getEvent());
+        verify(emailNotificationConnectorMock, never()).sendEmail(any());
+        verify(notificationMapper).createNotificationFromEmailMessageDTO(argThat(email ->
+                "Fallback subject".equals(email.getSubject())
+                        && "Email_null/ONBOARDING_OK".equals(email.getTemplateName())), eq(evaluationDTO));
+        verify(notificationManagerRepository).save(argThat(notification ->
+                notification == saved
+                        && NotificationConstants.NOTIFICATION_STATUS_KO.equals(notification.getNotificationStatus())
+                        && notification.getStatusKoTimestamp() != null));
+    }
+
+    @ParameterizedTest
+    @MethodSource("retryProfiles")
+    void notify_whenRetryContentIsMissing_savesWithoutSending(String profile) {
+        Notification notification = Notification.builder()
+                .id("NOTIFICATION_ID")
+                .userId("USER_ID")
+                .initiativeId(INITIATIVE_ID)
+                .templateName("Email_null/ONBOARDING_OK")
+                .event(ONBOARDING_OK)
+                .build();
+        InitiativeNotificationDTO initiative = new InitiativeNotificationDTO();
+        initiative.setEmailFlux(profile);
+        when(initiativeRestConnector.getInitiativeDetailInfo(INITIATIVE_ID)).thenReturn(initiative);
+        when(emailNotificationContentService.resolveProfileAndFind(profile, ONBOARDING_OK))
+                .thenReturn(Optional.empty());
+
+        assertFalse(onboardingWebNotification.notify(notification));
+
+        verify(notificationMapper, never()).notificationToEmailMessageDTO(any());
+        verify(emailNotificationContentService, never())
+                .resolveProfileAndFindWithDefaultFallback(any(), any());
+        verify(emailNotificationConnectorMock, never()).sendEmail(any());
+        verify(notificationManagerRepository, never()).deleteById(anyString());
+        verify(notificationManagerRepository).save(argThat(saved ->
+                saved == notification
+                        && "Email_null/ONBOARDING_OK".equals(saved.getTemplateName())
+                        && NotificationConstants.NOTIFICATION_STATUS_KO.equals(saved.getNotificationStatus())
+                        && saved.getStatusKoTimestamp() != null));
+    }
+
+    @Test
+    void notify_whenInitiativeFetchFails_savesWithoutSending() {
+        Notification notification = Notification.builder()
+                .id("NOTIFICATION_ID")
+                .initiativeId(INITIATIVE_ID)
+                .templateName("Email_null/ONBOARDING_OK")
+                .event(ONBOARDING_OK)
+                .build();
+        when(initiativeRestConnector.getInitiativeDetailInfo(INITIATIVE_ID))
+                .thenThrow(new feign.FeignException.InternalServerError(
+                        "Internal Server Error", mock(feign.Request.class), new byte[0], null));
+
+        assertFalse(onboardingWebNotification.notify(notification));
+
+        verifyNoInteractions(emailNotificationContentService, emailNotificationConnectorMock);
+        verify(notificationMapper, never()).notificationToEmailMessageDTO(any());
+        verify(notificationManagerRepository, never()).deleteById(anyString());
+        verify(notificationManagerRepository).save(argThat(saved ->
+                saved == notification
+                        && "Email_null/ONBOARDING_OK".equals(saved.getTemplateName())
+                        && NotificationConstants.NOTIFICATION_STATUS_KO.equals(saved.getNotificationStatus())
+                        && saved.getStatusKoTimestamp() != null));
+    }
+
+    private static Stream<Arguments> retryProfiles() {
+        return Stream.of(Arguments.of("DEC26"), Arguments.of("DEFAULT"), Arguments.of((String) null));
+    }
+
+    @Test
+    void handleInitiativeFetchError_whenContentMissing_doesNotSave() {
+        EvaluationDTO evaluationDTO = getEvaluationDto();
+        when(emailNotificationContentService.resolveProfileAndFindWithDefaultFallback(null, ONBOARDING_OK))
+                .thenReturn(Optional.empty());
+
+        ((OnboardingWebNotificationImpl) onboardingWebNotification).handleInitiativeFetchError(evaluationDTO);
+
+        assertEquals(ONBOARDING_OK, evaluationDTO.getEvent());
+        verify(notificationMapper, never()).createNotificationFromEmailMessageDTO(any(), any());
+        verify(notificationManagerRepository, never()).save(any());
+        verify(emailNotificationConnectorMock, never()).sendEmail(any());
     }
 
     @Test
@@ -932,6 +1094,69 @@ class OnboardingWebNotificationTest {
 
         verify(notificationMapper, times(1))
                 .notificationToEmailMessageDTO(notification);
+    }
+
+    @Test
+    void notify_whenRefreshEnabled_refreshesValidContentAndAssistedLink() {
+        onboardingWebNotification = new OnboardingWebNotificationImpl(
+                emailNotificationConnectorMock, notificationManagerRepository, notificationMapper,
+                initiativeRestConnector, emailNotificationContentService, profilesNotificationCatalog, true);
+        Notification notification = Notification.builder()
+                .id("NOTIFICATION_ID")
+                .initiativeId(INITIATIVE_ID)
+                .templateName("Email_OLD/GenericError")
+                .subject("Old subject")
+                .templateValues(Map.of("assistedLink", "https://old.example", "name", "Mario"))
+                .event(ONBOARDING_KO_GENERIC)
+                .build();
+        InitiativeNotificationDTO initiative = new InitiativeNotificationDTO();
+        initiative.setEmailFlux("DEC26");
+        ProfilesNotificationProperties.ProfileConfigVariables variables =
+                new ProfilesNotificationProperties.ProfileConfigVariables();
+        variables.setAssistedLink("https://new.example");
+        when(initiativeRestConnector.getInitiativeDetailInfo(INITIATIVE_ID)).thenReturn(initiative);
+        when(emailNotificationContentService.resolveProfileAndFind("DEC26", ONBOARDING_KO_GENERIC))
+                .thenReturn(Optional.of(new EmailNotificationContent("New subject", "Email_DEC26/GenericError")));
+        when(profilesNotificationCatalog.retrieveProfileVariables("DEC26")).thenReturn(Optional.of(variables));
+        when(notificationMapper.notificationToEmailMessageDTO(notification))
+                .thenAnswer(invocation -> new NotificationMapper().notificationToEmailMessageDTO(invocation.getArgument(0)));
+
+        assertTrue(onboardingWebNotification.notify(notification));
+
+        verify(emailNotificationConnectorMock).sendEmail(argThat(email ->
+                "New subject".equals(email.getSubject())
+                        && "Email_DEC26/GenericError".equals(email.getTemplateName())
+                        && "https://new.example".equals(email.getTemplateValues().get("assistedLink"))
+                        && "Mario".equals(email.getTemplateValues().get("name"))));
+        verify(notificationManagerRepository).deleteById("NOTIFICATION_ID");
+    }
+
+    @Test
+    void notify_whenRefreshEnabledAndContentMissing_savesWithoutSending() {
+        onboardingWebNotification = new OnboardingWebNotificationImpl(
+                emailNotificationConnectorMock, notificationManagerRepository, notificationMapper,
+                initiativeRestConnector, emailNotificationContentService, profilesNotificationCatalog, true);
+        Notification notification = Notification.builder()
+                .id("NOTIFICATION_ID")
+                .initiativeId(INITIATIVE_ID)
+                .templateName("Email_OLD/EsitoOk")
+                .subject("Old subject")
+                .event(ONBOARDING_OK)
+                .build();
+        InitiativeNotificationDTO initiative = new InitiativeNotificationDTO();
+        initiative.setEmailFlux("DEC26");
+        when(initiativeRestConnector.getInitiativeDetailInfo(INITIATIVE_ID)).thenReturn(initiative);
+        when(emailNotificationContentService.resolveProfileAndFind("DEC26", ONBOARDING_OK))
+                .thenReturn(Optional.empty());
+
+        assertFalse(onboardingWebNotification.notify(notification));
+
+        verify(emailNotificationConnectorMock, never()).sendEmail(any());
+        verify(notificationManagerRepository, never()).deleteById(anyString());
+        verify(notificationManagerRepository).save(argThat(saved ->
+                "Email_OLD/EsitoOk".equals(saved.getTemplateName())
+                        && "Old subject".equals(saved.getSubject())
+                        && NotificationConstants.NOTIFICATION_STATUS_KO.equals(saved.getNotificationStatus())));
     }
 
     @Test
