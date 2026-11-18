@@ -55,7 +55,8 @@ public class MongoExceptionHandler {
     return getErrorDTOResponseEntity(ex, request, ex.getRetryAfterMs());
   }
 
-  private ResponseEntity<ErrorDTO> getErrorDTOResponseEntity(Exception ex, HttpServletRequest request, Long retryAfterMs) {
+  private ResponseEntity<ErrorDTO> getErrorDTOResponseEntity(Exception ex,
+                                                             HttpServletRequest request, Long retryAfterMs) {
     String message = ex.getMessage();
 
     log.info(

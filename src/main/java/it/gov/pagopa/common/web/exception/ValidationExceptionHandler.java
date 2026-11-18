@@ -29,36 +29,36 @@ public class ValidationExceptionHandler {
                 .orElse(new ErrorDTO("INVALID_REQUEST", "Invalid request"));
     }
 
-    @ExceptionHandler(MethodArgumentNotValidException.class)
-    @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public ErrorDTO handleValidationExceptions(
-            MethodArgumentNotValidException ex, HttpServletRequest request) {
+  @ExceptionHandler(MethodArgumentNotValidException.class)
+  @ResponseStatus(HttpStatus.BAD_REQUEST)
+  public ErrorDTO handleValidationExceptions(
+      MethodArgumentNotValidException ex, HttpServletRequest request) {
 
-        String message = ex.getBindingResult().getAllErrors().stream()
-                .map(error -> {
-                    String fieldName = ((FieldError) error).getField();
-                    String errorMessage = error.getDefaultMessage();
-                    return String.format("[%s]: %s", fieldName, errorMessage);
-                }).collect(Collectors.joining("; "));
+    String message = ex.getBindingResult().getAllErrors().stream()
+        .map(error -> {
+          String fieldName = ((FieldError) error).getField();
+          String errorMessage = error.getDefaultMessage();
+          return String.format("[%s]: %s", fieldName, errorMessage);
+        }).collect(Collectors.joining("; "));
 
-        log.info("A MethodArgumentNotValidException occurred handling request {}: HttpStatus 400 - {}",
-                ErrorManager.getRequestDetails(request), message);
-        log.debug("Something went wrong while validating http request", ex);
+    log.info("A MethodArgumentNotValidException occurred handling request {}: HttpStatus 400 - {}",
+        ErrorManager.getRequestDetails(request), message);
+    log.debug("Something went wrong while validating http request", ex);
 
-        return new ErrorDTO(templateValidationErrorDTO.getCode(), message);
-    }
+    return new ErrorDTO(templateValidationErrorDTO.getCode(), message);
+  }
 
-    @ExceptionHandler(MissingRequestHeaderException.class)
-    @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public ErrorDTO handleMissingRequestHeaderExceptions(
-            MissingRequestHeaderException ex, HttpServletRequest request) {
+  @ExceptionHandler(MissingRequestHeaderException.class)
+  @ResponseStatus(HttpStatus.BAD_REQUEST)
+  public ErrorDTO handleMissingRequestHeaderExceptions(
+      MissingRequestHeaderException ex, HttpServletRequest request) {
 
-        String message = ex.getMessage();
+    String message = ex.getMessage();
 
-        log.info("A MissingRequestHeaderException occurred handling request {}: HttpStatus 400 - {}",
-                ErrorManager.getRequestDetails(request), message);
-        log.debug("Something went wrong handling request", ex);
+    log.info("A MissingRequestHeaderException occurred handling request {}: HttpStatus 400 - {}",
+        ErrorManager.getRequestDetails(request), message);
+    log.debug("Something went wrong handling request", ex);
 
-        return new ErrorDTO(templateValidationErrorDTO.getCode(), message);
-    }
+    return new ErrorDTO(templateValidationErrorDTO.getCode(), message);
+  }
 }

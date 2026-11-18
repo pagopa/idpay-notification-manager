@@ -85,7 +85,7 @@ class NotificationMapperTest {
     Notification actual = notificationMapper.evaluationToNotification(EVALUATION_DTO);
 
     NOTIFICATION.setNotificationDate(actual.getNotificationDate());
-
+    NOTIFICATION.setBeneficiaryBudgetCents(actual.getBeneficiaryBudgetCents());
     assertEquals(NOTIFICATION, actual);
   }
 

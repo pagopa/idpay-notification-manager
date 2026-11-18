@@ -1,0 +1,190 @@
+notification:
+  manager:
+    profiles:
+      DEFAULT:
+        variables:
+          assisted-link: ${ASSISTED_LINK:https://pari.pagopa.it/bonusnotfound/utente/assistenza}
+        events:
+          ONBOARDING_OK:
+            subject: "${SUBJECT_OK:Il tuo Bonus è attivo}"
+            markdown: |-
+              ${MARKDOWN_OK_CTA:---
+              it:
+                cta_1:
+                  text: "Vai al bonus"
+                  action: "ioit://idpay/initiative/%initiativeId%"
+              en:
+                cta_1:
+                  text: "Go to the bonus page"
+                  action: "ioit://idpay/initiative/%initiativeId%"
+              ---}${MARKDOWN_DOUBLE_NEW_LINE:
+              
+              }${MARKDOWN_OK:Buone notizie! Hai ottenuto %initiativeName%. Da questo momento puoi visualizzare il bonus nella sezione Portafoglio dell'app IO.
+      
+              Ti ricordiamo che per iniziare ad usufruire del bonus devi configurare almeno un metodo di pagamento.
+              
+              Puoi trovare maggiori informazioni sul [sito](http://example.com/).}
+          ONBOARDING_OK_PARTIAL:
+            subject: "${SUBJECT_OK_PARTIAL:Il tuo Bonus è attivo}"
+            markdown: |-
+              ${MARKDOWN_OK_CTA:---
+              it:
+                cta_1:
+                  text: "Vai al bonus"
+                  action: "ioit://idpay/initiative/%initiativeId%"
+              en:
+                cta_1:
+                  text: "Go to the bonus page"
+                  action: "ioit://idpay/initiative/%initiativeId%"
+              ---}${MARKDOWN_DOUBLE_NEW_LINE:
+              
+              }${MARKDOWN_OK_PARTIAL:Buone notizie! Hai ottenuto una parte dell'importo richiesto per %initiativeName%. Da questo momento puoi visualizzare il bonus che ti è stato assegnato nella sezione Portafoglio dell'app IO.
+              
+              Ti ricordiamo che per iniziare ad usufruire del bonus devi configurare almeno un metodo di pagamento.
+              
+              Puoi trovare maggiori informazioni sul [sito](http://example.com/).}
+          ONBOARDING_JOINED:
+            subject: "${SUBJECT_OK:Il tuo Bonus è attivo}"
+            markdown: |-
+              ${MARKDOWN_OK_CTA:---
+              it:
+                cta_1:
+                  text: "Vai al bonus"
+                  action: "ioit://idpay/initiative/%initiativeId%"
+              en:
+                cta_1:
+                  text: "Go to the bonus page"
+                  action: "ioit://idpay/initiative/%initiativeId%"
+              ---}${MARKDOWN_DOUBLE_NEW_LINE:
+              
+              }${MARKDOWN_OK:Buone notizie! Hai ottenuto %initiativeName%. Da questo momento puoi visualizzare il bonus nella sezione Portafoglio dell'app IO.
+              
+              Ti ricordiamo che per iniziare ad usufruire del bonus devi configurare almeno un metodo di pagamento.
+              
+              Puoi trovare maggiori informazioni sul [sito](http://example.com/).}
+          ONBOARDING_DEMANDED:
+            subject: "${SUBJECT_DEMANDED:Attiva il bonus %initiativeName%}"
+            markdown: |-
+              ${MARKDOWN_DEMANDED:Buone notizie! Grazie ad un tuo familiare puoi ottenere %initiativeName%.
+              
+              Aderisci all’iniziativa per usufruire del bonus.
+              
+              Puoi trovare maggiori informazioni sul [sito](http://example.com/).}
+          ONBOARDING_WAITING_LIST:
+            subject: "${SUBJECT_ON_WAITING_LIST:Aggiornamenti sulla tua richiesta per %initiativeName%}"
+            markdown: |-
+              ${MARKDOWN_ON_WAITING_LIST:La tua richiesta per %initiativeName% è stata inserita in **lista d’attesa**, poiché al momento non ci sono fondi disponibili.
+      
+              **Cosa succede ora?**
+      
+              Non devi fare nulla: la tua richiesta rimane valida. Ti ricontatteremo se si renderanno disponibili nuove risorse.
+      
+              **Hai attivato le notifiche?**
+              
+              Se ancora non l’hai fatto, per non perderti i messaggi [attiva le notifiche push](#).
+              
+              **Come funziona il bonus?**
+              
+              Per saperne di più su come funziona il %initiativeName% e i criteri di assegnazione, [leggi i dettagli](https://assistenza.ioapp.it/hc/it/#categories).}
+          ONBOARDING_KO_GENERIC:
+            subject: "${SUBJECT_KO_GENERIC:Abbiamo riscontrato dei problemi}"
+            markdown: |-
+              ${MARKDOWN_KO_GENERIC:Si è verificato un errore nel processare la tua richiesta di %initiativeName%.
+              Se ritieni che ci sia stato un errore puoi segnalarlo direttamente all'Ente erogatore dell'iniziativa.}
+          ONBOARDING_KO_PDND:
+            subject: "${SUBJECT_KO:Non è stato possibile attivare %initiativeName%}"
+            markdown: |-
+              ${MARKDOWN_KO_PDND:Purtroppo non hai i requisiti necessari per aderire a %initiativeName% per i seguenti motivi:}${MARKDOWN_DOUBLE_NEW_LINE:
+              
+              }${MARKDOWN_KO_PDND_REJECT_REASONS:%pdndRejectReasonsList%}${MARKDOWN_KO_MISTAKE:Se ritieni che ci sia stato un errore puoi segnalarlo direttamente all'Ente erogatore dell'iniziativa.}${MARKDOWN_DOUBLE_NEW_LINE:
+              
+              }${MARKDOWN_APOLOGY:Ci scusiamo per il disagio.}
+          ONBOARDING_KO_RANKING:
+            subject: "${SUBJECT_KO:Non è stato possibile attivare %initiativeName%}"
+            markdown: |-
+              ${MARKDOWN_KO_RANKING:Purtroppo non è stato possibile attivare %initiativeName% in quanto i tuoi requisiti non rientrano nella graduatoria.}${MARKDOWN_DOUBLE_NEW_LINE:
+              
+              }${MARKDOWN_KO_MISTAKE:Se ritieni che ci sia stato un errore puoi segnalarlo direttamente all'Ente erogatore dell'iniziativa.}${MARKDOWN_DOUBLE_NEW_LINE:
+              
+              }${MARKDOWN_APOLOGY:Ci scusiamo per il disagio.}
+          ONBOARDING_KO_BUDGET:
+            subject: "${SUBJECT_KO:Non è stato possibile attivare %initiativeName%}"
+            markdown: |-
+              ${MARKDOWN_KO_BUDGET_EXHAUSTED:Purtroppo non è stato possibile attivare %initiativeName% in quanto è terminato il budget disponibile.}${MARKDOWN_DOUBLE_NEW_LINE:
+              
+              }${MARKDOWN_APOLOGY:Ci scusiamo per il disagio.}
+          ONBOARDING_KO_REJECTED_NO_RETRY:
+            subject: "${SUBJECT_KO:Non è stato possibile attivare %initiativeName%}"
+            markdown: |-
+              ${MARKDOWN_KO_REJECTED_NO_RETRY:Purtroppo non è stato possibile aderire a %initiativeName% per i seguenti motivi:}${MARKDOWN_DOUBLE_NEW_LINE:
+              
+              }${MARKDOWN_KO_REJECTED_NO_RETRY_REJECT_REASONS:%noRetryRejectReasonsList%}${MARKDOWN_KO_MISTAKE:Se ritieni che ci sia stato un errore puoi segnalarlo direttamente all'Ente erogatore dell'iniziativa.}${MARKDOWN_DOUBLE_NEW_LINE:
+              
+              }${MARKDOWN_APOLOGY:Ci scusiamo per il disagio.}
+          ONBOARDING_KO_TECHNICAL:
+            subject: "${SUBJECT_KO_TECH:Abbiamo riscontrato dei problemi}"
+            markdown: |-
+              ${MARKDOWN_KO_TECH:Si è verificato un errore nel processare la tua richiesta di %initiativeName%.
+              Ti chiediamo di riprovare.}
+          CHECK_IBAN_KO:
+            subject: "${SUBJECT_KO_CHECKIBAN:L'IBAN che hai inserito è errato}"
+            markdown: |-
+              ${MARKDOWN_KO_CHECKIBAN:Il codice iban che hai inserito risulta essere errato. Ti chiediamo di modificarlo per evitare lasciare scoperte le iniziative associate e non ricevere i rimborsi (nel caso tu ne fossi beneficiario).
+              
+              Per modificare l'IBAN errato ti basta andare **Profilo > I tuoi dati > I tuoi IBAN** e seguire le indicazioni, oppure cliccare direttamente qui sotto.}
+          REFUND_OK:
+            subject: "${SUBJECT_OK_REFUND:Ti è stato accreditato un rimborso!}"
+            markdown: |-
+              ${MARKDOWN_OK_REFUND:Ti è stato accreditato un rimborso di %effectiveReward% euro!
+              
+              Puoi controllare il bonus disponibile direttamente nella pagina dell'iniziativa.}
+          REFUND_KO:
+            subject: "${SUBJECT_KO_REFUND:Non è stato possibile effettuare il rimborso}"
+            markdown:
+              ${MARKDOWN_KO_REFUND:Purtroppo non è stato possibile accreditarti il rimborso.
+              
+              Ti chiediamo di modificare l'IBAN.
+              Per modificare l'IBAN errato ti basta andare **Profilo > I tuoi dati > I tuoi IBAN** e seguire le indicazioni.
+              }
+          SUSPENSION:
+            subject: "${SUBJECT_SUSPENSION:Sospensione temporanea da iniziativa %initiativeName%}"
+            markdown:
+              ${MARKDOWN_SUSPENSION:In seguito ad alcune verifiche, il tuo profilo è stato sospeso dall'iniziativa.
+              Gli importi ancora da erogare saranno sospesi e le transazioni a partire da questo momento non saranno riconosciute come valide ai fini dell'iniziativa.
+              Contatta l'assistenza al numero XXXXX per capire come risolvere entro 60 giorni a partire da oggi e comunica il codice protocollo XXXX.}
+          READMISSION:
+            subject: "${SUBJECT_READMISSION:Riammissione a iniziativa %initiativeName%}"
+            markdown:
+              ${MARKDOWN_READMISSION:In seguito ad alcune verifiche, il tuo profilo è stato riammesso all'iniziativa.
+              Gli importi precedentemente sospesi saranno riammessi e rimborsati nel prossimo ordine di rimborso a tuo favore.}
+          INITIATIVE_PUBLISHING:
+            subject: "${SUBJECT_INITIATIVE_PUBLISHING:Ottieni il tuo bonus da 500€!}"
+            markdown: |-
+              ${MARKDOWN_INITIATIVE_PUBLISHING:**Fino al 31 agosto 2022** puoi ottenere il tuo Bonus Cultura di 500 euro per acquistare:
+              biglietti per cinema, teatri, concerti, eventi culturali, musei, monumenti e parchi archeologici;
+              musica, libri, abbonamenti a quotidiani e periodici, anche in formato digitale;
+              corsi di teatro, musica, danza e lingue straniere.
+              
+              **Spendere il bonus è semplicissimo**: al momento dell’acquisto, online e presso gli esercenti fisici, **paga con la tua carta d’identità elettronica** o la tua tessera sanitaria. In alternativa, puoi sempre anticipare la spesa con uno dei tuoi metodi di pagamento...
+              }
+          VOUCHER_EXPIRING:
+            subject: "${SUBJECT_OK_REMINDER:Il tuo bonus sta per scadere!}"
+            markdown: |-
+              ${MARKDOWN_OK_CTA:---
+              it:
+                  cta_1: 
+                      text: "Vai al bonus"
+                      action: "ioit://idpay/initiative/%initiativeId%"
+              en:
+                  cta_1: 
+                      text: "Go to the bonus page"
+                      action: "ioit://idpay/initiative/%initiativeId%"
+              ---}${MARKDOWN_DOUBLE_NEW_LINE:
+              
+              }${MARKDOWN_OK_REMINDER:Hai già deciso come usare il %initiativeName%?
+              
+              Hai tempo **fino alle 23:59 del giorno %voucherEndDate%** per usare il contributo.
+              
+              **Hai domande?**
+              
+              Per avere più dettagli su come e dove usare il bonus, [leggi la guida](#).}
