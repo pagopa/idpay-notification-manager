@@ -1,6 +1,7 @@
 package it.gov.pagopa.notification.manager.dto;
 
 import it.gov.pagopa.notification.manager.enums.Channel;
+import it.gov.pagopa.notification.manager.enums.NotificationEvent;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
@@ -42,4 +43,5 @@ public class EvaluationDTO {
   private String fiscalCode;
   private String ioToken;
   private String emailFlux;
+  private NotificationEvent event;
 }
